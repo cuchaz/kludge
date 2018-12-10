@@ -5,7 +5,35 @@
 
 package cuchaz.kludge
 
+import cuchaz.kludge.window.Monitors
+import cuchaz.kludge.window.Size
+import cuchaz.kludge.window.Window
+import cuchaz.kludge.window.Windows
+
 
 fun main(args: Array<String>) {
-	println("Hello World!")
+
+	// listen to GLFW error messages
+	Windows.init()
+	Windows.errors.setOut(System.err)
+
+	Window(
+		size = Size(640, 480),
+		title = "Kludge Demo"
+	).use { win ->
+
+		win.centerOn(Monitors.primary)
+		win.visible = true
+
+		// main loop
+		while (!win.shouldClose()) {
+
+			// TODO: render something
+
+			Windows.pollEvents()
+		}
+	}
+
+	// cleanup
+	Windows.close()
 }

@@ -19,7 +19,35 @@ repositories {
 }
 
 dependencies {
+
     compile(kotlin("stdlib-jdk8"))
+
+	fun lwjgl(module: String? = null) {
+		val name = "lwjgl" +
+			if (module == null) {
+				""
+			} else {
+				"-$module"
+			}
+		val lwjglVersion = "3.2.0"
+		compile("org.lwjgl", name, lwjglVersion)
+		for (os in listOf("linux", "macos", "windows")) {
+			compile("org.lwjgl", name, lwjglVersion, classifier = "natives-$os")
+		}
+	}
+	lwjgl()
+	lwjgl("glfw")
+	lwjgl("jemalloc")
+	lwjgl("nfd")
+	lwjgl("vulkan")
+
+	compile("org.joml", "joml", "1.9.12")
+
+	testImplementation("io.kotlintest", "kotlintest-runner-junit5", "3.1.11")
+}
+
+val test by tasks.getting(Test::class) {
+	useJUnitPlatform { }
 }
 
 configure<JavaPluginConvention> {
