@@ -5,10 +5,8 @@
 
 package cuchaz.kludge
 
-import cuchaz.kludge.window.Monitors
-import cuchaz.kludge.window.Size
-import cuchaz.kludge.window.Window
-import cuchaz.kludge.window.Windows
+import cuchaz.kludge.vulkan.*
+import cuchaz.kludge.window.*
 
 
 fun main(args: Array<String>) {
@@ -17,20 +15,41 @@ fun main(args: Array<String>) {
 	Windows.init()
 	Windows.errors.setOut(System.err)
 
-	Window(
-		size = Size(640, 480),
-		title = "Kludge Demo"
-	).use { win ->
+	// check for vulkan support
+	if (!Windows.isVulkanSupported) {
+		throw Error("No Vulkan support")
+	}
 
-		win.centerOn(Monitors.primary)
-		win.visible = true
+	Vulkan(
+		extensionNames = Windows.requiredVulkanExtensions + setOf(Vulkan.DebugExtension),
+		layerNames = setOf(Vulkan.StandardValidationLayer)
+	).use { vulkan ->
 
-		// main loop
-		while (!win.shouldClose()) {
+		vulkan.debugMessager { severityFlags, typeFlags, msg ->
+			println("VULKAN: $msg")
+		}.use {
 
-			// TODO: render something
+			vulkan.debugInfo("Debug message!")
 
-			Windows.pollEvents()
+			// TEMP
+			println("Hello Vulkan!")
+
+			Window(
+				size = Size(640, 480),
+				title = "Kludge Demo"
+			).use { win ->
+
+				win.centerOn(Monitors.primary)
+				win.visible = true
+
+				// main loop
+				while (!win.shouldClose()) {
+
+					// TODO: render something
+
+					Windows.pollEvents()
+				}
+			}
 		}
 	}
 

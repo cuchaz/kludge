@@ -53,8 +53,17 @@ val test by tasks.getting(Test::class) {
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
 }
+
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+
+	kotlinOptions {
+
+		jvmTarget = "1.8"
+
+		// enable experimental features
+		languageVersion = "1.3"
+		freeCompilerArgs += "-XXLanguage:+InlineClasses"
+	}
 }
 
 (extensions["license"] as LicenseExtension).apply {

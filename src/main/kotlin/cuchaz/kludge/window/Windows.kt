@@ -5,8 +5,10 @@
 
 package cuchaz.kludge.window
 
+import cuchaz.kludge.tools.toStrings
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.glfw.GLFWErrorCallback
+import org.lwjgl.glfw.GLFWVulkan.*
 import java.io.Closeable
 import java.io.PrintStream
 
@@ -27,6 +29,17 @@ object Windows : Closeable {
 	override fun close() {
 		glfwTerminate()
 		errors.close()
+	}
+
+	val isVulkanSupported: Boolean by lazy {
+		glfwVulkanSupported()
+	}
+
+	val requiredVulkanExtensions: Set<String> by lazy {
+		glfwGetRequiredInstanceExtensions()
+			?.toStrings()
+			?.toMutableSet()
+			?: throw Error("Can't get GLFW extensions")
 	}
 
 	fun pollEvents() {
