@@ -8,6 +8,8 @@ package cuchaz.kludge.tools
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
+import java.nio.*
+import java.util.*
 
 
 inline fun <R> memstack(block: (MemoryStack) -> R): R {
@@ -25,6 +27,41 @@ fun Collection<String>.toPointerBuffer() =
 		}
 		flip()
 	}
+
+fun IntBuffer.toList(size: Int) = (0 until size).map { get(it) }
+fun LongBuffer.toList(size: Int) = (0 until size).map { get(it) }
+fun FloatBuffer.toList(size: Int) = (0 until size).map { get(it) }
+fun DoubleBuffer.toList(size: Int) = (0 until size).map { get(it) }
+
+/** builds a UUID from the first 16 bytes in the buffer */
+fun ByteBuffer.toUUID(): UUID {
+
+	if (capacity() < 16) {
+		throw IllegalArgumentException("byte buffer must be at least 16 bytes")
+	}
+
+	fun next() = get().toLong() and 0xff
+
+	rewind()
+	return UUID(
+		(next() shl 8*7)
+			or (next() shl 8*6)
+			or (next() shl 8*5)
+			or (next() shl 8*4)
+			or (next() shl 8*3)
+			or (next() shl 8*2)
+			or (next() shl 8*1)
+			or (next()),
+		(next() shl 8*7)
+			or (next() shl 8*6)
+			or (next() shl 8*5)
+			or (next() shl 8*4)
+			or (next() shl 8*3)
+			or (next() shl 8*2)
+			or (next() shl 8*1)
+			or (next())
+	)
+}
 
 
 inline class IntFlags(val value: Int) {

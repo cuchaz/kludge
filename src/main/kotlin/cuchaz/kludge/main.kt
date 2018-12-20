@@ -31,9 +31,12 @@ fun main(args: Array<String>) {
 
 			vulkan.debugInfo("Debug message!")
 
-			// TEMP
-			println("Hello Vulkan!")
+			// TEMP: list devices
+			for (device in vulkan.physicalDevices) {
+				println("device: $device")
+			}
 
+			/* TEMP
 			Window(
 				size = Size(640, 480),
 				title = "Kludge Demo"
@@ -50,6 +53,7 @@ fun main(args: Array<String>) {
 					Windows.pollEvents()
 				}
 			}
+			*/
 		}
 	}
 
