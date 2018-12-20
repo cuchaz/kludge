@@ -5,9 +5,9 @@
 
 package cuchaz.kludge.window
 
+import cuchaz.kludge.tools.memstack
 import org.lwjgl.glfw.Callbacks.*
 import org.lwjgl.glfw.GLFW.*
-import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil.*
 
 
@@ -57,9 +57,9 @@ class Window(
 
 	var pos: Pos
 		get() {
-			MemoryStack.stackPush().use { stack ->
-				val x = stack.mallocInt(1)
-				val y = stack.mallocInt(1)
+			memstack { mem ->
+				val x = mem.mallocInt(1)
+				val y = mem.mallocInt(1)
 				glfwGetWindowPos(id, x, y)
 				return Pos(x.get(0), y.get(0))
 			}
@@ -70,9 +70,9 @@ class Window(
 
 	var size: Size
 		get() {
-			MemoryStack.stackPush().use { stack ->
-				val width = stack.mallocInt(1)
-				val height = stack.mallocInt(1)
+			memstack { mem ->
+				val width = mem.mallocInt(1)
+				val height = mem.mallocInt(1)
 				glfwGetWindowSize(id, width, height)
 				return Size(width.get(0), height.get(0))
 			}

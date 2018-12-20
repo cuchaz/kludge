@@ -6,9 +6,8 @@
 package cuchaz.kludge.vulkan
 
 import cuchaz.kludge.Kludge
-import cuchaz.kludge.tools.IntFlags
+import cuchaz.kludge.tools.memstack
 import cuchaz.kludge.tools.toPointerBuffer
-import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
 
@@ -50,7 +49,7 @@ class Vulkan(
 		}
 
 		val supportedExtensions: Set<String> by lazy {
-			MemoryStack.stackPush().use { mem ->
+			memstack { mem ->
 				val pCount = mem.mallocInt(1)
 				VK10.vkEnumerateInstanceExtensionProperties(null as String?, pCount, null)
 					.orFail("Failed to query supported extensions")
@@ -66,7 +65,7 @@ class Vulkan(
 		const val DebugExtension = EXTDebugUtils.VK_EXT_DEBUG_UTILS_EXTENSION_NAME
 
 		val supportedLayers: Set<String> by lazy {
-			MemoryStack.stackPush().use { mem ->
+			memstack { mem ->
 				val pCount = mem.mallocInt(1)
 				VK10.vkEnumerateInstanceLayerProperties(pCount, null)
 				val count = pCount.get(0)
@@ -82,7 +81,7 @@ class Vulkan(
 	}
 
 	internal val instance: VkInstance = run {
-		MemoryStack.stackPush().use { mem ->
+		memstack { mem ->
 
 			val infoApp = VkApplicationInfo.callocStack(mem)
 				.sType(VK10.VK_STRUCTURE_TYPE_APPLICATION_INFO)

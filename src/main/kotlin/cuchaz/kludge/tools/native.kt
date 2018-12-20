@@ -6,8 +6,15 @@
 package cuchaz.kludge.tools
 
 import org.lwjgl.PointerBuffer
+import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 
+
+inline fun <R> memstack(block: (MemoryStack) -> R): R {
+	MemoryStack.stackPush().use { mem ->
+		return block(mem)
+	}
+}
 
 fun PointerBuffer.toStrings() = (0 until capacity()).map { getStringASCII() }
 

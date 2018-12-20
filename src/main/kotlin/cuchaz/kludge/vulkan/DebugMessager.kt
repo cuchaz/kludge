@@ -6,7 +6,7 @@
 package cuchaz.kludge.vulkan
 
 import cuchaz.kludge.tools.IntFlags
-import org.lwjgl.system.MemoryStack
+import cuchaz.kludge.tools.memstack
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
 
@@ -34,7 +34,7 @@ fun Vulkan.debugMessager(
 ) = object : DebugMessager {
 
 	private val debugId: Long = run {
-		MemoryStack.stackPush().use { mem ->
+		memstack { mem ->
 			val infoCreate = VkDebugUtilsMessengerCreateInfoEXT.callocStack(mem)
 				.sType(EXTDebugUtils.VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT)
 				.messageSeverity(desiredSeverities.value)
@@ -69,7 +69,7 @@ fun Vulkan.debugMessager(
 }
 
 fun Vulkan.debugSend(severities: IntFlags, types: IntFlags, msg: String) {
-	MemoryStack.stackPush().use { mem ->
+	memstack { mem ->
 
 		// create a dummy object
 		val pObjects = VkDebugUtilsObjectNameInfoEXT.callocStack(1, mem)
