@@ -1,9 +1,7 @@
 package cuchaz.kludge.vulkan
 
-import cuchaz.kludge.tools.IntFlags
-import cuchaz.kludge.tools.memstack
-import cuchaz.kludge.tools.toList
-import cuchaz.kludge.tools.toUUID
+import cuchaz.kludge.tools.*
+import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import java.util.*
 
@@ -274,129 +272,192 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 		}
 	}
 
-	data class Features internal constructor (
-		val robustBufferAccess: Boolean,
-		val fullDrawIndexUint32: Boolean,
-		val imageCubeArray: Boolean,
-		val independentBlend: Boolean,
-		val geometryShader: Boolean,
-		val tessellationShader: Boolean,
-		val sampleRateShading: Boolean,
-		val dualSrcBlend: Boolean,
-		val logicOp: Boolean,
-		val multiDrawIndirect: Boolean,
-		val drawIndirectFirstInstance: Boolean,
-		val depthClamp: Boolean,
-		val depthBiasClamp: Boolean,
-		val fillModeNonSolid: Boolean,
-		val depthBounds: Boolean,
-		val wideLines: Boolean,
-		val largePoints: Boolean,
-		val alphaToOne: Boolean,
-		val multiViewport: Boolean,
-		val samplerAnisotropy: Boolean,
-		val textureCompressionETC2: Boolean,
-		val textureCompressionASTC_LDR: Boolean,
-		val textureCompressionBC: Boolean,
-		val occlusionQueryPrecise: Boolean,
-		val pipelineStatisticsQuery: Boolean,
-		val vertexPipelineStoresAndAtomics: Boolean,
-		val fragmentStoresAndAtomics: Boolean,
-		val shaderTessellationAndGeometryPointSize: Boolean,
-		val shaderImageGatherExtended: Boolean,
-		val shaderStorageImageExtendedFormats: Boolean,
-		val shaderStorageImageMultisample: Boolean,
-		val shaderStorageImageReadWithoutFormat: Boolean,
-		val shaderStorageImageWriteWithoutFormat: Boolean,
-		val shaderUniformBufferArrayDynamicIndexing: Boolean,
-		val shaderSampledImageArrayDynamicIndexing: Boolean,
-		val shaderStorageBufferArrayDynamicIndexing: Boolean,
-		val shaderStorageImageArrayDynamicIndexing: Boolean,
-		val shaderClipDistance: Boolean,
-		val shaderCullDistance: Boolean,
-		val shaderFloat64: Boolean,
-		val shaderInt64: Boolean,
-		val shaderInt16: Boolean,
-		val shaderResourceResidency: Boolean,
-		val shaderResourceMinLod: Boolean,
-		val sparseBinding: Boolean,
-		val sparseResidencyBuffer: Boolean,
-		val sparseResidencyImage2D: Boolean,
-		val sparseResidencyImage3D: Boolean,
-		val sparseResidency2Samples: Boolean,
-		val sparseResidency4Samples: Boolean,
-		val sparseResidency8Samples: Boolean,
-		val sparseResidency16Samples: Boolean,
-		val sparseResidencyAliased: Boolean,
-		val variableMultisampleRate: Boolean,
-		val inheritedQueries: Boolean
-	)
+	data class Features(
+		val robustBufferAccess: Boolean = false,
+		val fullDrawIndexUint32: Boolean = false,
+		val imageCubeArray: Boolean = false,
+		val independentBlend: Boolean = false,
+		val geometryShader: Boolean = false,
+		val tessellationShader: Boolean = false,
+		val sampleRateShading: Boolean = false,
+		val dualSrcBlend: Boolean = false,
+		val logicOp: Boolean = false,
+		val multiDrawIndirect: Boolean = false,
+		val drawIndirectFirstInstance: Boolean = false,
+		val depthClamp: Boolean = false,
+		val depthBiasClamp: Boolean = false,
+		val fillModeNonSolid: Boolean = false,
+		val depthBounds: Boolean = false,
+		val wideLines: Boolean = false,
+		val largePoints: Boolean = false,
+		val alphaToOne: Boolean = false,
+		val multiViewport: Boolean = false,
+		val samplerAnisotropy: Boolean = false,
+		val textureCompressionETC2: Boolean = false,
+		val textureCompressionASTC_LDR: Boolean = false,
+		val textureCompressionBC: Boolean = false,
+		val occlusionQueryPrecise: Boolean = false,
+		val pipelineStatisticsQuery: Boolean = false,
+		val vertexPipelineStoresAndAtomics: Boolean = false,
+		val fragmentStoresAndAtomics: Boolean = false,
+		val shaderTessellationAndGeometryPointSize: Boolean = false,
+		val shaderImageGatherExtended: Boolean = false,
+		val shaderStorageImageExtendedFormats: Boolean = false,
+		val shaderStorageImageMultisample: Boolean = false,
+		val shaderStorageImageReadWithoutFormat: Boolean = false,
+		val shaderStorageImageWriteWithoutFormat: Boolean = false,
+		val shaderUniformBufferArrayDynamicIndexing: Boolean = false,
+		val shaderSampledImageArrayDynamicIndexing: Boolean = false,
+		val shaderStorageBufferArrayDynamicIndexing: Boolean = false,
+		val shaderStorageImageArrayDynamicIndexing: Boolean = false,
+		val shaderClipDistance: Boolean = false,
+		val shaderCullDistance: Boolean = false,
+		val shaderFloat64: Boolean = false,
+		val shaderInt64: Boolean = false,
+		val shaderInt16: Boolean = false,
+		val shaderResourceResidency: Boolean = false,
+		val shaderResourceMinLod: Boolean = false,
+		val sparseBinding: Boolean = false,
+		val sparseResidencyBuffer: Boolean = false,
+		val sparseResidencyImage2D: Boolean = false,
+		val sparseResidencyImage3D: Boolean = false,
+		val sparseResidency2Samples: Boolean = false,
+		val sparseResidency4Samples: Boolean = false,
+		val sparseResidency8Samples: Boolean = false,
+		val sparseResidency16Samples: Boolean = false,
+		val sparseResidencyAliased: Boolean = false,
+		val variableMultisampleRate: Boolean = false,
+		val inheritedQueries: Boolean = false
+	) {
+		
+		internal constructor(features: VkPhysicalDeviceFeatures) : this(
+			features.robustBufferAccess(),
+			features.fullDrawIndexUint32(),
+			features.imageCubeArray(),
+			features.independentBlend(),
+			features.geometryShader(),
+			features.tessellationShader(),
+			features.sampleRateShading(),
+			features.dualSrcBlend(),
+			features.logicOp(),
+			features.multiDrawIndirect(),
+			features.drawIndirectFirstInstance(),
+			features.depthClamp(),
+			features.depthBiasClamp(),
+			features.fillModeNonSolid(),
+			features.depthBounds(),
+			features.wideLines(),
+			features.largePoints(),
+			features.alphaToOne(),
+			features.multiViewport(),
+			features.samplerAnisotropy(),
+			features.textureCompressionETC2(),
+			features.textureCompressionASTC_LDR(),
+			features.textureCompressionBC(),
+			features.occlusionQueryPrecise(),
+			features.pipelineStatisticsQuery(),
+			features.vertexPipelineStoresAndAtomics(),
+			features.fragmentStoresAndAtomics(),
+			features.shaderTessellationAndGeometryPointSize(),
+			features.shaderImageGatherExtended(),
+			features.shaderStorageImageExtendedFormats(),
+			features.shaderStorageImageMultisample(),
+			features.shaderStorageImageReadWithoutFormat(),
+			features.shaderStorageImageWriteWithoutFormat(),
+			features.shaderUniformBufferArrayDynamicIndexing(),
+			features.shaderSampledImageArrayDynamicIndexing(),
+			features.shaderStorageBufferArrayDynamicIndexing(),
+			features.shaderStorageImageArrayDynamicIndexing(),
+			features.shaderClipDistance(),
+			features.shaderCullDistance(),
+			features.shaderFloat64(),
+			features.shaderInt64(),
+			features.shaderInt16(),
+			features.shaderResourceResidency(),
+			features.shaderResourceMinLod(),
+			features.sparseBinding(),
+			features.sparseResidencyBuffer(),
+			features.sparseResidencyImage2D(),
+			features.sparseResidencyImage3D(),
+			features.sparseResidency2Samples(),
+			features.sparseResidency4Samples(),
+			features.sparseResidency8Samples(),
+			features.sparseResidency16Samples(),
+			features.sparseResidencyAliased(),
+			features.variableMultisampleRate(),
+			features.inheritedQueries()
+		)
+		
+		internal fun toVulkan(mem: MemoryStack) =
+			VkPhysicalDeviceFeatures.callocStack(mem).apply {
+				robustBufferAccess(robustBufferAccess)
+				fullDrawIndexUint32(fullDrawIndexUint32)
+				imageCubeArray(imageCubeArray)
+				independentBlend(independentBlend)
+				geometryShader(geometryShader)
+				tessellationShader(tessellationShader)
+				sampleRateShading(sampleRateShading)
+				dualSrcBlend(dualSrcBlend)
+				logicOp(logicOp)
+				multiDrawIndirect(multiDrawIndirect)
+				drawIndirectFirstInstance(drawIndirectFirstInstance)
+				depthClamp(depthClamp)
+				depthBiasClamp(depthBiasClamp)
+				fillModeNonSolid(fillModeNonSolid)
+				depthBounds(depthBounds)
+				wideLines(wideLines)
+				largePoints(largePoints)
+				alphaToOne(alphaToOne)
+				multiViewport(multiViewport)
+				samplerAnisotropy(samplerAnisotropy)
+				textureCompressionETC2(textureCompressionETC2)
+				textureCompressionASTC_LDR(textureCompressionASTC_LDR)
+				textureCompressionBC(textureCompressionBC)
+				occlusionQueryPrecise(occlusionQueryPrecise)
+				pipelineStatisticsQuery(pipelineStatisticsQuery)
+				vertexPipelineStoresAndAtomics(vertexPipelineStoresAndAtomics)
+				fragmentStoresAndAtomics(fragmentStoresAndAtomics)
+				shaderTessellationAndGeometryPointSize(shaderTessellationAndGeometryPointSize)
+				shaderImageGatherExtended(shaderImageGatherExtended)
+				shaderStorageImageExtendedFormats(shaderStorageImageExtendedFormats)
+				shaderStorageImageMultisample(shaderStorageImageMultisample)
+				shaderStorageImageReadWithoutFormat(shaderStorageImageReadWithoutFormat)
+				shaderStorageImageWriteWithoutFormat(shaderStorageImageWriteWithoutFormat)
+				shaderUniformBufferArrayDynamicIndexing(shaderUniformBufferArrayDynamicIndexing)
+				shaderSampledImageArrayDynamicIndexing(shaderSampledImageArrayDynamicIndexing)
+				shaderStorageBufferArrayDynamicIndexing(shaderStorageBufferArrayDynamicIndexing)
+				shaderStorageImageArrayDynamicIndexing(shaderStorageImageArrayDynamicIndexing)
+				shaderClipDistance(shaderClipDistance)
+				shaderCullDistance(shaderCullDistance)
+				shaderFloat64(shaderFloat64)
+				shaderInt64(shaderInt64)
+				shaderInt16(shaderInt16)
+				shaderResourceResidency(shaderResourceResidency)
+				shaderResourceMinLod(shaderResourceMinLod)
+				sparseBinding(sparseBinding)
+				sparseResidencyBuffer(sparseResidencyBuffer)
+				sparseResidencyImage2D(sparseResidencyImage2D)
+				sparseResidencyImage3D(sparseResidencyImage3D)
+				sparseResidency2Samples(sparseResidency2Samples)
+				sparseResidency4Samples(sparseResidency4Samples)
+				sparseResidency8Samples(sparseResidency8Samples)
+				sparseResidency16Samples(sparseResidency16Samples)
+				sparseResidencyAliased(sparseResidencyAliased)
+				variableMultisampleRate(variableMultisampleRate)
+				inheritedQueries(inheritedQueries)
+			}
+	}
 
 	val features: Features by lazy {
 		memstack { mem ->
 			val features = VkPhysicalDeviceFeatures.mallocStack(mem)
 			VK10.vkGetPhysicalDeviceFeatures(vkDevice, features)
-			Features(
-				features.robustBufferAccess(),
-				features.fullDrawIndexUint32(),
-				features.imageCubeArray(),
-				features.independentBlend(),
-				features.geometryShader(),
-				features.tessellationShader(),
-				features.sampleRateShading(),
-				features.dualSrcBlend(),
-				features.logicOp(),
-				features.multiDrawIndirect(),
-				features.drawIndirectFirstInstance(),
-				features.depthClamp(),
-				features.depthBiasClamp(),
-				features.fillModeNonSolid(),
-				features.depthBounds(),
-				features.wideLines(),
-				features.largePoints(),
-				features.alphaToOne(),
-				features.multiViewport(),
-				features.samplerAnisotropy(),
-				features.textureCompressionETC2(),
-				features.textureCompressionASTC_LDR(),
-				features.textureCompressionBC(),
-				features.occlusionQueryPrecise(),
-				features.pipelineStatisticsQuery(),
-				features.vertexPipelineStoresAndAtomics(),
-				features.fragmentStoresAndAtomics(),
-				features.shaderTessellationAndGeometryPointSize(),
-				features.shaderImageGatherExtended(),
-				features.shaderStorageImageExtendedFormats(),
-				features.shaderStorageImageMultisample(),
-				features.shaderStorageImageReadWithoutFormat(),
-				features.shaderStorageImageWriteWithoutFormat(),
-				features.shaderUniformBufferArrayDynamicIndexing(),
-				features.shaderSampledImageArrayDynamicIndexing(),
-				features.shaderStorageBufferArrayDynamicIndexing(),
-				features.shaderStorageImageArrayDynamicIndexing(),
-				features.shaderClipDistance(),
-				features.shaderCullDistance(),
-				features.shaderFloat64(),
-				features.shaderInt64(),
-				features.shaderInt16(),
-				features.shaderResourceResidency(),
-				features.shaderResourceMinLod(),
-				features.sparseBinding(),
-				features.sparseResidencyBuffer(),
-				features.sparseResidencyImage2D(),
-				features.sparseResidencyImage3D(),
-				features.sparseResidency2Samples(),
-				features.sparseResidency4Samples(),
-				features.sparseResidency8Samples(),
-				features.sparseResidency16Samples(),
-				features.sparseResidencyAliased(),
-				features.variableMultisampleRate(),
-				features.inheritedQueries()
-			)
+			Features(features)
 		}
 	}
 
-	class QueueFamilyProperties internal constructor(
+	data class QueueFamily internal constructor(
+		val index: Int,
 		val queueFlags: IntFlags,
 		val queueCount: Int,
 		val timestampValidBits: Int,
@@ -411,7 +472,7 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 		}
 	}
 
-	val queueFamilyProperties: List<QueueFamilyProperties> by lazy {
+	val queueFamilies: List<QueueFamily> by lazy {
 		memstack { mem ->
 
 			val pCount = mem.mallocInt(1)
@@ -423,7 +484,8 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 			(0 until count)
 				.map {
 					val qf = pQueueFamilies.get(it)
-					QueueFamilyProperties(
+					QueueFamily(
+						it,
 						IntFlags(qf.queueFlags()),
 						qf.queueCount(),
 						qf.timestampValidBits(),
@@ -432,6 +494,11 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 				}
 		}
 	}
+
+	fun findQueueFamily(flags: IntFlags) =
+		queueFamilies
+			.find { it.queueFlags.hasAll(flags) }
+			?: throw NoSuchElementException("can't find queue family with desired flags")
 
 	override fun toString() = "${properties.name}: ${properties.uuid}"
 }
@@ -447,5 +514,49 @@ val Vulkan.physicalDevices get(): List<PhysicalDevice> {
 
 		return (0 until count)
 			.map { PhysicalDevice(instance, pDevices.get()) }
+	}
+}
+
+
+class Device(internal val vkDevice: VkDevice) : AutoCloseable {
+
+	override fun close() {
+		VK10.vkDestroyDevice(vkDevice, null)
+	}
+}
+
+fun PhysicalDevice.device(
+	queuePriorities: Map<PhysicalDevice.QueueFamily,List<Float>>,
+	features: PhysicalDevice.Features = PhysicalDevice.Features(),
+	extensionNames: List<String> = emptyList(),
+	layerNames: List<String> = emptyList(),
+	apiVersion: Version = properties.apiVersion
+): Device {
+	memstack { mem ->
+
+		// set the queue creation info
+		val queueInfos = VkDeviceQueueCreateInfo.callocStack(queuePriorities.size, mem)
+		for ((queueFamily, priorities) in queuePriorities) {
+			queueInfos.get()
+				.sType(VK10.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
+				.queueFamilyIndex(queueFamily.index)
+				.pQueuePriorities(priorities.toBuffer(mem))
+		}
+		queueInfos.rewind()
+
+		// set device creation info
+		val deviceInfo = VkDeviceCreateInfo.callocStack(mem)
+			.sType(VK10.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
+			.pQueueCreateInfos(queueInfos)
+			.pEnabledFeatures(features.toVulkan(mem))
+			.ppEnabledExtensionNames(extensionNames.toPointerBuffer(mem))
+			.ppEnabledLayerNames(layerNames.toPointerBuffer(mem))
+
+		// make the device
+		val pDevice = mem.mallocPointer(1)
+		VK10.vkCreateDevice(vkDevice, deviceInfo, null, pDevice)
+			.orFail("failed to create device")
+
+		return Device(VkDevice(pDevice.get(0), vkDevice, deviceInfo, apiVersion.value))
 	}
 }

@@ -92,8 +92,8 @@ class Vulkan(
 			val infoCreate = VkInstanceCreateInfo.callocStack(mem)
 				.sType(VK10.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
 				.pApplicationInfo(infoApp)
-				.ppEnabledExtensionNames(extensionNames.toPointerBuffer())
-				.ppEnabledLayerNames(layerNames.toPointerBuffer())
+				.ppEnabledExtensionNames(extensionNames.toPointerBuffer(mem))
+				.ppEnabledLayerNames(layerNames.toPointerBuffer(mem))
 
 			val pInstance = mem.mallocPointer(1)
 			VK10.vkCreateInstance(infoCreate, null, pInstance)

@@ -20,8 +20,8 @@ inline fun <R> memstack(block: (MemoryStack) -> R): R {
 
 fun PointerBuffer.toStrings() = (0 until capacity()).map { getStringASCII() }
 
-fun Collection<String>.toPointerBuffer() =
-	MemoryUtil.memAllocPointer(size).apply {
+fun Collection<String>.toPointerBuffer(mem: MemoryStack) =
+	mem.mallocPointer(size).apply {
 		for (str in this@toPointerBuffer) {
 			put(MemoryUtil.memASCII(str))
 		}
@@ -32,6 +32,38 @@ fun IntBuffer.toList(size: Int) = (0 until size).map { get(it) }
 fun LongBuffer.toList(size: Int) = (0 until size).map { get(it) }
 fun FloatBuffer.toList(size: Int) = (0 until size).map { get(it) }
 fun DoubleBuffer.toList(size: Int) = (0 until size).map { get(it) }
+
+fun List<Int>.toBuffer(mem: MemoryStack) =
+	mem.mallocInt(size).apply {
+		for (i in this@toBuffer) {
+			put(i)
+		}
+		flip()
+	}
+
+fun List<Long>.toBuffer(mem: MemoryStack) =
+	mem.mallocLong(size).apply {
+		for (i in this@toBuffer) {
+			put(i)
+		}
+		flip()
+	}
+
+fun List<Float>.toBuffer(mem: MemoryStack) =
+	mem.mallocFloat(size).apply {
+		for (i in this@toBuffer) {
+			put(i)
+		}
+		flip()
+	}
+
+fun List<Double>.toBuffer(mem: MemoryStack) =
+	mem.mallocDouble(size).apply {
+		for (i in this@toBuffer) {
+			put(i)
+		}
+		flip()
+	}
 
 /** builds a UUID from the first 16 bytes in the buffer */
 fun ByteBuffer.toUUID(): UUID {
@@ -89,10 +121,15 @@ inline class IntFlags(val value: Int) {
 		val value: Int
 	}
 
-	operator fun get(bit: Bit) = value and bit.value != 0
+	fun has(bit: Bit) = (value and bit.value) != 0
+	fun hasAny(other: IntFlags) = (value and other.value) != 0
+	fun hasAll(other: IntFlags) = (value and other.value) == other.value
 
 	fun set(bit: Bit) = IntFlags(value or bit.value)
+	fun setAll(other: IntFlags) = IntFlags(value or other.value)
+
 	fun unset(bit: Bit) = IntFlags(value and bit.value.inv())
+	fun unsetAll(other: IntFlags) = IntFlags(value and other.value.inv())
 
 	fun set(bit: Bit, value: Boolean) = if (value) set(bit) else unset(bit)
 }

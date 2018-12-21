@@ -5,6 +5,7 @@
 
 package cuchaz.kludge
 
+import cuchaz.kludge.tools.IntFlags
 import cuchaz.kludge.vulkan.*
 import cuchaz.kludge.window.*
 
@@ -17,7 +18,7 @@ fun main(args: Array<String>) {
 
 	// check for vulkan support
 	if (!Windows.isVulkanSupported) {
-		throw Error("No Vulkan support")
+		throw Error("No Vulkan support from GLFW")
 	}
 
 	Vulkan(
@@ -27,13 +28,25 @@ fun main(args: Array<String>) {
 
 		vulkan.debugMessager { severityFlags, typeFlags, msg ->
 			println("VULKAN: $msg")
-		}.use {
+		}.use { debug ->
 
 			vulkan.debugInfo("Debug message!")
 
-			// TEMP: list devices
+			// print device info
 			for (device in vulkan.physicalDevices) {
 				println("device: $device")
+				device.queueFamilies.forEach { println("\t$it") }
+			}
+
+			// connect to a device
+			vulkan.physicalDevices[0].let { pd ->
+				pd.device(
+					queuePriorities = mapOf(
+						pd.findQueueFamily(IntFlags.of(PhysicalDevice.QueueFamily.Flags.Graphics)) to listOf(1.0f)
+					)
+				)
+			}.use { device ->
+				println("have a device!: $device")
 			}
 
 			/* TEMP
