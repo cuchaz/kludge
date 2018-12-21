@@ -134,6 +134,8 @@ inline class IntFlags(val value: Int) {
 	fun set(bit: Bit, value: Boolean) = if (value) set(bit) else unset(bit)
 }
 
+// NOTE: making this function a member of IntFlags causes a compiler crash
+// but an extension function is ok
 fun <T:IntFlags.Bit> IntFlags.toString(bits: Array<T>): String =
 	bits
 		.filter { has(it) }

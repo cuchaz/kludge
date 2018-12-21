@@ -44,22 +44,6 @@ fun main(args: Array<String>) {
 				device.queueFamilies.forEach { println("\t$it") }
 			}
 
-			// connect to a device
-			val physicalDevice = vulkan.physicalDevices[0]
-			val queueFamily = physicalDevice.findQueueFamily(IntFlags.of(PhysicalDevice.QueueFamily.Flags.Graphics))
-			physicalDevice.device(
-				queuePriorities = mapOf(
-					queueFamily to listOf(1.0f)
-				)
-			).use { device ->
-
-				println("have a device!: $device")
-
-				val queue = device.queues[queueFamily]!![0]
-				println("have a queue: $queue")
-			}
-
-			/* TEMP
 			Window(
 				size = Size(640, 480),
 				title = "Kludge Demo"
@@ -68,15 +52,36 @@ fun main(args: Array<String>) {
 				win.centerOn(Monitors.primary)
 				win.visible = true
 
-				// main loop
-				while (!win.shouldClose()) {
+				// make a surface
+				vulkan.surface(win).use { surface ->
 
-					// TODO: render something
+					// connect to a device
+					val physicalDevice = vulkan.physicalDevices[0]
+					val graphicsFamily = physicalDevice.findQueueFamily(IntFlags.of(PhysicalDevice.QueueFamily.Flags.Graphics))
+					val surfaceFamily = physicalDevice.findQueueFamily(surface)
+					physicalDevice.device(
+						queuePriorities = mapOf(
+							graphicsFamily to listOf(1.0f),
+							surfaceFamily to listOf(1.0f)
+						)
+					).use { device ->
 
-					Windows.pollEvents()
+						println("have a device!: $device")
+
+						val graphicsQueue = device.queues[graphicsFamily]!![0]
+						val surfaceQueue = device.queues[surfaceFamily]!![0]
+						println("have queues:\n\t$graphicsQueue\n\t$surfaceQueue")
+					}
+
+					// main loop
+					while (!win.shouldClose()) {
+
+						// TODO: render something
+
+						Windows.pollEvents()
+					}
 				}
 			}
-			*/
 		}
 	}
 

@@ -5,7 +5,7 @@
 
 package cuchaz.kludge.vulkan
 
-import org.lwjgl.vulkan.VK10
+import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.VkExtent3D
 
 
@@ -18,7 +18,7 @@ class VulkanException(val err: Int, val msg: String? = null) : RuntimeException(
 )
 
 fun Int.orFail(handler: (Int) -> Nothing) {
-	if (this != VK10.VK_SUCCESS) {
+	if (this != VK_SUCCESS) {
 		handler(this)
 	}
 }
@@ -27,9 +27,9 @@ fun Int.orFail(msg: String? = null) = orFail { err -> throw VulkanException(err,
 
 fun Boolean.toVulkan() =
 	if (this) {
-		VK10.VK_TRUE
+		VK_TRUE
 	} else {
-		VK10.VK_FALSE
+		VK_FALSE
 	}
 
 
@@ -40,12 +40,12 @@ data class Version(
 ) {
 
 	internal constructor (value: Int) : this(
-		VK10.VK_VERSION_MAJOR(value),
-		VK10.VK_VERSION_MINOR(value),
-		VK10.VK_VERSION_PATCH(value)
+		VK_VERSION_MAJOR(value),
+		VK_VERSION_MINOR(value),
+		VK_VERSION_PATCH(value)
 	)
 
-	internal val value = VK10.VK_MAKE_VERSION(major, minor, patch)
+	internal val value = VK_MAKE_VERSION(major, minor, patch)
 
 	override fun toString() = "$major.$minor.$patch"
 }

@@ -1,8 +1,15 @@
+/*
+ * Copyright (c) 2019, Cuchaz Interactive, LLC. All rights reserved.
+ * License terms are at license.txt in the project root
+ */
+
 package cuchaz.kludge.vulkan
 
 import cuchaz.kludge.tools.*
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
+import org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR
+import org.lwjgl.vulkan.VK10.*
 import java.util.*
 
 
@@ -12,7 +19,7 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 
 	enum class Type {
 
-		// NOTE: must match order of eg VK10.VK_PHYSICAL_DEVICE_TYPE_OTHER
+		// NOTE: must match order of eg VK_PHYSICAL_DEVICE_TYPE_OTHER
 		Other,
 		IntegratedGpu,
 		DiscreteGpu,
@@ -148,7 +155,7 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 		memstack { mem ->
 
 			val props = VkPhysicalDeviceProperties.mallocStack(mem)
-			VK10.vkGetPhysicalDeviceProperties(vkDevice, props)
+			vkGetPhysicalDeviceProperties(vkDevice, props)
 
 			val limits = props.limits()
 
@@ -451,12 +458,13 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 	val features: Features by lazy {
 		memstack { mem ->
 			val features = VkPhysicalDeviceFeatures.mallocStack(mem)
-			VK10.vkGetPhysicalDeviceFeatures(vkDevice, features)
+			vkGetPhysicalDeviceFeatures(vkDevice, features)
 			Features(features)
 		}
 	}
 
 	data class QueueFamily internal constructor(
+		val physicalDevice: PhysicalDevice,
 		val index: Int,
 		val queueFlags: IntFlags,
 		val queueCount: Int,
@@ -465,28 +473,37 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 	) {
 
 		enum class Flags(override val value: Int) : IntFlags.Bit {
-			Graphics(VK10.VK_QUEUE_GRAPHICS_BIT),
-			Compute(VK10.VK_QUEUE_COMPUTE_BIT),
-			Transfer(VK10.VK_QUEUE_TRANSFER_BIT),
-			Binding(VK10.VK_QUEUE_SPARSE_BINDING_BIT)
+			Graphics(VK_QUEUE_GRAPHICS_BIT),
+			Compute(VK_QUEUE_COMPUTE_BIT),
+			Transfer(VK_QUEUE_TRANSFER_BIT),
+			Binding(VK_QUEUE_SPARSE_BINDING_BIT)
 		}
 
 		override fun toString() = "queue family $index (${queueFlags.toString(Flags.values())})"
+
+		fun supportsSurface(surface: Surface): Boolean {
+			memstack { mem ->
+				val pSupported = mem.mallocInt(1)
+				vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice.vkDevice, index, surface.id, pSupported)
+				return pSupported.get(0) != 0
+			}
+		}
 	}
 
 	val queueFamilies: List<QueueFamily> by lazy {
 		memstack { mem ->
 
 			val pCount = mem.mallocInt(1)
-			VK10.vkGetPhysicalDeviceQueueFamilyProperties(vkDevice, pCount, null)
+			vkGetPhysicalDeviceQueueFamilyProperties(vkDevice, pCount, null)
 			val count = pCount.get(0)
 			val pQueueFamilies = VkQueueFamilyProperties.mallocStack(count, mem)
-			VK10.vkGetPhysicalDeviceQueueFamilyProperties(vkDevice, pCount, pQueueFamilies)
+			vkGetPhysicalDeviceQueueFamilyProperties(vkDevice, pCount, pQueueFamilies)
 
 			(0 until count)
 				.map {
 					val qf = pQueueFamilies.get(it)
 					QueueFamily(
+						this,
 						it,
 						IntFlags(qf.queueFlags()),
 						qf.queueCount(),
@@ -502,6 +519,11 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 			.find { it.queueFlags.hasAll(flags) }
 			?: throw NoSuchElementException("can't find queue family with desired flags")
 
+	fun findQueueFamily(surface: Surface) =
+		queueFamilies
+			.find {it.supportsSurface(surface) }
+			?: throw NoSuchElementException("can't find queue family that supports surface")
+
 	override fun toString() = "${properties.name}: ${properties.uuid}"
 }
 
@@ -509,10 +531,10 @@ val Vulkan.physicalDevices get(): List<PhysicalDevice> {
 	memstack { mem ->
 
 		val pCount = mem.mallocInt(1)
-		VK10.vkEnumeratePhysicalDevices(instance, pCount, null)
+		vkEnumeratePhysicalDevices(instance, pCount, null)
 		val count = pCount.get(0)
 		val pDevices = mem.mallocPointer(count)
-		VK10.vkEnumeratePhysicalDevices(instance, pCount, pDevices)
+		vkEnumeratePhysicalDevices(instance, pCount, pDevices)
 
 		return (0 until count)
 			.map { PhysicalDevice(instance, pDevices.get()) }
@@ -533,7 +555,7 @@ class Device internal constructor(
 	}
 
 	override fun close() {
-		VK10.vkDestroyDevice(vkDevice, null)
+		vkDestroyDevice(vkDevice, null)
 	}
 
 	override fun toString() = "device for ${physicalDevice}"
@@ -552,7 +574,7 @@ fun PhysicalDevice.device(
 		val queueInfos = VkDeviceQueueCreateInfo.callocStack(queuePriorities.size, mem)
 		for ((queueFamily, priorities) in queuePriorities) {
 			queueInfos.get()
-				.sType(VK10.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
+				.sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
 				.queueFamilyIndex(queueFamily.index)
 				.pQueuePriorities(priorities.toBuffer(mem))
 		}
@@ -560,7 +582,7 @@ fun PhysicalDevice.device(
 
 		// set device creation info
 		val deviceInfo = VkDeviceCreateInfo.callocStack(mem)
-			.sType(VK10.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
+			.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
 			.pQueueCreateInfos(queueInfos)
 			.pEnabledFeatures(features.toVulkan(mem))
 			.ppEnabledExtensionNames(extensionNames.toPointerBuffer(mem))
@@ -568,7 +590,7 @@ fun PhysicalDevice.device(
 
 		// make the device
 		val pDevice = mem.mallocPointer(1)
-		VK10.vkCreateDevice(vkDevice, deviceInfo, null, pDevice)
+		vkCreateDevice(vkDevice, deviceInfo, null, pDevice)
 			.orFail("failed to create device")
 
 		return Device(
@@ -588,7 +610,7 @@ class Queue internal constructor (
 	internal val vkQueue: VkQueue = run {
 		memstack { mem ->
 			val pQueue = mem.mallocPointer(1)
-			VK10.vkGetDeviceQueue(device.vkDevice, family.index, index, pQueue)
+			vkGetDeviceQueue(device.vkDevice, family.index, index, pQueue)
 			return@run VkQueue(pQueue.get(0), device.vkDevice)
 		}
 	}

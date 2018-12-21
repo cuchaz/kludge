@@ -17,12 +17,13 @@ class Window(
 	size: Size = Size(300, 300)
 ): AutoCloseable {
 
-	private val id: Long
+	internal val id: Long
 
 	init {
 
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE)
 		glfwWindowHint(GLFW_RESIZABLE, resizable.toGLFW())
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API)
 
 		id = glfwCreateWindow(size.width, size.height, title, NULL, NULL)
 		if (id == NULL) {
