@@ -26,7 +26,13 @@ fun main(args: Array<String>) {
 		layerNames = setOf(Vulkan.StandardValidationLayer)
 	).use { vulkan ->
 
-		vulkan.debugMessager { severityFlags, typeFlags, msg ->
+		vulkan.debugMessager(
+			desiredSeverities = IntFlags.of(
+				DebugMessager.Severity.Error,
+				DebugMessager.Severity.Warning,
+				DebugMessager.Severity.Verbose
+			)
+		) { severityFlags, typeFlags, msg ->
 			println("VULKAN: $msg")
 		}.use { debug ->
 
@@ -39,14 +45,18 @@ fun main(args: Array<String>) {
 			}
 
 			// connect to a device
-			vulkan.physicalDevices[0].let { pd ->
-				pd.device(
-					queuePriorities = mapOf(
-						pd.findQueueFamily(IntFlags.of(PhysicalDevice.QueueFamily.Flags.Graphics)) to listOf(1.0f)
-					)
+			val physicalDevice = vulkan.physicalDevices[0]
+			val queueFamily = physicalDevice.findQueueFamily(IntFlags.of(PhysicalDevice.QueueFamily.Flags.Graphics))
+			physicalDevice.device(
+				queuePriorities = mapOf(
+					queueFamily to listOf(1.0f)
 				)
-			}.use { device ->
+			).use { device ->
+
 				println("have a device!: $device")
+
+				val queue = device.queues[queueFamily]!![0]
+				println("have a queue: $queue")
 			}
 
 			/* TEMP

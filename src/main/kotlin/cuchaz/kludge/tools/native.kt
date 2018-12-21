@@ -133,3 +133,8 @@ inline class IntFlags(val value: Int) {
 
 	fun set(bit: Bit, value: Boolean) = if (value) set(bit) else unset(bit)
 }
+
+fun <T:IntFlags.Bit> IntFlags.toString(bits: Array<T>): String =
+	bits
+		.filter { has(it) }
+		.joinToString()

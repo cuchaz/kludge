@@ -470,6 +470,8 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 			Transfer(VK10.VK_QUEUE_TRANSFER_BIT),
 			Binding(VK10.VK_QUEUE_SPARSE_BINDING_BIT)
 		}
+
+		override fun toString() = "queue family $index (${queueFlags.toString(Flags.values())})"
 	}
 
 	val queueFamilies: List<QueueFamily> by lazy {
@@ -518,11 +520,23 @@ val Vulkan.physicalDevices get(): List<PhysicalDevice> {
 }
 
 
-class Device(internal val vkDevice: VkDevice) : AutoCloseable {
+class Device internal constructor(
+	val physicalDevice: PhysicalDevice,
+	internal val vkDevice: VkDevice,
+	queuePriorities: Map<PhysicalDevice.QueueFamily,List<Float>>
+) : AutoCloseable {
+
+	val queues: Map<PhysicalDevice.QueueFamily,List<Queue>> by lazy {
+		queuePriorities.mapValues { (family, priorities) ->
+			priorities.mapIndexed { i, priority -> Queue(this, family, i) }
+		}
+	}
 
 	override fun close() {
 		VK10.vkDestroyDevice(vkDevice, null)
 	}
+
+	override fun toString() = "device for ${physicalDevice}"
 }
 
 fun PhysicalDevice.device(
@@ -557,6 +571,29 @@ fun PhysicalDevice.device(
 		VK10.vkCreateDevice(vkDevice, deviceInfo, null, pDevice)
 			.orFail("failed to create device")
 
-		return Device(VkDevice(pDevice.get(0), vkDevice, deviceInfo, apiVersion.value))
+		return Device(
+			this,
+			VkDevice(pDevice.get(0), vkDevice, deviceInfo, apiVersion.value),
+			queuePriorities
+		)
 	}
+}
+
+class Queue internal constructor (
+	val device: Device,
+	val family: PhysicalDevice.QueueFamily,
+	val index: Int
+) {
+
+	internal val vkQueue: VkQueue = run {
+		memstack { mem ->
+			val pQueue = mem.mallocPointer(1)
+			VK10.vkGetDeviceQueue(device.vkDevice, family.index, index, pQueue)
+			return@run VkQueue(pQueue.get(0), device.vkDevice)
+		}
+	}
+
+	// no cleanup needed
+
+	override fun toString() = "queue ${family.index}.$index on $device"
 }
