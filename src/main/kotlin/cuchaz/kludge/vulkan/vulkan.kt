@@ -6,6 +6,7 @@
 package cuchaz.kludge.vulkan
 
 import org.lwjgl.vulkan.VK10.*
+import org.lwjgl.vulkan.VkExtent2D
 import org.lwjgl.vulkan.VkExtent3D
 
 
@@ -50,10 +51,15 @@ data class Version(
 	override fun toString() = "$major.$minor.$patch"
 }
 
+data class Extent2D(
+	val width: Int,
+	val height: Int
+)
+fun VkExtent2D.toExtent2D() = Extent2D(width(), height())
+
 data class Extent3D(
 	val width: Int,
 	val height: Int,
 	val depth: Int
 )
-
 fun VkExtent3D.toExtent3D() = Extent3D(width(), height(), depth())

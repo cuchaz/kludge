@@ -8,7 +8,8 @@ package cuchaz.kludge.vulkan
 import cuchaz.kludge.tools.*
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
-import org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfaceSupportKHR
+import org.lwjgl.vulkan.KHRSurface.*
+import org.lwjgl.vulkan.KHRSwapchain.*
 import org.lwjgl.vulkan.VK10.*
 import java.util.*
 
@@ -29,6 +30,10 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 		companion object {
 			operator fun get(id: Int) = values()[id]
 		}
+	}
+
+	companion object {
+		const val SwapchainExtension = VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	}
 
 	data class Limits internal constructor(
@@ -525,6 +530,27 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 			?: throw NoSuchElementException("can't find queue family that supports surface")
 
 	override fun toString() = "${properties.name}: ${properties.uuid}"
+
+	val extensionNames: Set<String> by lazy {
+		memstack { mem ->
+
+			val pCount = mem.mallocInt(1)
+			vkEnumerateDeviceExtensionProperties(vkDevice, null as String?, pCount, null)
+			val count = pCount.get(0)
+			val pProperties = VkExtensionProperties.mallocStack(count, mem)
+			vkEnumerateDeviceExtensionProperties(vkDevice, null as String?, pCount, pProperties)
+
+			(0 until count)
+				.map { pProperties.get().extensionNameString() }
+				.toSet()
+		}
+	}
+
+	fun supportsExtension(name: String): Boolean {
+		memstack { mem ->
+			return false
+		}
+	}
 }
 
 val Vulkan.physicalDevices get(): List<PhysicalDevice> {
@@ -564,8 +590,8 @@ class Device internal constructor(
 fun PhysicalDevice.device(
 	queuePriorities: Map<PhysicalDevice.QueueFamily,List<Float>>,
 	features: PhysicalDevice.Features = PhysicalDevice.Features(),
-	extensionNames: List<String> = emptyList(),
-	layerNames: List<String> = emptyList(),
+	extensionNames: Set<String> = emptySet(),
+	layerNames: Set<String> = emptySet(),
 	apiVersion: Version = properties.apiVersion
 ): Device {
 	memstack { mem ->
@@ -619,3 +645,4 @@ class Queue internal constructor (
 
 	override fun toString() = "queue ${family.index}.$index on $device"
 }
+

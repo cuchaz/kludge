@@ -41,6 +41,7 @@ fun main(args: Array<String>) {
 			// print device info
 			for (device in vulkan.physicalDevices) {
 				println("device: $device")
+				println("extensions: ${device.extensionNames}")
 				device.queueFamilies.forEach { println("\t$it") }
 			}
 
@@ -63,7 +64,8 @@ fun main(args: Array<String>) {
 						queuePriorities = mapOf(
 							graphicsFamily to listOf(1.0f),
 							surfaceFamily to listOf(1.0f)
-						)
+						),
+						extensionNames = setOf(PhysicalDevice.SwapchainExtension)
 					).use { device ->
 
 						println("have a device!: $device")
@@ -71,6 +73,13 @@ fun main(args: Array<String>) {
 						val graphicsQueue = device.queues[graphicsFamily]!![0]
 						val surfaceQueue = device.queues[surfaceFamily]!![0]
 						println("have queues:\n\t$graphicsQueue\n\t$surfaceQueue")
+					}
+
+					// look for swapchain support
+					physicalDevice.swapchainSupport(surface).apply {
+						println(capabilities)
+						println("surface format: $surfaceFormats")
+						println("present mode: $presentModes")
 					}
 
 					// main loop

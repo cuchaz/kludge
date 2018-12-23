@@ -10,6 +10,8 @@ import cuchaz.kludge.tools.memstack
 import cuchaz.kludge.tools.toPointerBuffer
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
+import org.lwjgl.vulkan.EXTDebugUtils.*
+import org.lwjgl.vulkan.KHRSwapchain.*
 import org.lwjgl.vulkan.VK10.*
 
 
@@ -63,7 +65,7 @@ class Vulkan(
 			}
 		}
 
-		const val DebugExtension = EXTDebugUtils.VK_EXT_DEBUG_UTILS_EXTENSION_NAME
+		const val DebugExtension = VK_EXT_DEBUG_UTILS_EXTENSION_NAME
 
 		val supportedLayers: Set<String> by lazy {
 			memstack { mem ->
