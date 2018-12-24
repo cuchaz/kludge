@@ -5,8 +5,7 @@ import cuchaz.kludge.tools.memstack
 import cuchaz.kludge.tools.toBuffer
 import org.lwjgl.vulkan.KHRSurface.*
 import org.lwjgl.vulkan.*
-import org.lwjgl.vulkan.KHRSwapchain.vkCreateSwapchainKHR
-import org.lwjgl.vulkan.KHRSwapchain.vkDestroySwapchainKHR
+import org.lwjgl.vulkan.KHRSwapchain.*
 import org.lwjgl.vulkan.VK10.*
 
 
@@ -354,8 +353,23 @@ enum class ColorSpace(val value: Int) {
 
 class Swapchain internal constructor(
 	val device: Device,
-	internal val id: Long
+	internal val id: Long,
+	val surfaceFormat: SwapchainSupport.SurfaceFormat,
+	val extent: Extent2D
 ) : AutoCloseable {
+
+	// NOTE: these images do not need explicit cleanup
+	val images: List<Image> by lazy {
+		memstack { mem ->
+			val pCount = mem.mallocInt(1)
+			vkGetSwapchainImagesKHR(device.vkDevice, id, pCount, null)
+			val count = pCount.get(0)
+			val pImages = mem.mallocLong(count)
+			vkGetSwapchainImagesKHR(device.vkDevice, id, pCount, pImages)
+			(0 until count)
+				.map { Image(device, pImages.get()) }
+		}
+	}
 
 	override fun close() {
 		vkDestroySwapchainKHR(device.vkDevice, id, null)
@@ -403,7 +417,7 @@ fun SwapchainSupport.swapchain(
 		val pSwapchain = mem.mallocLong(1)
 		vkCreateSwapchainKHR(device.vkDevice, info, null, pSwapchain)
 			.orFail("failed to create swapchain")
-		return Swapchain(device, pSwapchain.get(0))
+		return Swapchain(device, pSwapchain.get(0), surfaceFormat, extent)
 	}
 }
 
@@ -435,4 +449,16 @@ enum class CompositeAlpha(override val value: Int) : IntFlags.Bit {
 	PreMultiplied(VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR),
 	PostMultiplied(VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR),
 	Inherit(VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR);
+}
+
+
+// TODO: move this somewhere else?
+class Image internal constructor(
+	val device: Device,
+	internal val id: Long
+) : AutoCloseable {
+
+	override fun close() {
+		vkDestroyImage(device.vkDevice, id, null)
+	}
 }

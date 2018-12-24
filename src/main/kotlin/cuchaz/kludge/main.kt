@@ -95,6 +95,9 @@ fun main(args: Array<String>) {
 
 							// TODO
 							println("swapchain!")
+							for (image in swapchain.images) {
+								println("\timage: $image")
+							}
 						}
 					}
 
