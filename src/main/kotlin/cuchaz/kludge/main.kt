@@ -97,6 +97,9 @@ fun main(args: Array<String>) {
 							println("swapchain!")
 							for (image in swapchain.images) {
 								println("\timage: $image")
+								image.view(Image.ViewType.TwoD, swapchain.surfaceFormat.format).use { view ->
+									println("\t\tview: $view")
+								}
 							}
 						}
 					}

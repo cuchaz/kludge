@@ -366,6 +366,7 @@ class Swapchain internal constructor(
 			val count = pCount.get(0)
 			val pImages = mem.mallocLong(count)
 			vkGetSwapchainImagesKHR(device.vkDevice, id, pCount, pImages)
+				.orFail("failed to get swapchain images")
 			(0 until count)
 				.map { Image(device, pImages.get()) }
 		}
@@ -449,16 +450,4 @@ enum class CompositeAlpha(override val value: Int) : IntFlags.Bit {
 	PreMultiplied(VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR),
 	PostMultiplied(VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR),
 	Inherit(VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR);
-}
-
-
-// TODO: move this somewhere else?
-class Image internal constructor(
-	val device: Device,
-	internal val id: Long
-) : AutoCloseable {
-
-	override fun close() {
-		vkDestroyImage(device.vkDevice, id, null)
-	}
 }
