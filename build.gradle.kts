@@ -4,8 +4,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 
-    java
-    kotlin("jvm") version "1.3.10"
+	java
+	kotlin("jvm") version "1.3.10"
 
 	// https://github.com/Minecrell/licenser
 	id("net.minecrell.licenser") version "0.4.1"
@@ -15,12 +15,12 @@ group = "cuchaz"
 version = "0.1"
 
 repositories {
-    jcenter()
+	jcenter()
 }
 
 dependencies {
 
-    compile(kotlin("stdlib-jdk8"))
+	compile(kotlin("stdlib-jdk8"))
 
 	fun lwjgl(module: String? = null) {
 		val name = "lwjgl" +
@@ -51,7 +51,7 @@ val test by tasks.getting(Test::class) {
 }
 
 configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
+	sourceCompatibility = JavaVersion.VERSION_1_8
 }
 
 tasks.withType<KotlinCompile> {
