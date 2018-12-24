@@ -471,7 +471,7 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 	data class QueueFamily internal constructor(
 		val physicalDevice: PhysicalDevice,
 		val index: Int,
-		val queueFlags: IntFlags,
+		val queueFlags: IntFlags<Flags>,
 		val queueCount: Int,
 		val timestampValidBits: Int,
 		val minImageTransferGranularity: Extent3D
@@ -519,7 +519,7 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 		}
 	}
 
-	fun findQueueFamily(flags: IntFlags) =
+	fun findQueueFamily(flags: IntFlags<QueueFamily.Flags>) =
 		queueFamilies
 			.find { it.queueFlags.hasAll(flags) }
 			?: throw NoSuchElementException("can't find queue family with desired flags")

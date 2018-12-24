@@ -1,8 +1,13 @@
 package cuchaz.kludge.vulkan
 
+import cuchaz.kludge.tools.IntFlags
 import cuchaz.kludge.tools.memstack
+import cuchaz.kludge.tools.toBuffer
 import org.lwjgl.vulkan.KHRSurface.*
 import org.lwjgl.vulkan.*
+import org.lwjgl.vulkan.KHRSwapchain.vkCreateSwapchainKHR
+import org.lwjgl.vulkan.KHRSwapchain.vkDestroySwapchainKHR
+import org.lwjgl.vulkan.VK10.*
 
 
 fun PhysicalDevice.swapchainSupport(surface: Surface) =
@@ -21,7 +26,7 @@ class SwapchainSupport internal constructor(
 		val maxImageExtent: Extent2D,
 		val maxImageArrayLayers: Int,
 		val supportedTransforms: Int,
-		val currentTransform: Int,
+		val currentTransform: IntFlags<Transform>,
 		val supportedCompositeAlpha: Int,
 		val supportedUsageFlags: Int
 	) {
@@ -33,7 +38,7 @@ class SwapchainSupport internal constructor(
 			caps.maxImageExtent().toExtent2D(),
 			caps.maxImageArrayLayers(),
 			caps.supportedTransforms(),
-			caps.currentTransform(),
+			IntFlags(caps.currentTransform()),
 			caps.supportedCompositeAlpha(),
 			caps.supportedUsageFlags()
 		)
@@ -69,6 +74,20 @@ class SwapchainSupport internal constructor(
 		}
 	}
 
+	/**
+	 * Attempts to find a surface format with the desired properties.
+	 * If the surface has no preference, a surface format with the desired properties is created.
+	 * Otherwise, the first surface format supported by the surface is used.
+	 */
+	fun pickSurfaceFormat(format: Format, colorSpace: ColorSpace) =
+		if (surfaceFormats.size == 1 && surfaceFormats.get(0).format == Format.UNDEFINED) {
+			SurfaceFormat(format, colorSpace)
+		} else {
+			surfaceFormats
+				.find { it.format == Format.B8G8R8A8_UNORM && it.colorSpace == ColorSpace.SRGB_NONLINEAR }
+				?: surfaceFormats.get(0)
+		}
+
 	enum class PresentMode {
 		Immediate,
 		Mailbox,
@@ -86,6 +105,35 @@ class SwapchainSupport internal constructor(
 			(0 until count)
 				.map { PresentMode.values()[pModes.get()] }
 		}
+	}
+
+	/**
+	 * Picks the first available present mode from the order given.
+	 * If no given modes are available, the first available mode is returned.
+	 */
+	fun pickPresentMode(vararg modes: PresentMode): PresentMode {
+		for (mode in modes) {
+			if (presentModes.contains(mode)) {
+				return mode
+			}
+		}
+		return presentModes.get(0)
+	}
+
+	/**
+	 * Returns the current window extents, unless the window manager doesn't report useful window extents
+	 * In that case, returns the minimum window extents instead
+	 */
+	fun pickExtent(): Extent2D {
+
+		// some window managers send a bogus value to indicate we should explicitly pick an extent
+		// NOTE: uint32_t max would be interpreted as a signed integer with value -1 in the JVM
+		if (capabilities.currentExtent.width < 0) {
+			return capabilities.minImageExtent
+		}
+
+		// otherwise, use the current extent
+		return capabilities.currentExtent
 	}
 }
 
@@ -301,4 +349,90 @@ enum class ColorSpace(val value: Int) {
 				.find { it.value == value }
 				?: throw NoSuchElementException("unknown color space: $value")
 	}
+}
+
+
+class Swapchain internal constructor(
+	val device: Device,
+	internal val id: Long
+) : AutoCloseable {
+
+	override fun close() {
+		vkDestroySwapchainKHR(device.vkDevice, id, null)
+	}
+}
+
+fun SwapchainSupport.swapchain(
+	device: Device,
+	imageCount: Int = capabilities.minImageCount,
+	surfaceFormat: SwapchainSupport.SurfaceFormat,
+	presentMode: SwapchainSupport.PresentMode,
+	extent: Extent2D = pickExtent(),
+	arrayLayers: Int = 1,
+	usage: IntFlags<ImageUsage> = IntFlags.of(ImageUsage.ColorAttachment),
+	concurrentQueues: Set<PhysicalDevice.QueueFamily> = emptySet(),
+	transform: IntFlags<Transform> = capabilities.currentTransform,
+	compositeAlpha: IntFlags<CompositeAlpha> = IntFlags.of(CompositeAlpha.Opaque),
+	clipped: Boolean = true,
+	oldSwapchain: Swapchain? = null
+): Swapchain {
+	memstack { mem ->
+
+		val info = VkSwapchainCreateInfoKHR.callocStack(mem)
+			.sType(KHRSwapchain.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
+			.surface(surface.id)
+			.minImageCount(imageCount)
+			.imageFormat(surfaceFormat.format.ordinal)
+			.imageColorSpace(surfaceFormat.colorSpace.value)
+			.imageExtent(extent.toVulkan(mem))
+			.imageArrayLayers(arrayLayers)
+			.imageUsage(usage.value)
+			.preTransform(transform.value)
+			.compositeAlpha(compositeAlpha.value)
+			.presentMode(presentMode.ordinal)
+			.clipped(clipped)
+			.oldSwapchain(oldSwapchain?.id ?: VK_NULL_HANDLE)
+
+		if (concurrentQueues.size > 1) {
+			info.imageSharingMode(VK_SHARING_MODE_CONCURRENT)
+			info.pQueueFamilyIndices(concurrentQueues.map { it.index }.toBuffer(mem))
+		} else {
+			info.imageSharingMode(VK_SHARING_MODE_EXCLUSIVE)
+		}
+
+		val pSwapchain = mem.mallocLong(1)
+		vkCreateSwapchainKHR(device.vkDevice, info, null, pSwapchain)
+			.orFail("failed to create swapchain")
+		return Swapchain(device, pSwapchain.get(0))
+	}
+}
+
+enum class ImageUsage(override val value: Int) : IntFlags.Bit {
+	TransferSrc(VK_IMAGE_USAGE_TRANSFER_SRC_BIT),
+	TransferDst(VK_IMAGE_USAGE_TRANSFER_DST_BIT),
+	Sampled(VK_IMAGE_USAGE_SAMPLED_BIT),
+	Storage(VK_IMAGE_USAGE_STORAGE_BIT),
+	ColorAttachment(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT),
+	DepthStencilAttachment(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT),
+	TransientAttachment(VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT),
+	InputAttachment(VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT);
+}
+
+enum class Transform(override val value: Int) : IntFlags.Bit {
+	Identity(VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR),
+	Rotate90(VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR),
+	Rotate180(VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR),
+	Rotate270(VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR),
+	HorizontalMirror(VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR),
+	HorizontalMirrorRotate90(VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR),
+	HorizontalMirrorRotate180(VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR),
+	HorizontalMirrorRotate270(VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR),
+	Inherit(VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR);
+}
+
+enum class CompositeAlpha(override val value: Int) : IntFlags.Bit {
+	Opaque(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR),
+	PreMultiplied(VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR),
+	PostMultiplied(VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR),
+	Inherit(VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR);
 }

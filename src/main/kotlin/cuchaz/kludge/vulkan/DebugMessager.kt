@@ -28,9 +28,9 @@ interface DebugMessager : AutoCloseable {
 }
 
 fun Vulkan.debugMessager(
-	desiredSeverities: IntFlags = IntFlags.of(*DebugMessager.Severity.values()),
-	desiredTypes: IntFlags = IntFlags.of(*DebugMessager.Type.values()),
-	block: (IntFlags, IntFlags, String) -> Unit
+	desiredSeverities: IntFlags<DebugMessager.Severity> = IntFlags.of(*DebugMessager.Severity.values()),
+	desiredTypes: IntFlags<DebugMessager.Type> = IntFlags.of(*DebugMessager.Type.values()),
+	block: (IntFlags<DebugMessager.Severity>, IntFlags<DebugMessager.Type>, String) -> Unit
 ) = object : DebugMessager {
 
 	private val debugId: Long = run {
@@ -68,7 +68,7 @@ fun Vulkan.debugMessager(
 	}
 }
 
-fun Vulkan.debugSend(severities: IntFlags, types: IntFlags, msg: String) {
+fun Vulkan.debugSend(severities: IntFlags<DebugMessager.Severity>, types: IntFlags<DebugMessager.Type>, msg: String) {
 	memstack { mem ->
 
 		// create a dummy object

@@ -96,20 +96,20 @@ fun ByteBuffer.toUUID(): UUID {
 }
 
 
-inline class IntFlags(val value: Int) {
+inline class IntFlags<T:IntFlags.Bit>(val value: Int) {
 
 	companion object {
 
-		fun <T:Bit> of(vararg bits: T): IntFlags {
-			var flags = IntFlags(0)
+		fun <T:Bit> of(vararg bits: T): IntFlags<T> {
+			var flags = IntFlags<T>(0)
 			for (bit in bits) {
 				flags = flags.set(bit)
 			}
 			return flags
 		}
 
-		fun <T:Bit> of(bits: Iterable<T>): IntFlags {
-			var flags = IntFlags(0)
+		fun <T:Bit> of(bits: Iterable<T>): IntFlags<T> {
+			var flags = IntFlags<T>(0)
 			for (bit in bits) {
 				flags = flags.set(bit)
 			}
@@ -122,21 +122,21 @@ inline class IntFlags(val value: Int) {
 	}
 
 	fun has(bit: Bit) = (value and bit.value) != 0
-	fun hasAny(other: IntFlags) = (value and other.value) != 0
-	fun hasAll(other: IntFlags) = (value and other.value) == other.value
+	fun hasAny(other: IntFlags<T>) = (value and other.value) != 0
+	fun hasAll(other: IntFlags<T>) = (value and other.value) == other.value
 
-	fun set(bit: Bit) = IntFlags(value or bit.value)
-	fun setAll(other: IntFlags) = IntFlags(value or other.value)
+	fun set(bit: Bit) = IntFlags<T>(value or bit.value)
+	fun setAll(other: IntFlags<T>) = IntFlags<T>(value or other.value)
 
-	fun unset(bit: Bit) = IntFlags(value and bit.value.inv())
-	fun unsetAll(other: IntFlags) = IntFlags(value and other.value.inv())
+	fun unset(bit: Bit) = IntFlags<T>(value and bit.value.inv())
+	fun unsetAll(other: IntFlags<T>) = IntFlags<T>(value and other.value.inv())
 
 	fun set(bit: Bit, value: Boolean) = if (value) set(bit) else unset(bit)
 }
 
 // NOTE: making this function a member of IntFlags causes a compiler crash
 // but an extension function is ok
-fun <T:IntFlags.Bit> IntFlags.toString(bits: Array<T>): String =
+fun <T:IntFlags.Bit> IntFlags<T>.toString(bits: Array<T>): String =
 	bits
 		.filter { has(it) }
 		.joinToString()

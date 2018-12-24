@@ -73,13 +73,29 @@ fun main(args: Array<String>) {
 						val graphicsQueue = device.queues[graphicsFamily]!![0]
 						val surfaceQueue = device.queues[surfaceFamily]!![0]
 						println("have queues:\n\t$graphicsQueue\n\t$surfaceQueue")
-					}
 
-					// look for swapchain support
-					physicalDevice.swapchainSupport(surface).apply {
-						println(capabilities)
-						println("surface format: $surfaceFormats")
-						println("present mode: $presentModes")
+						// look for swapchain support
+						physicalDevice.swapchainSupport(surface).run {
+
+							// TEMP
+							println(capabilities)
+							println("surface format: $surfaceFormats")
+							println("present mode: $presentModes")
+
+							return@run swapchain(
+								device,
+								surfaceFormat = pickSurfaceFormat(Format.B8G8R8A8_UNORM, ColorSpace.SRGB_NONLINEAR),
+								presentMode = pickPresentMode(
+									SwapchainSupport.PresentMode.Mailbox,
+									SwapchainSupport.PresentMode.FifoRelaxed,
+									SwapchainSupport.PresentMode.Fifo
+								)
+							)
+						}.use { swapchain ->
+
+							// TODO
+							println("swapchain!")
+						}
 					}
 
 					// main loop
