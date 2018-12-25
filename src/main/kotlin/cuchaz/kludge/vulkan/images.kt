@@ -54,10 +54,10 @@ class Image internal constructor(
 	)
 
 	enum class Aspect(override val value: Int) : IntFlags.Bit {
-		Color(0x1),
-		Depth(0x2),
-		Stencil(0x4),
-		Metadata(0x8)
+		Color(VK_IMAGE_ASPECT_COLOR_BIT),
+		Depth(VK_IMAGE_ASPECT_DEPTH_BIT),
+		Stencil(VK_IMAGE_ASPECT_STENCIL_BIT),
+		Metadata(VK_IMAGE_ASPECT_METADATA_BIT)
 	}
 
 	class SubresourceRange(

@@ -8,7 +8,12 @@ package cuchaz.kludge.tools
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
+import java.io.File
+import java.io.InputStream
 import java.nio.*
+import java.nio.channels.FileChannel
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 
 
@@ -18,12 +23,14 @@ inline fun <R> memstack(block: (MemoryStack) -> R): R {
 	}
 }
 
+fun String.toASCII(mem: MemoryStack): ByteBuffer = mem.ASCII(this)
+
 fun PointerBuffer.toStrings() = (0 until capacity()).map { getStringASCII() }
 
 fun Collection<String>.toPointerBuffer(mem: MemoryStack) =
 	mem.mallocPointer(size).apply {
 		for (str in this@toPointerBuffer) {
-			put(MemoryUtil.memASCII(str))
+			put(str.toASCII(mem))
 		}
 		flip()
 	}
@@ -140,3 +147,23 @@ fun <T:IntFlags.Bit> IntFlags<T>.toString(bits: Array<T>): String =
 	bits
 		.filter { has(it) }
 		.joinToString()
+
+
+fun Path.toByteBuffer(): ByteBuffer =
+	FileChannel.open(this).map(FileChannel.MapMode.READ_ONLY, 0, Files.size(this))
+
+fun File.toByteBuffer(): ByteBuffer = toPath().toByteBuffer()
+
+/* TODO: do we need something like this?
+fun InputStream.toByteBuffer(size: Int): ByteBuffer {
+	val out = ByteBuffer.allocateDirect(size)
+	var remaining = size
+	while (remaining > 0) {
+		out.put(buf)
+		val read = read(result, offset, remaining)
+		if (read < 0) break
+		remaining -= read
+		offset += read
+	}
+}
+*/
