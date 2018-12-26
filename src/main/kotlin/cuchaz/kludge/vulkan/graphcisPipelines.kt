@@ -272,11 +272,15 @@ internal fun VkAttachmentReference.set(ref: AttachmentReference) =
 		layout(ref.layout.ordinal)
 	}
 internal fun Collection<AttachmentReference>.toBuffer(mem: MemoryStack) =
-	VkAttachmentReference.callocStack(size, mem).apply {
-		for (ref in this@toBuffer) {
-			get().set(ref)
+	if (isEmpty()) {
+		null
+	} else {
+		VkAttachmentReference.callocStack(size, mem).apply {
+			for (ref in this@toBuffer) {
+				get().set(ref)
+			}
+			flip()
 		}
-		flip()
 	}
 
 data class Subpass(
@@ -294,8 +298,46 @@ data class Subpass(
 	}
 }
 
+enum class AccessFlags(override val value: Int) : IntFlags.Bit {
+	IndirectCommandRead(VK_ACCESS_INDIRECT_COMMAND_READ_BIT),
+	IndexRead(VK_ACCESS_INDEX_READ_BIT),
+	VertexAttributeRead(VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT),
+	UniformRead(VK_ACCESS_UNIFORM_READ_BIT),
+	InputAttachmentRead(VK_ACCESS_INPUT_ATTACHMENT_READ_BIT),
+	ShaderRead(VK_ACCESS_SHADER_READ_BIT),
+	ShaderWrite(VK_ACCESS_SHADER_WRITE_BIT),
+	ColorAttachmentRead(VK_ACCESS_COLOR_ATTACHMENT_READ_BIT),
+	ColorAttachmentWrite(VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT),
+	DepthStencilAttachmentRead(VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT),
+	DepthStencilAttachmentWrite(VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT),
+	TransferRead(VK_ACCESS_TRANSFER_READ_BIT),
+	TransferWrite(VK_ACCESS_TRANSFER_WRITE_BIT),
+	HostRead(VK_ACCESS_HOST_READ_BIT),
+	HostWrite(VK_ACCESS_HOST_WRITE_BIT),
+	MemoryRead(VK_ACCESS_MEMORY_READ_BIT),
+	MemoryWrite(VK_ACCESS_MEMORY_WRITE_BIT)
+}
 
-// TODO: sort defaults at end?
+enum class DependencyFlags(override val value: Int) : IntFlags.Bit {
+	ByRegion(VK_DEPENDENCY_BY_REGION_BIT)
+}
+
+data class SubpassDependency(
+	val srcSubpass: Int,
+	val dstSubpass: Int,
+	val srcStageMask: IntFlags<PipelineStage>,
+	val dstStageMask: IntFlags<PipelineStage>,
+	val srcAccessMask: IntFlags<AccessFlags>,
+	val dstAccessMask: IntFlags<AccessFlags>,
+	val dependencyFlags: IntFlags<DependencyFlags> = IntFlags(0)
+) {
+
+	companion object {
+		const val External = VK_SUBPASS_EXTERNAL
+	}
+}
+
+
 fun Device.graphicsPipeline(
 	stages: List<ShaderModule.Stage>,
 	vertexInput: VertexInput, // TODO: use this
@@ -306,7 +348,8 @@ fun Device.graphicsPipeline(
 	multisampleState: MultisampleState = MultisampleState(),
 	attachments: List<AttachmentDescription>, // TODO: find a way to cement the attachment order and indices/references
 	colorBlend: ColorBlendState,
-	subpasses: List<Subpass>
+	subpasses: List<Subpass>,
+	subpassDependencies: List<SubpassDependency>
 ): GraphicsPipeline {
 	memstack { mem ->
 
@@ -405,15 +448,29 @@ fun Device.graphicsPipeline(
 				.pipelineBindPoint(subpass.pipelineBindPoint.ordinal)
 				.pInputAttachments(subpass.inputAttachments.toBuffer(mem))
 				.pColorAttachments(subpass.colorAttachments.toBuffer(mem))
+				.colorAttachmentCount(subpass.colorAttachments.size)
 				.pResolveAttachments(subpass.resolveAttachments.toBuffer(mem))
 				.pDepthStencilAttachment(subpass.depthStencilAttachment?.toVulkan(mem))
 				.pPreserveAttachments(subpass.preserveAttachments.toBuffer(mem))
 		}
 		pSubpasses.flip()
+		val pSubpassDependencies = VkSubpassDependency.callocStack(subpassDependencies.size, mem)
+		for (subpassDependency in subpassDependencies) {
+			pSubpassDependencies.get()
+				.srcSubpass(subpassDependency.srcSubpass)
+				.dstSubpass(subpassDependency.dstSubpass)
+				.srcStageMask(subpassDependency.srcStageMask.value)
+				.dstStageMask(subpassDependency.dstStageMask.value)
+				.srcAccessMask(subpassDependency.srcAccessMask.value)
+				.dstAccessMask(subpassDependency.dstAccessMask.value)
+				.dependencyFlags(subpassDependency.dependencyFlags.value)
+		}
+		pSubpassDependencies.flip()
 		val pRenderPassInfo = VkRenderPassCreateInfo.callocStack(mem)
 			.sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO)
 			.pAttachments(pAttachments)
 			.pSubpasses(pSubpasses)
+			.pDependencies(pSubpassDependencies)
 		val pRenderPass = mem.mallocLong(1)
 		vkCreateRenderPass(vkDevice, pRenderPassInfo, null, pRenderPass)
 			.orFail("failed to create render pass")
@@ -454,9 +511,6 @@ fun Device.graphicsPipeline(
 		//pDepthStencilState(@Nullable @NativeType("VkPipelineDepthStencilStateCreateInfo const *") VkPipelineDepthStencilStateCreateInfo value) { npDepthStencilState(address(), value); return this; }
 
 		// TODO: do we need any of these?
-		//subpass(@NativeType("uint32_t") int value) { nsubpass(address(), value); return this; }
-		//basePipelineHandle(@NativeType("VkPipeline") long value) { nbasePipelineHandle(address(), value); return this; }
-		//basePipelineIndex(@NativeType("int32_t") int value) { nbasePipelineIndex(address(), value); return this; }
 		//pTessellationState(@Nullable @NativeType("VkPipelineTessellationStateCreateInfo const *") VkPipelineTessellationStateCreateInfo value) { npTessellationState(address(), value); return this; }
 
 		// finally! build the graphics pipeline

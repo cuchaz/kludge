@@ -7,11 +7,10 @@ package cuchaz.kludge.vulkan
 
 import cuchaz.kludge.Kludge
 import cuchaz.kludge.tools.memstack
-import cuchaz.kludge.tools.toPointerBuffer
+import cuchaz.kludge.tools.toStringPointerBuffer
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.EXTDebugUtils.*
-import org.lwjgl.vulkan.KHRSwapchain.*
 import org.lwjgl.vulkan.VK10.*
 
 
@@ -95,8 +94,8 @@ class Vulkan(
 			val infoCreate = VkInstanceCreateInfo.callocStack(mem)
 				.sType(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
 				.pApplicationInfo(infoApp)
-				.ppEnabledExtensionNames(extensionNames.toPointerBuffer(mem))
-				.ppEnabledLayerNames(layerNames.toPointerBuffer(mem))
+				.ppEnabledExtensionNames(extensionNames.toStringPointerBuffer(mem))
+				.ppEnabledLayerNames(layerNames.toStringPointerBuffer(mem))
 
 			val pInstance = mem.mallocPointer(1)
 			vkCreateInstance(infoCreate, null, pInstance)

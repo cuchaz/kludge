@@ -7,9 +7,7 @@ package cuchaz.kludge.tools
 
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
-import org.lwjgl.system.MemoryUtil
 import java.io.File
-import java.io.InputStream
 import java.nio.*
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -27,12 +25,16 @@ fun String.toASCII(mem: MemoryStack): ByteBuffer = mem.ASCII(this)
 
 fun PointerBuffer.toStrings() = (0 until capacity()).map { getStringASCII() }
 
-fun Collection<String>.toPointerBuffer(mem: MemoryStack) =
-	mem.mallocPointer(size).apply {
-		for (str in this@toPointerBuffer) {
-			put(str.toASCII(mem))
+fun Collection<String>.toStringPointerBuffer(mem: MemoryStack): PointerBuffer? =
+	if (isEmpty()) {
+		null
+	} else {
+		mem.mallocPointer(size).apply {
+			for (str in this@toStringPointerBuffer) {
+				put(str.toASCII(mem))
+			}
+			flip()
 		}
-		flip()
 	}
 
 fun IntBuffer.toList(size: Int) = (0 until size).map { get(it) }
@@ -40,37 +42,90 @@ fun LongBuffer.toList(size: Int) = (0 until size).map { get(it) }
 fun FloatBuffer.toList(size: Int) = (0 until size).map { get(it) }
 fun DoubleBuffer.toList(size: Int) = (0 until size).map { get(it) }
 
-fun List<Int>.toBuffer(mem: MemoryStack) =
-	mem.mallocInt(size).apply {
-		for (i in this@toBuffer) {
-			put(i)
-		}
+fun Int.toBuffer(mem: MemoryStack): IntBuffer =
+	mem.mallocInt(1).apply {
+		put(this@toBuffer)
 		flip()
+	}
+fun Collection<Int>.toBuffer(mem: MemoryStack): IntBuffer? =
+	if (isEmpty()) {
+		null
+	} else {
+		mem.mallocInt(size).apply {
+			for (i in this@toBuffer) {
+				put(i)
+			}
+			flip()
+		}
 	}
 
-fun List<Long>.toBuffer(mem: MemoryStack) =
-	mem.mallocLong(size).apply {
-		for (i in this@toBuffer) {
-			put(i)
-		}
+fun Long.toBuffer(mem: MemoryStack): LongBuffer =
+	mem.mallocLong(1).apply {
+		put(this@toBuffer)
 		flip()
+	}
+fun Long.toPointerBuffer(mem: MemoryStack): PointerBuffer =
+	mem.mallocPointer(1).apply {
+		put(this@toPointerBuffer)
+		flip()
+	}
+fun Collection<Long>.toBuffer(mem: MemoryStack): LongBuffer? =
+	if (isEmpty()) {
+		null
+	} else {
+		mem.mallocLong(size).apply {
+			for (i in this@toBuffer) {
+				put(i)
+			}
+			flip()
+		}
+	}
+fun Collection<Long>.toPointerBuffer(mem: MemoryStack): PointerBuffer? =
+	if (isEmpty()) {
+		null
+	} else {
+		mem.mallocPointer(size).apply {
+			for (i in this@toPointerBuffer) {
+				put(i)
+			}
+			flip()
+		}
 	}
 
-fun List<Float>.toBuffer(mem: MemoryStack) =
-	mem.mallocFloat(size).apply {
-		for (i in this@toBuffer) {
-			put(i)
-		}
+fun Float.toBuffer(mem: MemoryStack): FloatBuffer =
+	mem.mallocFloat(1).apply {
+		put(this@toBuffer)
 		flip()
+	}
+fun Collection<Float>.toBuffer(mem: MemoryStack): FloatBuffer? =
+	if (isEmpty()) {
+		null
+	} else {
+		mem.mallocFloat(size).apply {
+			for (i in this@toBuffer) {
+				put(i)
+			}
+			flip()
+		}
 	}
 
-fun List<Double>.toBuffer(mem: MemoryStack) =
-	mem.mallocDouble(size).apply {
-		for (i in this@toBuffer) {
-			put(i)
-		}
+fun Double.toBuffer(mem: MemoryStack): DoubleBuffer =
+	mem.mallocDouble(1).apply {
+		put(this@toBuffer)
 		flip()
 	}
+fun Collection<Double>.toBuffer(mem: MemoryStack): DoubleBuffer? =
+	if (isEmpty()) {
+		null
+	} else {
+		mem.mallocDouble(size).apply {
+			for (i in this@toBuffer) {
+				put(i)
+			}
+			flip()
+		}
+	}
+
 
 /** builds a UUID from the first 16 bytes in the buffer */
 fun ByteBuffer.toUUID(): UUID {

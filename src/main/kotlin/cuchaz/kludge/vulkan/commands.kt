@@ -112,7 +112,7 @@ class CommandBuffer internal constructor(
 				.renderPass(graphicsPipeline.renderPassId)
 				.framebuffer(framebuffer.id)
 				.renderArea(renderArea.toVulkan(mem))
-				.pClearValues(listOf(clearValue).toBuffer(mem))
+				.pClearValues(clearValue.toBuffer(mem))
 			vkCmdBeginRenderPass(vkBuf, info, contents.ordinal)
 		}
 	}
@@ -142,6 +142,13 @@ class ClearValue(
 ) {
 	constructor(r: Float, g: Float, b: Float, a: Float = 1.0f) : this(ClearColorValue.Float(r, g, b, a))
 	constructor(r: Int, g: Int, b: Int, a: Int) : this(ClearColorValue.Int(r, g, b, a))
+
+	internal fun toBuffer(mem: MemoryStack) =
+		VkClearValue.mallocStack(1, mem)
+			.apply {
+				get().set(this@ClearValue)
+				flip()
+			}
 }
 internal fun VkClearValue.set(value: ClearValue) =
 	apply {
@@ -159,11 +166,15 @@ internal fun VkClearValue.toClearValueInt() =
 		depthStencil().toClearDepthStencilValue()
 	)
 internal fun Collection<ClearValue>.toBuffer(mem: MemoryStack) =
-	VkClearValue.mallocStack(size, mem).apply {
-		for (c in this@toBuffer) {
-			get().set(c)
+	if (isEmpty()) {
+		null
+	} else {
+		VkClearValue.mallocStack(size, mem).apply {
+			for (c in this@toBuffer) {
+				get().set(c)
+			}
+			flip()
 		}
-		flip()
 	}
 
 data class ClearDepthStencilValue(
@@ -188,8 +199,8 @@ sealed class ClearColorValue {
 
 	data class Float(
 		val r: kotlin.Float = 0.0f,
-		val b: kotlin.Float = 0.0f,
 		val g: kotlin.Float = 0.0f,
+		val b: kotlin.Float = 0.0f,
 		val a: kotlin.Float = 1.0f
 	) : ClearColorValue() {
 		internal fun toVulkan(mem: MemoryStack) = VkClearColorValue.mallocStack(mem).set(this)
@@ -215,8 +226,8 @@ internal fun VkClearColorValue.set(color: ClearColorValue) =
 			}
 			is ClearColorValue.Int -> {
 				int32(0, color.r)
-				int32(1, color.b)
-				int32(2, color.g)
+				int32(1, color.g)
+				int32(2, color.b)
 				int32(3, color.a)
 			}
 		}

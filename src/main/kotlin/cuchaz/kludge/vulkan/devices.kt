@@ -585,6 +585,11 @@ class Device internal constructor(
 	}
 
 	override fun toString() = "device for ${physicalDevice}"
+
+	fun waitForIdle() {
+		vkDeviceWaitIdle(vkDevice)
+			.orFail("failed to wait for device")
+	}
 }
 
 fun PhysicalDevice.device(
@@ -602,7 +607,7 @@ fun PhysicalDevice.device(
 			queueInfos.get()
 				.sType(VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
 				.queueFamilyIndex(queueFamily.index)
-				.pQueuePriorities(priorities.toBuffer(mem))
+				.pQueuePriorities(priorities.toBuffer(mem) ?: throw IllegalArgumentException("no queue priorities for $queueFamily"))
 		}
 		queueInfos.rewind()
 
@@ -611,8 +616,8 @@ fun PhysicalDevice.device(
 			.sType(VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
 			.pQueueCreateInfos(queueInfos)
 			.pEnabledFeatures(features.toVulkan(mem))
-			.ppEnabledExtensionNames(extensionNames.toPointerBuffer(mem))
-			.ppEnabledLayerNames(layerNames.toPointerBuffer(mem))
+			.ppEnabledExtensionNames(extensionNames.toStringPointerBuffer(mem))
+			.ppEnabledLayerNames(layerNames.toStringPointerBuffer(mem))
 
 		// make the device
 		val pDevice = mem.mallocPointer(1)
@@ -644,5 +649,68 @@ class Queue internal constructor (
 	// no cleanup needed
 
 	override fun toString() = "queue ${family.index}.$index on $device"
+
+	fun submit(
+		waitSemaphore: Semaphore,
+		waitStage: IntFlags<PipelineStage>,
+		commandBuffer: CommandBuffer,
+		signalSemaphore: Semaphore
+	) {
+		memstack { mem ->
+			val info = VkSubmitInfo.callocStack(mem)
+				.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
+				.pWaitSemaphores(waitSemaphore.id.toBuffer(mem))
+				.waitSemaphoreCount(1)
+				.pWaitDstStageMask(waitStage.value.toBuffer(mem))
+				.pCommandBuffers(commandBuffer.id.toPointerBuffer(mem))
+				.pSignalSemaphores(signalSemaphore.id.toBuffer(mem))
+			val fence = VK_NULL_HANDLE
+			vkQueueSubmit(vkQueue, info, fence)
+				.orFail("failed to submit queue")
+		}
+	}
+
+	fun present(
+		waitSemaphore: Semaphore,
+		swapchain: Swapchain,
+		imageIndex: Int
+	) {
+		memstack { mem ->
+			val info = VkPresentInfoKHR.callocStack(mem)
+				.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR)
+				.pWaitSemaphores(waitSemaphore.id.toBuffer(mem))
+				.pSwapchains(swapchain.id.toBuffer(mem))
+				.swapchainCount(1)
+				.pImageIndices(imageIndex.toBuffer(mem))
+				.pResults(null)
+			// TODO: presentation failure shoudn't necessarily crash the program
+			vkQueuePresentKHR(vkQueue, info)
+				.orFail("failed to present queue")
+		}
+	}
+
+	fun waitForIdle() {
+		vkQueueWaitIdle(vkQueue)
+			.orFail("failed to wait for queue")
+	}
 }
 
+enum class PipelineStage(override val value: Int): IntFlags.Bit {
+	TopOfPipe(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT),
+	DrawIndirect(VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT),
+	VertexInput(VK_PIPELINE_STAGE_VERTEX_INPUT_BIT),
+	VertexShader(VK_PIPELINE_STAGE_VERTEX_SHADER_BIT),
+	TessellationControlShader(VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT),
+	TessellationEvaluationShader(VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT),
+	GeometryShader(VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT),
+	FragmentShader(VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT),
+	EarlyFragmentTests(VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT),
+	LateFragmentTests(VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT),
+	ColorAttachmentOutput(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT),
+	ComputeShader(VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT),
+	Transfer(VK_PIPELINE_STAGE_TRANSFER_BIT),
+	BottomOfPipe(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT),
+	Host(VK_PIPELINE_STAGE_HOST_BIT),
+	AllGraphicsc(VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT),
+	AllCommands(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT)
+}

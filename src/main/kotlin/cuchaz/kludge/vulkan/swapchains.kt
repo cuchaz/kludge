@@ -375,6 +375,19 @@ class Swapchain internal constructor(
 	override fun close() {
 		vkDestroySwapchainKHR(device.vkDevice, id, null)
 	}
+
+	fun acquireNextImage(
+		semaphore: Semaphore,
+		timeoutNs: Long = -1
+	): Int {
+		memstack { mem ->
+			val fence = VK_NULL_HANDLE // TODO: support fences?
+			val pIndex = mem.mallocInt(1)
+			vkAcquireNextImageKHR(device.vkDevice, id, timeoutNs, semaphore.id, fence, pIndex)
+				.orFail("failed to acquire next image")
+			return pIndex.get(0) // TODO: hide index from caller
+		}
+	}
 }
 
 fun SwapchainSupport.swapchain(
