@@ -141,12 +141,35 @@ class CommandBuffer internal constructor(
 }
 
 
-class ClearValue(
-	val color: ClearColorValue,
-	val depthStencil: ClearDepthStencilValue = ClearDepthStencilValue()
-) {
-	constructor(r: Float, g: Float, b: Float, a: Float = 1.0f) : this(ClearColorValue.Float(r, g, b, a))
-	constructor(r: Int, g: Int, b: Int, a: Int) : this(ClearColorValue.Int(r, g, b, a))
+sealed class ClearValue {
+
+	sealed class Color : ClearValue() {
+
+		data class Float(
+			val r: kotlin.Float = 0.0f,
+			val g: kotlin.Float = 0.0f,
+			val b: kotlin.Float = 0.0f,
+			val a: kotlin.Float = 1.0f
+		) : ClearValue.Color() {
+			internal fun toVulkan(mem: MemoryStack) = VkClearValue.mallocStack(mem).set(this)
+		}
+
+		data class Int(
+			val r: kotlin.Int = 0,
+			val g: kotlin.Int = 0,
+			val b: kotlin.Int = 0,
+			val a: kotlin.Int = 0
+		) : ClearValue.Color() {
+			internal fun toVulkan(mem: MemoryStack) = VkClearValue.mallocStack(mem).set(this)
+		}
+	}
+
+	class DepthStencil(
+		val depth: Float = 0.0f,
+		val stencil: Int = 0
+	) : ClearValue() {
+		internal fun toVulkan(mem: MemoryStack) = VkClearValue.mallocStack(mem).set(this)
+	}
 
 	internal fun toBuffer(mem: MemoryStack) =
 		VkClearValue.mallocStack(1, mem)
@@ -157,18 +180,43 @@ class ClearValue(
 }
 internal fun VkClearValue.set(value: ClearValue) =
 	apply {
-		color().set(value.color)
-		depthStencil().set(value.depthStencil)
+		when (value) {
+			is ClearValue.Color.Float -> color().apply {
+				float32(0, value.r)
+				float32(1, value.g)
+				float32(2, value.b)
+				float32(3, value.a)
+			}
+			is ClearValue.Color.Int -> color().apply {
+				int32(0, value.r)
+				int32(1, value.g)
+				int32(2, value.b)
+				int32(3, value.a)
+			}
+			is ClearValue.DepthStencil -> depthStencil().apply {
+				depth(value.depth)
+				stencil(value.stencil)
+			}
+		}
 	}
-internal fun VkClearValue.toClearValueFloat() =
-	ClearValue(
-		color().toClearColorValueFloat(),
-		depthStencil().toClearDepthStencilValue()
+internal fun VkClearValue.toClearValueColorFloat() =
+	ClearValue.Color.Float(
+		color().float32(0),
+		color().float32(1),
+		color().float32(2),
+		color().float32(3)
 	)
-internal fun VkClearValue.toClearValueInt() =
-	ClearValue(
-		color().toClearColorValueInt(),
-		depthStencil().toClearDepthStencilValue()
+internal fun VkClearValue.toClearValueColorInt() =
+	ClearValue.Color.Int(
+		color().int32(0),
+		color().int32(1),
+		color().int32(2),
+		color().int32(3)
+	)
+internal fun VkClearValue.toClearValueDepthStencil() =
+	ClearValue.DepthStencil(
+		depthStencil().depth(),
+		depthStencil().stencil()
 	)
 internal fun Collection<ClearValue>.toBuffer(mem: MemoryStack) =
 	if (isEmpty()) {
@@ -181,73 +229,3 @@ internal fun Collection<ClearValue>.toBuffer(mem: MemoryStack) =
 			flip()
 		}
 	}
-
-data class ClearDepthStencilValue(
-	val depth: Float = 0.0f,
-	val stencil: Int = 0
-) {
-	internal fun toVulkan(mem: MemoryStack) = VkClearDepthStencilValue.mallocStack(mem).set(this)
-}
-internal fun VkClearDepthStencilValue.set(ds: ClearDepthStencilValue) =
-	apply {
-		depth(ds.depth)
-		stencil(ds.stencil)
-	}
-internal fun VkClearDepthStencilValue.toClearDepthStencilValue() =
-	ClearDepthStencilValue(
-		depth(),
-		stencil()
-	)
-
-// TODO: rename this to be less verbose?
-sealed class ClearColorValue {
-
-	data class Float(
-		val r: kotlin.Float = 0.0f,
-		val g: kotlin.Float = 0.0f,
-		val b: kotlin.Float = 0.0f,
-		val a: kotlin.Float = 1.0f
-	) : ClearColorValue() {
-		internal fun toVulkan(mem: MemoryStack) = VkClearColorValue.mallocStack(mem).set(this)
-	}
-
-	data class Int(
-		val r: kotlin.Int,
-		val g: kotlin.Int,
-		val b: kotlin.Int,
-		val a: kotlin.Int
-	) : ClearColorValue() {
-		internal fun toVulkan(mem: MemoryStack) = VkClearColorValue.mallocStack(mem).set(this)
-	}
-}
-internal fun VkClearColorValue.set(color: ClearColorValue) =
-	apply {
-		when (color) {
-			is ClearColorValue.Float -> {
-				float32(0, color.r)
-				float32(1, color.g)
-				float32(2, color.b)
-				float32(3, color.a)
-			}
-			is ClearColorValue.Int -> {
-				int32(0, color.r)
-				int32(1, color.g)
-				int32(2, color.b)
-				int32(3, color.a)
-			}
-		}
-	}
-internal fun VkClearColorValue.toClearColorValueFloat() =
-	ClearColorValue.Float(
-		float32(0),
-		float32(1),
-		float32(2),
-		float32(3)
-	)
-internal fun VkClearColorValue.toClearColorValueInt() =
-	ClearColorValue.Int(
-		int32(0),
-		int32(1),
-		int32(2),
-		int32(3)
-	)

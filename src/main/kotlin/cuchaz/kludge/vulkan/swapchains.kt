@@ -360,6 +360,7 @@ class Swapchain internal constructor(
 	val device: Device,
 	internal val id: Long,
 	val surfaceFormat: SwapchainSupport.SurfaceFormat,
+	val presentMode: SwapchainSupport.PresentMode,
 	val extent: Extent2D
 ) : AutoCloseable {
 
@@ -436,7 +437,7 @@ fun SwapchainSupport.swapchain(
 		val pSwapchain = mem.mallocLong(1)
 		vkCreateSwapchainKHR(device.vkDevice, info, null, pSwapchain)
 			.orFail("failed to create swapchain")
-		return Swapchain(device, pSwapchain.get(0), surfaceFormat, extent)
+		return Swapchain(device, pSwapchain.get(0), surfaceFormat, presentMode, extent)
 	}
 }
 
