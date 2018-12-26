@@ -7,11 +7,8 @@ package cuchaz.kludge.vulkan
 
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
+import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK10.*
-import org.lwjgl.vulkan.VkExtent2D
-import org.lwjgl.vulkan.VkExtent3D
-import org.lwjgl.vulkan.VkOffset2D
-import org.lwjgl.vulkan.VkRect2D
 
 
 class VulkanException(val err: Int, val msg: String? = null) : RuntimeException(
