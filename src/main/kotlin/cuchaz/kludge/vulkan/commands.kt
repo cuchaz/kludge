@@ -132,7 +132,7 @@ class CommandBuffer internal constructor(
 
 	fun draw(
 		vertices: Int,
-		instances: Int,
+		instances: Int = 1,
 		firstVertex: Int = 0,
 		firstInstance: Int = 0
 	) {

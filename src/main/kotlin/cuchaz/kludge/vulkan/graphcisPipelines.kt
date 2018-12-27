@@ -37,7 +37,7 @@ data class VertexInput(
 
 data class InputAssembly(
 	val topology: Topology,
-	val restart: Boolean
+	val restart: Boolean = false
 ) {
 
 	enum class Topology {
@@ -202,9 +202,7 @@ enum class ColorComponent(override val value: Int) : IntFlags.Bit {
 	A(VK_COLOR_COMPONENT_A_BIT)
 }
 
-// TODO: related to framebuffer list... use that info directly somehow?
 class ColorBlendState(
-	val attachments: List<Attachment?>, // TODO: should this be a list?
 	val logicOp: LogicOp? = null,
 	val blendConstants: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f)
 ) {
@@ -222,9 +220,9 @@ class ColorBlendState(
 	) {
 
 		data class Part(
-			val srcBlendFactor: BlendFactor,
-			val dstBlendFactor: BlendFactor,
-			val blendOp: BlendOp
+			val src: BlendFactor,
+			val dst: BlendFactor,
+			val op: BlendOp
 		)
 	}
 }
@@ -242,7 +240,18 @@ enum class ImageLayout(val value: Int) {
 	PresentSrc(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
 }
 
-data class AttachmentDescription(
+enum class LoadOp {
+	Load,
+	Clear,
+	DontCare
+}
+
+enum class StoreOp {
+	Store,
+	DontCare
+}
+
+data class Attachment(
 	val format: Format,
 	val samples: SampleCount = SampleCount.Bits1,
 	val loadOp: LoadOp = LoadOp.DontCare,
@@ -251,32 +260,23 @@ data class AttachmentDescription(
 	val stencilStoreOp: StoreOp = StoreOp.DontCare,
 	val initialLayout: ImageLayout = ImageLayout.Undefined,
 	val finalLayout: ImageLayout
-
 ) {
-	enum class LoadOp {
-		Load,
-		Clear,
-		DontCare
-	}
+	inner class Ref(
+		val index: Int,
+		val layout: ImageLayout
+	) {
+		val attachment: Attachment get() = this@Attachment
 
-	enum class StoreOp {
-		Store,
-		DontCare
+		internal fun toVulkan(mem: MemoryStack) = VkAttachmentReference.callocStack(mem).set(this)
 	}
 }
 
-data class AttachmentReference(
-	val attachmentIndex: Int, // TODO: hide this index somehow?
-	val layout: ImageLayout
-) {
-	internal fun toVulkan(mem: MemoryStack) = VkAttachmentReference.callocStack(mem).set(this)
-}
-internal fun VkAttachmentReference.set(ref: AttachmentReference) =
+internal fun VkAttachmentReference.set(ref: Attachment.Ref) =
 	apply {
-		attachment(ref.attachmentIndex)
+		attachment(ref.index)
 		layout(ref.layout.ordinal)
 	}
-internal fun Collection<AttachmentReference>.toBuffer(mem: MemoryStack) =
+internal fun Collection<Attachment.Ref>.toBuffer(mem: MemoryStack) =
 	if (isEmpty()) {
 		null
 	} else {
@@ -290,16 +290,26 @@ internal fun Collection<AttachmentReference>.toBuffer(mem: MemoryStack) =
 
 data class Subpass(
 	val pipelineBindPoint: PipelineBindPoint,
-	val inputAttachments: List<AttachmentReference> = emptyList(),
-	val colorAttachments: List<AttachmentReference> = emptyList(),
-	val resolveAttachments: List<AttachmentReference> = emptyList(),
-	val depthStencilAttachment: AttachmentReference? = null,
+	val inputAttachments: List<Attachment.Ref> = emptyList(),
+	val colorAttachments: List<Attachment.Ref> = emptyList(),
+	val resolveAttachments: List<Attachment.Ref> = emptyList(),
+	val depthStencilAttachment: Attachment.Ref? = null,
 	val preserveAttachments: List<Int> = emptyList() // TODO: hide these indices somehow?
 ) {
 
 	enum class PipelineBindPoint {
 		Graphics,
 		Compute
+	}
+
+	inner class Ref(
+		val index: Int
+	) {
+		val subpass: Subpass get() = this@Subpass
+	}
+
+	companion object {
+		val External: Subpass.Ref? = null
 	}
 }
 
@@ -328,32 +338,35 @@ enum class DependencyFlags(override val value: Int) : IntFlags.Bit {
 }
 
 data class SubpassDependency(
-	val srcSubpass: Int,
-	val dstSubpass: Int,
-	val srcStageMask: IntFlags<PipelineStage>,
-	val dstStageMask: IntFlags<PipelineStage>,
-	val srcAccessMask: IntFlags<AccessFlags>,
-	val dstAccessMask: IntFlags<AccessFlags>,
+	val src: Part,
+	val dst: Part,
 	val dependencyFlags: IntFlags<DependencyFlags> = IntFlags(0)
 ) {
 
-	companion object {
-		const val External = VK_SUBPASS_EXTERNAL
-	}
+	data class Part internal constructor(
+		val subpassRef: Subpass.Ref?,
+		val stageMask: IntFlags<PipelineStage>,
+		val accessMask: IntFlags<AccessFlags>
+	)
 }
 
+fun Subpass.Ref?.dependency(
+	stage: IntFlags<PipelineStage>,
+	access: IntFlags<AccessFlags> = IntFlags(0)
+) =
+	SubpassDependency.Part(this, stage, access)
 
 fun Device.graphicsPipeline(
 	stages: List<ShaderModule.Stage>,
-	vertexInput: VertexInput, // TODO: use this
+	vertexInput: VertexInput = VertexInput(),
 	inputAssembly: InputAssembly,
 	viewports: List<Viewport>,
 	scissors: List<Rect2D>,
 	rasterizationState: RasterizationState = RasterizationState(),
 	multisampleState: MultisampleState = MultisampleState(),
-	attachments: List<AttachmentDescription>, // TODO: find a way to cement the attachment order and indices/references
-	colorBlend: ColorBlendState,
-	subpasses: List<Subpass>,
+	attachments: List<Pair<Attachment.Ref,ColorBlendState.Attachment?>>,
+	colorBlend: ColorBlendState = ColorBlendState(),
+	subpasses: List<Subpass.Ref>,
 	subpassDependencies: List<SubpassDependency>
 ): GraphicsPipeline {
 	memstack { mem ->
@@ -433,9 +446,28 @@ fun Device.graphicsPipeline(
 		vkCreatePipelineLayout(vkDevice, pLayoutInfo, null, pLayout)
 			.orFail("failied to create pipeline layout")
 
+		// make sure attachment refs are sequential
+		val attachmentRefsInOrder = attachments
+			.sortedBy { (ref, _) -> ref.index }
+		for (i in 0 until attachmentRefsInOrder.size) {
+			if (attachmentRefsInOrder[i].first.index != i) {
+				throw IllegalArgumentException("attachment references don't have sequential indices: ${attachmentRefsInOrder.map { it.first.index }}")
+			}
+		}
+
+		// make sure subpass refs are sequential
+		val subpassRefsInOrder = subpasses
+			.sortedBy { it.index }
+		for (i in 0 until subpassRefsInOrder.size) {
+			if (subpassRefsInOrder[i].index != i) {
+				throw IllegalArgumentException("subpass references don't have sequential indices: ${subpassRefsInOrder.map { it.index }}")
+			}
+		}
+
 		// build the render pass
 		val pAttachments = VkAttachmentDescription.callocStack(attachments.size, mem)
-		for (attachment in attachments) {
+		for ((ref, blend) in attachmentRefsInOrder) {
+			val attachment = ref.attachment
 			pAttachments.get()
 				.format(attachment.format.ordinal)
 				.samples(attachment.samples.value)
@@ -448,7 +480,8 @@ fun Device.graphicsPipeline(
 		}
 		pAttachments.flip()
 		val pSubpasses = VkSubpassDescription.callocStack(subpasses.size, mem)
-		for (subpass in subpasses) {
+		for (subpassRef in subpasses) {
+			val subpass = subpassRef.subpass
 			pSubpasses.get()
 				.pipelineBindPoint(subpass.pipelineBindPoint.ordinal)
 				.pInputAttachments(subpass.inputAttachments.toBuffer(mem))
@@ -462,12 +495,12 @@ fun Device.graphicsPipeline(
 		val pSubpassDependencies = VkSubpassDependency.callocStack(subpassDependencies.size, mem)
 		for (subpassDependency in subpassDependencies) {
 			pSubpassDependencies.get()
-				.srcSubpass(subpassDependency.srcSubpass)
-				.dstSubpass(subpassDependency.dstSubpass)
-				.srcStageMask(subpassDependency.srcStageMask.value)
-				.dstStageMask(subpassDependency.dstStageMask.value)
-				.srcAccessMask(subpassDependency.srcAccessMask.value)
-				.dstAccessMask(subpassDependency.dstAccessMask.value)
+				.srcSubpass(subpassDependency.src.subpassRef?.index ?: VK_SUBPASS_EXTERNAL)
+				.dstSubpass(subpassDependency.dst.subpassRef?.index ?: VK_SUBPASS_EXTERNAL)
+				.srcStageMask(subpassDependency.src.stageMask.value)
+				.dstStageMask(subpassDependency.dst.stageMask.value)
+				.srcAccessMask(subpassDependency.src.accessMask.value)
+				.dstAccessMask(subpassDependency.dst.accessMask.value)
 				.dependencyFlags(subpassDependency.dependencyFlags.value)
 		}
 		pSubpassDependencies.flip()
@@ -480,22 +513,19 @@ fun Device.graphicsPipeline(
 		vkCreateRenderPass(vkDevice, pRenderPassInfo, null, pRenderPass)
 			.orFail("failed to create render pass")
 
-		// TEMP
-		assert (attachments.size == colorBlend.attachments.size)
-
 		// build color blend state
-		val pBlendAttachments = VkPipelineColorBlendAttachmentState.callocStack(colorBlend.attachments.size, mem)
-		for (attachment in colorBlend.attachments) {
+		val pBlendAttachments = VkPipelineColorBlendAttachmentState.callocStack(attachments.size, mem)
+		for ((ref, blend) in attachmentRefsInOrder) {
 			pBlendAttachments.get().apply {
-				if (attachment != null) {
+				if (blend != null) {
 					blendEnable(true)
-					srcColorBlendFactor(attachment.color.srcBlendFactor.ordinal)
-					dstColorBlendFactor(attachment.color.dstBlendFactor.ordinal)
-					colorBlendOp(attachment.color.blendOp.ordinal)
-					srcAlphaBlendFactor(attachment.alpha.srcBlendFactor.ordinal)
-					dstAlphaBlendFactor(attachment.alpha.dstBlendFactor.ordinal)
-					alphaBlendOp(attachment.alpha.blendOp.ordinal)
-					colorWriteMask(attachment.colorWriteMask.value)
+					srcColorBlendFactor(blend.color.src.ordinal)
+					dstColorBlendFactor(blend.color.dst.ordinal)
+					colorBlendOp(blend.color.op.ordinal)
+					srcAlphaBlendFactor(blend.alpha.src.ordinal)
+					dstAlphaBlendFactor(blend.alpha.dst.ordinal)
+					alphaBlendOp(blend.alpha.op.ordinal)
+					colorWriteMask(blend.colorWriteMask.value)
 				} else {
 					blendEnable(false)
 				}
@@ -511,9 +541,6 @@ fun Device.graphicsPipeline(
 			.blendConstants(1, colorBlend.blendConstants[1])
 			.blendConstants(2, colorBlend.blendConstants[2])
 			.blendConstants(3, colorBlend.blendConstants[3])
-
-		// TODO: depth and stencil testing
-		//pDepthStencilState(@Nullable @NativeType("VkPipelineDepthStencilStateCreateInfo const *") VkPipelineDepthStencilStateCreateInfo value) { npDepthStencilState(address(), value); return this; }
 
 		// TODO: do we need any of these?
 		//pTessellationState(@Nullable @NativeType("VkPipelineTessellationStateCreateInfo const *") VkPipelineTessellationStateCreateInfo value) { npTessellationState(address(), value); return this; }
@@ -532,6 +559,7 @@ fun Device.graphicsPipeline(
 			.layout(pLayout.get(0))
 			.renderPass(pRenderPass.get(0))
 			.pColorBlendState(pColorBlend)
+			.pDepthStencilState(null) // TODO: support depth and stencil testing?
 			.subpass(0) // TODO: support other subpasses?
 			.basePipelineHandle(VK_NULL_HANDLE) // TODO: support derivative pipelines?
 			.basePipelineIndex(-1)

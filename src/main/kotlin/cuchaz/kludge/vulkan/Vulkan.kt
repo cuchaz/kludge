@@ -54,7 +54,7 @@ class Vulkan(
 			memstack { mem ->
 				val pCount = mem.mallocInt(1)
 				vkEnumerateInstanceExtensionProperties(null as String?, pCount, null)
-					.orFail("Failed to query supported extensions")
+					.orFail("failed to query supported extensions")
 				val count = pCount.get(0)
 				val pProps = VkExtensionProperties.mallocStack(count)
 				vkEnumerateInstanceExtensionProperties(null as String?, pCount, pProps)

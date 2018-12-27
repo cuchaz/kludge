@@ -484,7 +484,7 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 			Binding(VK_QUEUE_SPARSE_BINDING_BIT)
 		}
 
-		override fun toString() = "queue family $index (${queueFlags.toString(Flags.values())})"
+		override fun toString() = "queue family $index ${queueFlags.toFlagsString()}"
 
 		fun supportsSurface(surface: Surface): Boolean {
 			memstack { mem ->

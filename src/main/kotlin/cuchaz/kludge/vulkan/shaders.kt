@@ -26,7 +26,7 @@ class ShaderModule(
 
 	inner class Stage(
 		val name: String,
-		val stage: IntFlags<ShaderStage>
+		val stage: ShaderStage
 	) {
 		val module: ShaderModule = this@ShaderModule
 	}
@@ -42,6 +42,7 @@ fun Device.shaderModule(code: ByteBuffer): ShaderModule {
 
 		val pMod = mem.mallocLong(1)
 		vkCreateShaderModule(vkDevice, info, null, pMod)
+			.orFail("failed to create shader module")
 		return ShaderModule(this, pMod.get(0))
 	}
 }

@@ -196,13 +196,13 @@ inline class IntFlags<T:IntFlags.Bit>(val value: Int) {
 	fun set(bit: Bit, value: Boolean) = if (value) set(bit) else unset(bit)
 }
 
-// NOTE: making this function a member of IntFlags causes a compiler crash
-// but an extension function is ok
-fun <T:IntFlags.Bit> IntFlags<T>.toString(bits: Array<T>): String =
-	bits
+// NOTE: need to inline this with reified T to get the enum constants
+// so, can't override the actual IntFlags.toString()
+inline fun <reified T:IntFlags.Bit> IntFlags<T>.toFlagsString(): String =
+	T::class.java.enumConstants
 		.filter { has(it) }
-		.joinToString()
-
+		.joinToString(",")
+		.let { "[$it]" }
 
 fun Path.toByteBuffer(): ByteBuffer =
 	FileChannel.open(this).map(FileChannel.MapMode.READ_ONLY, 0, Files.size(this))

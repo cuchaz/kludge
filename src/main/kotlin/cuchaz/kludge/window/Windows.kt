@@ -13,7 +13,7 @@ import java.io.Closeable
 import java.io.PrintStream
 
 
-object Windows : Closeable {
+object Windows : AutoCloseable {
 
 	fun init() {
 

@@ -17,6 +17,23 @@ import org.lwjgl.vulkan.VK10.*
 fun PhysicalDevice.swapchainSupport(surface: Surface) =
 	SwapchainSupport(this, surface)
 
+enum class PresentMode {
+	Immediate,
+	Mailbox,
+	Fifo,
+	FifoRelaxed
+}
+
+data class SurfaceFormat internal constructor(
+	val format: Format,
+	val colorSpace: ColorSpace
+) {
+	internal constructor(format: VkSurfaceFormatKHR) : this(
+		Format.values()[format.format()],
+		ColorSpace[format.colorSpace()]
+	)
+}
+
 class SwapchainSupport internal constructor(
 	val physicalDevice: PhysicalDevice,
 	val surface: Surface
@@ -56,16 +73,6 @@ class SwapchainSupport internal constructor(
 		}
 	}
 
-	data class SurfaceFormat internal constructor(
-		val format: Format,
-		val colorSpace: ColorSpace
-	) {
-		internal constructor(format: VkSurfaceFormatKHR) : this(
-			Format.values()[format.format()],
-			ColorSpace[format.colorSpace()]
-		)
-	}
-
 	val surfaceFormats: List<SurfaceFormat> by lazy {
 		memstack { mem ->
 			val pCount = mem.mallocInt(1)
@@ -81,23 +88,16 @@ class SwapchainSupport internal constructor(
 	/**
 	 * Attempts to find a surface format with the desired properties.
 	 * If the surface has no preference, a surface format with the desired properties is created.
-	 * Otherwise, the first surface format supported by the surface is used.
+	 * If the surface has preferences, and the desired properties match, the matching surface format is returned.
+	 * Otherwise, null is returned
 	 */
-	fun pickSurfaceFormat(format: Format, colorSpace: ColorSpace) =
+	fun find(format: Format, colorSpace: ColorSpace): SurfaceFormat? =
 		if (surfaceFormats.size == 1 && surfaceFormats.get(0).format == Format.UNDEFINED) {
 			SurfaceFormat(format, colorSpace)
 		} else {
 			surfaceFormats
 				.find { it.format == Format.B8G8R8A8_UNORM && it.colorSpace == ColorSpace.SRGB_NONLINEAR }
-				?: surfaceFormats.get(0)
 		}
-
-	enum class PresentMode {
-		Immediate,
-		Mailbox,
-		Fifo,
-		FifoRelaxed
-	}
 
 	val presentModes: List<PresentMode> by lazy {
 		memstack { mem ->
@@ -112,16 +112,15 @@ class SwapchainSupport internal constructor(
 	}
 
 	/**
-	 * Picks the first available present mode from the order given.
-	 * If no given modes are available, the first available mode is returned.
+	 * Attempts to find the present mode.
+	 * If the present mode is supported, that present mode is returned.
+	 * Otherwise, null is returned.
 	 */
-	fun pickPresentMode(vararg modes: PresentMode): PresentMode {
-		for (mode in modes) {
-			if (presentModes.contains(mode)) {
-				return mode
-			}
+	fun find(mode: PresentMode): PresentMode? {
+		if (presentModes.contains(mode)) {
+			return mode
 		}
-		return presentModes.get(0)
+		return null
 	}
 
 	/**
@@ -359,10 +358,18 @@ enum class ColorSpace(val value: Int) {
 class Swapchain internal constructor(
 	val device: Device,
 	internal val id: Long,
-	val surfaceFormat: SwapchainSupport.SurfaceFormat,
-	val presentMode: SwapchainSupport.PresentMode,
+	val surfaceFormat: SurfaceFormat,
+	val presentMode: PresentMode,
 	val extent: Extent2D
 ) : AutoCloseable {
+
+	val rect: Rect2D = Rect2D(Offset2D(0, 0), extent)
+	val viewport: Viewport = Viewport(
+		0.0f,
+		0.0f,
+		extent.width.toFloat(),
+		extent.height.toFloat()
+	)
 
 	// NOTE: these images do not need explicit cleanup
 	val images: List<Image> by lazy {
@@ -399,8 +406,8 @@ class Swapchain internal constructor(
 fun SwapchainSupport.swapchain(
 	device: Device,
 	imageCount: Int = capabilities.minImageCount,
-	surfaceFormat: SwapchainSupport.SurfaceFormat,
-	presentMode: SwapchainSupport.PresentMode,
+	surfaceFormat: SurfaceFormat,
+	presentMode: PresentMode,
 	extent: Extent2D = pickExtent(),
 	arrayLayers: Int = 1,
 	usage: IntFlags<ImageUsage> = IntFlags.of(ImageUsage.ColorAttachment),

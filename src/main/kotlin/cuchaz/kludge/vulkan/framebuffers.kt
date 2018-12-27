@@ -24,9 +24,8 @@ class Framebuffer internal constructor(
 fun Device.framebuffer(
 	graphicsPipeline: GraphicsPipeline,
 	imageViews: List<Image.View>,
-	width: Int,
-	height: Int,
-	layers: Int
+	extent: Extent2D,
+	layers: Int = 1
 ) : Framebuffer {
 	memstack { mem ->
 
@@ -34,8 +33,8 @@ fun Device.framebuffer(
 			.sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
 			.renderPass(graphicsPipeline.renderPassId)
 			.pAttachments(imageViews.map { it.id }.toBuffer(mem))
-			.width(width)
-			.height(height)
+			.width(extent.width)
+			.height(extent.height)
 			.layers(layers)
 
 		val pFramebuffer = mem.mallocLong(1)
