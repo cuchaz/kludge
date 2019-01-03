@@ -24,3 +24,12 @@ fun Float.clamp(a: Float, b: Float) = this.atLeast(a).atMost(b)
 fun Double.atLeast(d: Double) = max(this, d)
 fun Double.atMost(d: Double) = min(this, d)
 fun Double.clamp(a: Double, b: Double) = this.atLeast(a).atMost(b)
+
+fun Long.toIntOrNull(): Int? {
+	val i = toInt()
+	return if (i.toLong() == this) {
+		i
+	} else {
+		null
+	}
+}

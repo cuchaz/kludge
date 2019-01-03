@@ -138,6 +138,24 @@ class CommandBuffer internal constructor(
 	) {
 		vkCmdDraw(vkBuf, vertices, instances, firstVertex, firstInstance)
 	}
+
+	fun copyBuffer(
+		src: Buffer.Allocated,
+		dst: Buffer.Allocated,
+		srcOffset: Long = 0,
+		dstOffset: Long = 0,
+		size: Long = src.buffer.bytes
+	) {
+		memstack { mem ->
+			val pRegions = VkBufferCopy.callocStack(1, mem)
+			pRegions.get()
+				.srcOffset(srcOffset)
+				.dstOffset(dstOffset)
+				.size(size)
+			pRegions.flip()
+			vkCmdCopyBuffer(vkBuf, src.buffer.id, dst.buffer.id, pRegions)
+		}
+	}
 }
 
 

@@ -10,7 +10,7 @@ import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.KHRSurface.*
 import org.lwjgl.vulkan.KHRSwapchain.*
-import org.lwjgl.vulkan.VK10.*
+import org.lwjgl.vulkan.VK11.*
 import java.util.*
 
 
@@ -551,6 +551,38 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 			return false
 		}
 	}
+
+	val memoryHeaps: List<MemoryHeap> by lazy {
+		memstack { mem ->
+			val pMem = VkPhysicalDeviceMemoryProperties.mallocStack(mem)
+			vkGetPhysicalDeviceMemoryProperties(vkDevice, pMem)
+			(0 until pMem.memoryHeapCount())
+				.map { i ->
+					val heap = pMem.memoryHeaps(i)
+					return@map MemoryHeap(
+						i,
+						heap.size(),
+						IntFlags(heap.flags())
+					)
+				}
+		}
+	}
+
+	val memoryTypes: List<MemoryType> by lazy {
+		memstack { mem ->
+			val pMem = VkPhysicalDeviceMemoryProperties.mallocStack(mem)
+			vkGetPhysicalDeviceMemoryProperties(vkDevice, pMem)
+			(0 until pMem.memoryTypeCount())
+				.map { i ->
+					val type = pMem.memoryTypes(i)
+					return@map MemoryType(
+						i,
+						IntFlags(type.propertyFlags()),
+						memoryHeaps[type.heapIndex()]
+					)
+				}
+		}
+	}
 }
 
 val Vulkan.physicalDevices get(): List<PhysicalDevice> {
@@ -650,39 +682,51 @@ class Queue internal constructor (
 
 	override fun toString() = "queue ${family.index}.$index on $device"
 
+	data class WaitInfo(
+		val semaphore: Semaphore,
+		val dstStage: IntFlags<PipelineStage>
+	)
+
 	fun submit(
-		waitSemaphore: Semaphore,
-		waitStage: IntFlags<PipelineStage>,
 		commandBuffer: CommandBuffer,
-		signalSemaphore: Semaphore
+		waitFor: WaitInfo? = null,
+		signalTo: Semaphore? = null
 	) {
 		memstack { mem ->
 			val info = VkSubmitInfo.callocStack(mem)
 				.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
-				.pWaitSemaphores(waitSemaphore.id.toBuffer(mem))
-				.waitSemaphoreCount(1)
-				.pWaitDstStageMask(waitStage.value.toBuffer(mem))
 				.pCommandBuffers(commandBuffer.id.toPointerBuffer(mem))
-				.pSignalSemaphores(signalSemaphore.id.toBuffer(mem))
-			val fence = VK_NULL_HANDLE
+			if (waitFor != null) {
+				info.waitSemaphoreCount(1)
+				info.pWaitSemaphores(waitFor.semaphore.id.toBuffer(mem))
+				info.pWaitDstStageMask(waitFor.dstStage.value.toBuffer(mem))
+			} else {
+				info.waitSemaphoreCount(0)
+			}
+			if (signalTo != null) {
+				info.pSignalSemaphores(signalTo.id.toBuffer(mem))
+			}
+			val fence = VK_NULL_HANDLE // TODO: support fences?
 			vkQueueSubmit(vkQueue, info, fence)
 				.orFail("failed to submit queue")
 		}
 	}
 
 	fun present(
-		waitSemaphore: Semaphore,
 		swapchain: Swapchain,
-		imageIndex: Int
+		imageIndex: Int,
+		waitFor: Semaphore? = null
 	) {
 		memstack { mem ->
 			val info = VkPresentInfoKHR.callocStack(mem)
 				.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR)
-				.pWaitSemaphores(waitSemaphore.id.toBuffer(mem))
 				.pSwapchains(swapchain.id.toBuffer(mem))
 				.swapchainCount(1)
 				.pImageIndices(imageIndex.toBuffer(mem))
 				.pResults(null)
+			if (waitFor != null) {
+				info.pWaitSemaphores(waitFor.id.toBuffer(mem))
+			}
 			// TODO: presentation failure shoudn't necessarily crash the program
 			vkQueuePresentKHR(vkQueue, info)
 				.orFail("failed to present queue")
@@ -713,4 +757,36 @@ enum class PipelineStage(override val value: Int): IntFlags.Bit {
 	Host(VK_PIPELINE_STAGE_HOST_BIT),
 	AllGraphicsc(VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT),
 	AllCommands(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT)
+}
+
+
+class MemoryType(
+	internal val index: Int,
+	val flags: IntFlags<Flags>,
+	val heap: MemoryHeap
+) {
+
+	enum class Flags(override val value: Int): IntFlags.Bit {
+		DeviceLocal(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+		HostVisible(VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
+		HostCoherent(VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
+		HostCached(VK_MEMORY_PROPERTY_HOST_CACHED_BIT),
+		LazilyAllocated(VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT)
+	}
+
+	override fun toString() = "MemoryType[index=$index, flags=${flags.toFlagsString()}, heap=$heap]"
+}
+
+class MemoryHeap(
+	internal val index: Int,
+	val size: Long,
+	val flags: IntFlags<Flags>
+) {
+
+	enum class Flags(override val value: Int) : IntFlags.Bit {
+		DeviceLocal(VK_MEMORY_HEAP_DEVICE_LOCAL_BIT),
+		MultiInstance(VK_MEMORY_HEAP_MULTI_INSTANCE_BIT)
+	}
+
+	override fun toString() = "MemoryHeap[index=$index, size=$size, flags=${flags.toFlagsString()}]"
 }
