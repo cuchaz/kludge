@@ -18,6 +18,10 @@ class AutoCloser : AutoCloseable {
 		return thing
 	}
 
+	fun add(block: () -> Unit) {
+		things.add(AutoCloseable { block() })
+	}
+
 	override fun close() {
 		for (thing in things.reversed()) {
 			thing.close()
@@ -26,3 +30,21 @@ class AutoCloser : AutoCloseable {
 }
 
 fun <T:AutoCloseable> T.autoClose(closer: AutoCloser): T = closer.add(this)
+
+interface WithAutoCloser {
+	fun <T:AutoCloseable> T.autoClose(): T
+	fun autoClose(block: () -> Unit)
+}
+
+inline fun <T> autoCloser(block: WithAutoCloser.() -> T): T =
+	AutoCloser().use { autoCloser ->
+		object : WithAutoCloser {
+
+			override fun <T:AutoCloseable> T.autoClose(): T =
+				autoCloser.add(this)
+
+			override fun autoClose(block: () -> Unit) =
+				autoCloser.add(block)
+
+		}.block()
+	}
