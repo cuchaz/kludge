@@ -10,9 +10,8 @@ import cuchaz.kludge.tools.memstack
 import cuchaz.kludge.tools.toASCII
 import cuchaz.kludge.tools.toBuffer
 import org.lwjgl.system.MemoryStack
-import org.lwjgl.vulkan.VK10.*
 import org.lwjgl.vulkan.*
-import org.lwjgl.vulkan.KHRSwapchain.*
+import org.lwjgl.vulkan.VK11.*
 
 
 class GraphicsPipeline(
@@ -66,9 +65,7 @@ data class Viewport(
 	val height: Float,
 	val minDepth: Float = 0.0f,
 	val maxDepth: Float = 1.0f
-) {
-	internal fun toVulkan(mem: MemoryStack) = VkViewport.callocStack(mem).set(this)
-}
+)
 internal fun VkViewport.set(viewport: Viewport) =
 	apply {
 		x(viewport.x)
@@ -128,18 +125,18 @@ data class RasterizationState(
 }
 
 enum class SampleCount(override val value: Int) : IntFlags.Bit {
-	Bits1(VK_SAMPLE_COUNT_1_BIT),
-	Bits2(VK_SAMPLE_COUNT_2_BIT),
-	Bits4(VK_SAMPLE_COUNT_4_BIT),
-	Bits8(VK_SAMPLE_COUNT_8_BIT),
-	Bits16(VK_SAMPLE_COUNT_16_BIT),
-	Bits32(VK_SAMPLE_COUNT_32_BIT),
-	Bits64(VK_SAMPLE_COUNT_64_BIT)
+	One(VK_SAMPLE_COUNT_1_BIT),
+	Two(VK_SAMPLE_COUNT_2_BIT),
+	Four(VK_SAMPLE_COUNT_4_BIT),
+	Eight(VK_SAMPLE_COUNT_8_BIT),
+	Sixteen(VK_SAMPLE_COUNT_16_BIT),
+	ThirtyTwo(VK_SAMPLE_COUNT_32_BIT),
+	SixtyFour(VK_SAMPLE_COUNT_64_BIT)
 }
 
 data class MultisampleState(
 	val sampleShading: Boolean = false,
-	val rasterizationSamples: SampleCount = SampleCount.Bits1,
+	val rasterizationSamples: SampleCount = SampleCount.One,
 	val minSampleShading: Float = 1.0f,
 	//val sampleMask: SampleMask // TODO: support this?
 	val alphaToCoverage: Boolean = false,
@@ -227,19 +224,6 @@ class ColorBlendState(
 	}
 }
 
-enum class ImageLayout(val value: Int) {
-	Undefined(VK_IMAGE_LAYOUT_UNDEFINED),
-	General(VK_IMAGE_LAYOUT_GENERAL),
-	ColorAttachmentOptimal(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL),
-	DepthStencilAttachmentOptimal(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL),
-	DepthStencilReadOnlyOptimal(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL),
-	ShaderReadOnlyOptimal(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL),
-	TransferSrcOptimal(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL),
-	TransferDstOptimal(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL),
-	Preinitialized(VK_IMAGE_LAYOUT_PREINITIALIZED),
-	PresentSrc(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-}
-
 enum class LoadOp {
 	Load,
 	Clear,
@@ -252,18 +236,18 @@ enum class StoreOp {
 }
 
 data class Attachment(
-	val format: Format,
-	val samples: SampleCount = SampleCount.Bits1,
+	val format: Image.Format,
+	val samples: SampleCount = SampleCount.One,
 	val loadOp: LoadOp = LoadOp.DontCare,
 	val storeOp: StoreOp = StoreOp.DontCare,
 	val stencilLoadOp: LoadOp = LoadOp.DontCare,
 	val stencilStoreOp: StoreOp = StoreOp.DontCare,
-	val initialLayout: ImageLayout = ImageLayout.Undefined,
-	val finalLayout: ImageLayout
+	val initialLayout: Image.Layout = Image.Layout.Undefined,
+	val finalLayout: Image.Layout
 ) {
 	inner class Ref(
 		val index: Int,
-		val layout: ImageLayout
+		val layout: Image.Layout
 	) {
 		val attachment: Attachment get() = this@Attachment
 
@@ -313,7 +297,7 @@ data class Subpass(
 	}
 }
 
-enum class AccessFlags(override val value: Int) : IntFlags.Bit {
+enum class Access(override val value: Int) : IntFlags.Bit {
 	IndirectCommandRead(VK_ACCESS_INDIRECT_COMMAND_READ_BIT),
 	IndexRead(VK_ACCESS_INDEX_READ_BIT),
 	VertexAttributeRead(VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT),
@@ -333,26 +317,28 @@ enum class AccessFlags(override val value: Int) : IntFlags.Bit {
 	MemoryWrite(VK_ACCESS_MEMORY_WRITE_BIT)
 }
 
-enum class DependencyFlags(override val value: Int) : IntFlags.Bit {
-	ByRegion(VK_DEPENDENCY_BY_REGION_BIT)
+enum class Dependency(override val value: Int) : IntFlags.Bit {
+	ByRegion(VK_DEPENDENCY_BY_REGION_BIT),
+	ViewLocal(VK_DEPENDENCY_VIEW_LOCAL_BIT),
+	DeviceGroup(VK_DEPENDENCY_DEVICE_GROUP_BIT)
 }
 
 data class SubpassDependency(
 	val src: Part,
 	val dst: Part,
-	val dependencyFlags: IntFlags<DependencyFlags> = IntFlags(0)
+	val dependencyFlags: IntFlags<Dependency> = IntFlags(0)
 ) {
 
 	data class Part internal constructor(
 		val subpassRef: Subpass.Ref?,
 		val stageMask: IntFlags<PipelineStage>,
-		val accessMask: IntFlags<AccessFlags>
+		val accessMask: IntFlags<Access>
 	)
 }
 
 fun Subpass.Ref?.dependency(
 	stage: IntFlags<PipelineStage>,
-	access: IntFlags<AccessFlags> = IntFlags(0)
+	access: IntFlags<Access> = IntFlags(0)
 ) =
 	SubpassDependency.Part(this, stage, access)
 

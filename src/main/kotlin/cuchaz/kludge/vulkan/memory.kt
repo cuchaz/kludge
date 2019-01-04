@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2019, Cuchaz Interactive, LLC. All rights reserved.
+ * License terms are at license.txt in the project root
+ */
+
 package cuchaz.kludge.vulkan
 
 import cuchaz.kludge.tools.IntFlags
@@ -15,7 +20,7 @@ import java.nio.ByteBuffer
 class Buffer internal constructor(
 	val device: Device,
 	internal val id: Long,
-	val bytes: Long
+	val size: Long
 ) : AutoCloseable {
 
 	enum class Flags(override val value: Int) : IntFlags.Bit {
@@ -81,7 +86,7 @@ class Buffer internal constructor(
 }
 
 fun Device.buffer(
-	bytes: Long,
+	size: Long,
 	usage: IntFlags<Buffer.Usage>,
 	concurrentQueueFamilies: Set<PhysicalDevice.QueueFamily> = emptySet(),
 	flags: IntFlags<Buffer.Flags> = IntFlags(0)
@@ -90,7 +95,7 @@ fun Device.buffer(
 
 		val info = VkBufferCreateInfo.callocStack(mem)
 			.sType(VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO)
-			.size(bytes)
+			.size(size)
 			.flags(flags.value)
 			.usage(usage.value)
 		if (concurrentQueueFamilies.isEmpty()) {
@@ -103,7 +108,7 @@ fun Device.buffer(
 		val pBuf = mem.mallocLong(1)
 		vkCreateBuffer(vkDevice, info, null, pBuf)
 			.orFail("failed to create buffer")
-		return Buffer(this, pBuf.get(0), bytes)
+		return Buffer(this, pBuf.get(0), size)
 	}
 }
 
@@ -125,7 +130,7 @@ class MemoryRequirements(
 class DeviceMemory(
 	val device: Device,
 	internal val id: Long,
-	val bytes: Long,
+	val size: Long,
 	val type: MemoryType
 ) : AutoCloseable {
 
@@ -133,20 +138,17 @@ class DeviceMemory(
 		vkFreeMemory(device.vkDevice, id, null)
 	}
 
-	fun bindTo(buf: Buffer, offset: Long = 0L) =
-		device.bindBufferMemory(buf, this, offset)
+	val whollyMappable = size.toIntOrNull() != null
 
-	val whollyMappable = bytes.toIntOrNull() != null
-
-	val bytesAsInt: Int get() =
-		bytes
+	val sizeAsInt: Int get() =
+		size
 			.toIntOrNull()
 			?: throw IllegalStateException(
-				"buffer size ($bytes bytes) too large to map all at once."
+				"buffer size ($size bytes) too large to map all at once."
 				+ " Try mapping buffer slices up to ${Int.MAX_VALUE} bytes instead."
 			)
 
-	fun map(offset: Long = 0L, size: Int = bytesAsInt): ByteBuffer {
+	fun map(offset: Long = 0L, size: Int = sizeAsInt): ByteBuffer {
 		memstack { mem ->
 			val ppData = mem.mallocPointer(1)
 			val flags = 0 // reserved for future use
@@ -160,7 +162,7 @@ class DeviceMemory(
 		vkUnmapMemory(device.vkDevice, id)
 	}
 
-	inline fun <T> map(offset: Long = 0L, size: Int = bytesAsInt, block: (buf: ByteBuffer) -> T) =
+	inline fun <T> map(offset: Long = 0L, size: Int = sizeAsInt, block: (buf: ByteBuffer) -> T) =
 		try {
 			block(map(offset, size))
 		} finally {
@@ -170,11 +172,11 @@ class DeviceMemory(
 	// TODO: support flush/invalidate for mapped memory ranges?
 }
 
-fun Device.allocateMemory(bytes: Long, memType: MemoryType): DeviceMemory {
+fun Device.allocateMemory(size: Long, memType: MemoryType): DeviceMemory {
 	memstack { mem ->
 		val info = VkMemoryAllocateInfo.callocStack(mem)
 			.sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
-			.allocationSize(bytes)
+			.allocationSize(size)
 			.memoryTypeIndex(memType.index)
 		val pMem = mem.mallocLong(1)
 		vkAllocateMemory(vkDevice, info, null, pMem)
@@ -183,7 +185,7 @@ fun Device.allocateMemory(bytes: Long, memType: MemoryType): DeviceMemory {
 			see PhysicalDevice.properties.limits.maxMemoryAllocationCount
 			https://gamedev.stackexchange.com/questions/163933/why-do-gpus-have-limited-amount-of-allocations
 		 */
-		return DeviceMemory(this, pMem.get(0), bytes, memType)
+		return DeviceMemory(this, pMem.get(0), size, memType)
 	}
 }
 

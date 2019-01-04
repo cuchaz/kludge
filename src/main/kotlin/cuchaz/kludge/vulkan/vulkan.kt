@@ -5,7 +5,6 @@
 
 package cuchaz.kludge.vulkan
 
-import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK10.*
 
@@ -55,7 +54,7 @@ data class Extent2D(
 	val width: Int,
 	val height: Int
 ) {
-	internal fun toVulkan(mem: MemoryStack) = VkExtent2D.callocStack(mem).set(this)
+	fun to3D(depth: Int) = Extent3D(width, height, depth)
 }
 internal fun VkExtent2D.set(extent: Extent2D) =
 	apply {
@@ -68,9 +67,7 @@ data class Extent3D(
 	val width: Int,
 	val height: Int,
 	val depth: Int
-) {
-	internal fun toVulkan(mem: MemoryStack) = VkExtent3D.callocStack(mem).set(this)
-}
+)
 internal fun VkExtent3D.set(extent: Extent3D) =
 	apply {
 		width(extent.width)
@@ -83,7 +80,7 @@ data class Offset2D(
 	val x: Int,
 	val y: Int
 ) {
-	internal fun toVulkan(mem: MemoryStack) = VkOffset2D.callocStack(mem).set(this)
+	fun to3D(z: Int) = Offset3D(x, y, z)
 }
 internal fun VkOffset2D.set(offset: Offset2D) =
 	apply {
@@ -92,12 +89,23 @@ internal fun VkOffset2D.set(offset: Offset2D) =
 	}
 internal fun VkOffset2D.toOffset2D() = Offset2D(x(), y())
 
+data class Offset3D(
+	val x: Int,
+	val y: Int,
+	val z: Int
+)
+internal fun VkOffset3D.set(offset: Offset3D) =
+	apply {
+		x(offset.x)
+		y(offset.y)
+		z(offset.z)
+	}
+internal fun VkOffset3D.toOffset3D() = Offset3D(x(), y(), z())
+
 data class Rect2D(
 	val offset: Offset2D,
 	val extent: Extent2D
-) {
-	internal fun toVulkan(mem: MemoryStack) = VkRect2D.callocStack(mem).set(this)
-}
+)
 internal fun VkRect2D.set(rect: Rect2D) =
 	apply {
 		offset().set(rect.offset)

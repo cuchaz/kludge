@@ -399,7 +399,7 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 			features.variableMultisampleRate(),
 			features.inheritedQueries()
 		)
-		
+
 		internal fun toVulkan(mem: MemoryStack) =
 			VkPhysicalDeviceFeatures.callocStack(mem).apply {
 				robustBufferAccess(robustBufferAccess)
@@ -689,22 +689,22 @@ class Queue internal constructor (
 
 	fun submit(
 		commandBuffer: CommandBuffer,
-		waitFor: WaitInfo? = null,
-		signalTo: Semaphore? = null
+		waitFor: List<WaitInfo> = emptyList(),
+		signalTo: List<Semaphore> = emptyList()
 	) {
 		memstack { mem ->
 			val info = VkSubmitInfo.callocStack(mem)
 				.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
 				.pCommandBuffers(commandBuffer.id.toPointerBuffer(mem))
-			if (waitFor != null) {
-				info.waitSemaphoreCount(1)
-				info.pWaitSemaphores(waitFor.semaphore.id.toBuffer(mem))
-				info.pWaitDstStageMask(waitFor.dstStage.value.toBuffer(mem))
+			if (waitFor.isNotEmpty()) {
+				info.waitSemaphoreCount(waitFor.size)
+				info.pWaitSemaphores(waitFor.map { it.semaphore.id }.toBuffer(mem))
+				info.pWaitDstStageMask(waitFor.map { it.dstStage.value }.toBuffer(mem))
 			} else {
 				info.waitSemaphoreCount(0)
 			}
-			if (signalTo != null) {
-				info.pSignalSemaphores(signalTo.id.toBuffer(mem))
+			if (signalTo.isNotEmpty()) {
+				info.pSignalSemaphores(signalTo.map { it.id }.toBuffer(mem))
 			}
 			val fence = VK_NULL_HANDLE // TODO: support fences?
 			vkQueueSubmit(vkQueue, info, fence)
