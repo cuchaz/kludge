@@ -7,6 +7,7 @@ package cuchaz.kludge.vulkan
 
 import cuchaz.kludge.tools.IntFlags
 import cuchaz.kludge.tools.memstack
+import cuchaz.kludge.tools.toBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK10.*
@@ -128,6 +129,12 @@ class CommandBuffer internal constructor(
 
 	fun bind(graphicsPipeline: GraphicsPipeline) {
 		vkCmdBindPipeline(vkBuf, Subpass.PipelineBindPoint.Graphics.ordinal, graphicsPipeline.id)
+	}
+
+	fun bindVertexBuffer(buffer: Buffer, offset: Long = 0L) {
+		memstack { mem ->
+			vkCmdBindVertexBuffers(vkBuf, 0, buffer.id.toBuffer(mem), offset.toBuffer(mem))
+		}
 	}
 
 	fun draw(

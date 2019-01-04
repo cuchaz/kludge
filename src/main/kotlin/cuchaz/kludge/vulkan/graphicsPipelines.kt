@@ -28,11 +28,50 @@ class GraphicsPipeline(
 	}
 }
 
-data class VertexInput(
-	val bindingCount: Int = 0,
-	val attributesCount: Int = 0
-	// TODO: bindings and descriptions?
-)
+class VertexInput(block: VertexInput.() -> Unit = {}) {
+
+	val _bindings = ArrayList<Binding>()
+	val bindings: List<Binding> get() = _bindings
+
+	init {
+		block()
+	}
+
+	enum class Rate {
+		Vertex,
+		Instance
+	}
+
+	fun binding(stride: Int, rate: Rate = Rate.Vertex, block: Binding.() -> Unit = {}) =
+		Binding(bindings.size, stride, rate).apply {
+			_bindings.add(this)
+			block()
+		}
+
+	inner class Binding internal constructor(
+		val index: Int,
+		val stride: Int,
+		val rate: Rate
+	) {
+
+		val vertexInput: VertexInput = this@VertexInput
+		val _attributes = ArrayList<Attribute>()
+		val attributes: List<Attribute> get() = _attributes
+
+		fun attribute(location: Int, format: Image.Format, offset: Int) =
+			Attribute(location, format, offset).apply {
+				_attributes.add(this)
+			}
+
+		inner class Attribute internal constructor(
+			val location: Int,
+			val format: Image.Format,
+			val offset: Int = 0
+		) {
+			val binding: Binding = this@Binding
+		}
+	}
+}
 
 data class InputAssembly(
 	val topology: Topology,
@@ -86,43 +125,42 @@ internal fun VkViewport.toViewport() =
 	)
 
 data class RasterizationState(
+	val cullMode: IntFlags<CullMode>,
+	val frontFace: FrontFace,
 	val depthClamp: Boolean = false,
 	val discard: Boolean = false,
 	val polygonMode: PolygonMode = PolygonMode.Fill,
 	val lineWidth: Float = 1.0f,
-	val cullMode: IntFlags<CullMode> = IntFlags.of(CullMode.Back),
-	val frontFace: FrontFace = FrontFace.Counterclockwise,
 	val depthBias: DepthBias? = null
-) {
+)
 
-	enum class PolygonMode {
-		Fill,
-		Line,
-		Point
-	}
-
-	enum class CullMode(override val value: Int) : IntFlags.Bit {
-
-		Front(VK_CULL_MODE_FRONT_BIT),
-		Back(VK_CULL_MODE_BACK_BIT);
-
-		companion object {
-			val None = IntFlags<CullMode>(VK_CULL_MODE_NONE)
-			val FrontAndBck = IntFlags<CullMode>(VK_CULL_MODE_FRONT_AND_BACK)
-		}
-	}
-
-	enum class FrontFace {
-		Counterclockwise,
-		Clockwise
-	}
-
-	data class DepthBias(
-		val constantFactor: Float,
-		val clamp: Float,
-		val slopeFactor: Float
-	)
+enum class PolygonMode {
+	Fill,
+	Line,
+	Point
 }
+
+enum class CullMode(override val value: Int) : IntFlags.Bit {
+
+	Front(VK_CULL_MODE_FRONT_BIT),
+	Back(VK_CULL_MODE_BACK_BIT);
+
+	companion object {
+		val None = IntFlags<CullMode>(VK_CULL_MODE_NONE)
+		val FrontAndBck = IntFlags<CullMode>(VK_CULL_MODE_FRONT_AND_BACK)
+	}
+}
+
+enum class FrontFace {
+	Counterclockwise,
+	Clockwise
+}
+
+data class DepthBias(
+	val constantFactor: Float,
+	val clamp: Float,
+	val slopeFactor: Float
+)
 
 enum class SampleCount(override val value: Int) : IntFlags.Bit {
 	One(VK_SAMPLE_COUNT_1_BIT),
@@ -346,9 +384,9 @@ fun Device.graphicsPipeline(
 	stages: List<ShaderModule.Stage>,
 	vertexInput: VertexInput = VertexInput(),
 	inputAssembly: InputAssembly,
+	rasterizationState: RasterizationState,
 	viewports: List<Viewport>,
 	scissors: List<Rect2D>,
-	rasterizationState: RasterizationState = RasterizationState(),
 	multisampleState: MultisampleState = MultisampleState(),
 	attachments: List<Pair<Attachment.Ref,ColorBlendState.Attachment?>>,
 	colorBlend: ColorBlendState = ColorBlendState(),
@@ -372,8 +410,38 @@ fun Device.graphicsPipeline(
 		// build vertex input state
 		val pVertexInput = VkPipelineVertexInputStateCreateInfo.callocStack(mem)
 			.sType(VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
-			.pVertexBindingDescriptions(null) // TODO: support vertex data description
-			.pVertexAttributeDescriptions(null)
+			.pVertexBindingDescriptions(
+				if (vertexInput.bindings.isEmpty()) {
+					null
+				} else {
+					VkVertexInputBindingDescription.callocStack(vertexInput.bindings.size, mem).apply {
+						for (b in vertexInput.bindings) {
+							get()
+								.binding(b.index)
+								.stride(b.stride)
+								.inputRate(b.rate.ordinal)
+						}
+						flip()
+					}
+				}
+			)
+			.pVertexAttributeDescriptions(run {
+				val attrs = vertexInput.bindings.flatMap { it.attributes }
+				if (attrs.isEmpty()) {
+					null
+				} else {
+					VkVertexInputAttributeDescription.callocStack(attrs.size, mem).apply {
+						for (a in attrs) {
+							get()
+								.binding(a.binding.index)
+								.location(a.location)
+								.format(a.format.ordinal)
+								.offset(a.offset)
+						}
+						flip()
+					}
+				}
+			})
 
 		// build input assembly state
 		val pInputAssembly = VkPipelineInputAssemblyStateCreateInfo.callocStack(mem)

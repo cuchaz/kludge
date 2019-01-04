@@ -33,3 +33,7 @@ fun Long.toIntOrNull(): Int? {
 		null
 	}
 }
+
+// no idea why Kotlin defines these for integral types, but not floating point types...
+val Float.Companion.SIZE_BYTES: Int get() = 4
+val Double.Companion.SIZE_BYTES: Int get() = 8

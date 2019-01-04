@@ -127,6 +127,29 @@ fun Collection<Double>.toBuffer(mem: MemoryStack): DoubleBuffer? =
 	}
 
 
+fun ByteBuffer.putInts(vararg values: Int) {
+	for (v in values) {
+		putInt(v)
+	}
+}
+fun ByteBuffer.putLongs(vararg values: Long) {
+	for (v in values) {
+		putLong(v)
+	}
+}
+fun ByteBuffer.putFloats(vararg values: Float) {
+	for (v in values) {
+		putFloat(v)
+	}
+}
+fun ByteBuffer.putDoubles(vararg values: Double) {
+	for (v in values) {
+		putDouble(v)
+	}
+}
+
+
+
 /** builds a UUID from the first 16 bytes in the buffer */
 fun ByteBuffer.toUUID(): UUID {
 
