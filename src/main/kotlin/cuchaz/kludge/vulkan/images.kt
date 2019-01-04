@@ -38,9 +38,17 @@ class Image internal constructor(
 	}
 
 	enum class Type {
+
 		OneD,
 		TwoD,
-		ThreeD
+		ThreeD;
+
+		fun toViewType() =
+			when (this) {
+				OneD -> ViewType.OneD
+				TwoD -> ViewType.TwoD
+				ThreeD -> ViewType.ThreeD
+			}
 	}
 
 	enum class ViewType {
@@ -364,8 +372,8 @@ class Image internal constructor(
 	)
 
 	fun view(
-		viewType: ViewType,
-		format: Format,
+		viewType: ViewType = this.type.toViewType(),
+		format: Format = this.format,
 		components: Components = Components(),
 		range: SubresourceRange = SubresourceRange()
 	): View {
