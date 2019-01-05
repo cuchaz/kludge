@@ -19,6 +19,8 @@ Most likely to be useful for engineering and scientific applications, but also p
 
 Kludge is in an extremely early stage of development.
 
+The API is **highly** unstable! Expect breaking changes to happen frequently.
+
 Only the bare minimum of the Vulkan API has been exposed to support the hello world triangle demo.
 More work is needed to support applications requiring features beyond the bare minimum.
 
