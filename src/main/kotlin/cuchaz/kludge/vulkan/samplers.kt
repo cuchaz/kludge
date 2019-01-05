@@ -1,6 +1,10 @@
+/*
+ * Copyright (c) 2019, Cuchaz Interactive, LLC. All rights reserved.
+ * License terms are at license.txt in the project root
+ */
+
 package cuchaz.kludge.vulkan
 
-import cuchaz.kludge.tools.IntFlags
 import cuchaz.kludge.tools.memstack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK10.*

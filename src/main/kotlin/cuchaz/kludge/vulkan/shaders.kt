@@ -24,12 +24,17 @@ class ShaderModule(
 		vkDestroyShaderModule(device.vkDevice, id, null)
 	}
 
-	inner class Stage(
+	inner class Stage internal constructor(
 		val name: String,
 		val stage: ShaderStage
 	) {
 		val module: ShaderModule = this@ShaderModule
 	}
+
+	fun stage(
+		name: String,
+		stage: ShaderStage
+	) = Stage(name, stage)
 }
 
 

@@ -319,11 +319,6 @@ data class Subpass(
 	val preserveAttachments: List<Int> = emptyList() // TODO: hide these indices somehow?
 ) {
 
-	enum class PipelineBindPoint {
-		Graphics,
-		Compute
-	}
-
 	inner class Ref(
 		val index: Int
 	) {
@@ -333,6 +328,11 @@ data class Subpass(
 	companion object {
 		val External: Subpass.Ref? = null
 	}
+}
+
+enum class PipelineBindPoint {
+	Graphics,
+	Compute
 }
 
 enum class Access(override val value: Int) : IntFlags.Bit {
@@ -382,6 +382,7 @@ fun Subpass.Ref?.dependency(
 
 fun Device.graphicsPipeline(
 	stages: List<ShaderModule.Stage>,
+	descriptorSetLayouts: List<DescriptorSetLayout> = emptyList(),
 	vertexInput: VertexInput = VertexInput(),
 	inputAssembly: InputAssembly,
 	rasterizationState: RasterizationState,
@@ -494,7 +495,13 @@ fun Device.graphicsPipeline(
 		// build the pipeline layout
 		val pLayoutInfo = VkPipelineLayoutCreateInfo.callocStack(mem)
 			.sType(VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO)
-			.pSetLayouts(null) // TODO: support layouts?
+			.pSetLayouts(
+				if (descriptorSetLayouts.isEmpty()) {
+					null
+				} else {
+					descriptorSetLayouts.map { it.id }.toBuffer(mem)
+				}
+			)
 			.pPushConstantRanges(null) // TODO: support constant ranges?
 		val pLayout = mem.mallocLong(1)
 		vkCreatePipelineLayout(vkDevice, pLayoutInfo, null, pLayout)

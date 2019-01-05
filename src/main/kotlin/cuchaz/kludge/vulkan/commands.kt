@@ -127,13 +127,26 @@ class CommandBuffer internal constructor(
 		vkCmdEndRenderPass(vkBuf)
 	}
 
-	fun bind(graphicsPipeline: GraphicsPipeline) {
-		vkCmdBindPipeline(vkBuf, Subpass.PipelineBindPoint.Graphics.ordinal, graphicsPipeline.id)
+	fun bindPipeline(graphicsPipeline: GraphicsPipeline) {
+		vkCmdBindPipeline(vkBuf, PipelineBindPoint.Graphics.ordinal, graphicsPipeline.id)
 	}
+
+	// TODO: compute pipelines
 
 	fun bindVertexBuffer(buffer: Buffer, offset: Long = 0L) {
 		memstack { mem ->
 			vkCmdBindVertexBuffers(vkBuf, 0, buffer.id.toBuffer(mem), offset.toBuffer(mem))
+		}
+	}
+
+	fun bindDescriptorSet(
+		descriptorSet: DescriptorSet,
+		pipeline: GraphicsPipeline
+	) {
+		memstack { mem ->
+			val pOffsets = null // TODO: support offsets?
+			val pSets = descriptorSet.id.toBuffer(mem)
+			vkCmdBindDescriptorSets(vkBuf, PipelineBindPoint.Graphics.ordinal, pipeline.layoutId, 0, pSets, pOffsets)
 		}
 	}
 
@@ -145,6 +158,8 @@ class CommandBuffer internal constructor(
 	) {
 		vkCmdDraw(vkBuf, vertices, instances, firstVertex, firstInstance)
 	}
+
+	// TODO: draw indexed
 
 	fun copyBuffer(
 		src: Buffer,
