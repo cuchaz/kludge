@@ -4,8 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 
-	java
-	kotlin("jvm") version "1.3.10"
+	kotlin("jvm") version "1.3.20-eap-25"
 
 	// https://github.com/Minecrell/licenser
 	id("net.minecrell.licenser") version "0.4.1"
@@ -15,6 +14,7 @@ group = "cuchaz"
 version = "0.1"
 
 repositories {
+	maven("http://dl.bintray.com/kotlin/kotlin-eap")
 	jcenter()
 }
 
@@ -22,7 +22,8 @@ dependencies {
 
 	compile(kotlin("stdlib-jdk8"))
 
-	fun lwjgl(module: String? = null) {
+	fun lwjgl(module: String? = null, natives: Boolean = false) {
+
 		val name = "lwjgl" +
 			if (module == null) {
 				""
@@ -30,15 +31,19 @@ dependencies {
 				"-$module"
 			}
 		val lwjglVersion = "3.2.0"
+
 		compile("org.lwjgl", name, lwjglVersion)
-		for (os in listOf("linux", "macos", "windows")) {
-			compile("org.lwjgl", name, lwjglVersion, classifier = "natives-$os")
+
+		if (natives) {
+			for (os in listOf("linux", "macos", "windows")) {
+				runtimeOnly("org.lwjgl", name, lwjglVersion, classifier = "natives-$os")
+			}
 		}
 	}
-	lwjgl()
-	lwjgl("glfw")
-	lwjgl("jemalloc")
-	lwjgl("nfd")
+	lwjgl(natives=true)
+	lwjgl("glfw", natives=true)
+	lwjgl("jemalloc", natives=true)
+	lwjgl("nfd", natives=true)
 	lwjgl("vulkan")
 
 	compile("org.joml", "joml", "1.9.12")
