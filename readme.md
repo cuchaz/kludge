@@ -12,7 +12,7 @@ Most likely to be useful for engineering and scientific applications, but also p
 
 ## Demos
 
- * [Hello World Triangle](https://github.com/cuchaz/hello-kludge/blob/master/src/main/kotlin/cuchaz/hellokludge/helloworld/main.kt): A complete Vulkan demo in about 200 lines of Kotlin code.
+See the [Hello Kludge](https://github.com/cuchaz/hello-kludge) project for demos.
 
 
 ## Progress
