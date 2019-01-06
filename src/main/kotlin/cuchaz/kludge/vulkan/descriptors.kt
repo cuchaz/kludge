@@ -105,6 +105,9 @@ class DescriptorPool internal constructor(
 			return layouts.map { DescriptorSet(device, pSets.get(), this, it) }
 		}
 	}
+
+	fun allocate(layout: DescriptorSetLayout) =
+		allocate(listOf(layout))[0]
 }
 
 fun Device.descriptorPool(
@@ -141,6 +144,36 @@ class DescriptorSet(
 	val layout: DescriptorSetLayout
 ) {
 
+	inner class Address internal constructor(
+		val binding: DescriptorSetLayout.Binding,
+		val arrayElement: Int
+	) {
+		val set: DescriptorSet = this@DescriptorSet
+
+		fun write(
+			buffers: List<DescriptorSet.BufferInfo> = emptyList(),
+			images: List<DescriptorSet.ImageInfo> = emptyList()
+		) = Write(this, buffers, images)
+
+		fun copyTo(other: Address) =
+			Copy(this, other)
+	}
+
+	fun address(binding: DescriptorSetLayout.Binding, arrayElement: Int = 0) =
+		Address(binding, arrayElement)
+
+	data class Write internal constructor(
+		val dst: Address,
+		val buffers: List<BufferInfo>,
+		val images: List<ImageInfo>
+	)
+
+	data class Copy internal constructor(
+		val src: Address,
+		val dst: Address,
+		val descriptorCount: Int = 1
+	)
+
 	data class BufferInfo(
 		val buffer: Buffer,
 		val offset: Long = 0L,
@@ -152,28 +185,28 @@ class DescriptorSet(
 		val view: Image.View? = null,
 		val layout: Image.Layout? = null
 	)
+}
 
-	fun update(
-		binding: DescriptorSetLayout.Binding,
-		buffers: List<BufferInfo> = emptyList(),
-		images: List<ImageInfo> = emptyList(),
-		arrayElement: Int = 0
-	) {
-		memstack { mem ->
+fun Device.updateDescriptorSets(
+	writes: List<DescriptorSet.Write> = emptyList(),
+	copies: List<DescriptorSet.Copy> = emptyList()
+) {
+	memstack { mem ->
 
-			val writes = VkWriteDescriptorSet.callocStack(1, mem).apply {
+		val pWrites = VkWriteDescriptorSet.callocStack(writes.size, mem).apply {
+			for (w in writes) {
 				get()
 					.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
-					.dstSet(id)
-					.dstBinding(binding.binding)
-					.dstArrayElement(arrayElement)
-					.descriptorType(binding.type.ordinal)
+					.dstSet(w.dst.set.id)
+					.dstBinding(w.dst.binding.binding)
+					.dstArrayElement(w.dst.arrayElement)
+					.descriptorType(w.dst.binding.type.ordinal)
 					.pBufferInfo(
-						if (buffers.isEmpty()) {
+						if (w.buffers.isEmpty()) {
 							null
 						} else {
-							VkDescriptorBufferInfo.callocStack(buffers.size, mem).apply {
-								for (b in buffers) {
+							VkDescriptorBufferInfo.callocStack(w.buffers.size, mem).apply {
+								for (b in w.buffers) {
 									get()
 										.buffer(b.buffer.id)
 										.offset(b.offset)
@@ -184,11 +217,11 @@ class DescriptorSet(
 						}
 					)
 					.pImageInfo(
-						if (images.isEmpty()) {
+						if (w.images.isEmpty()) {
 							null
 						} else {
-							VkDescriptorImageInfo.callocStack(images.size, mem).apply {
-								for (i in images) {
+							VkDescriptorImageInfo.callocStack(w.images.size, mem).apply {
+								for (i in w.images) {
 									get()
 										.sampler(i.sampler?.id ?: VK_NULL_HANDLE)
 										.imageView(i.view?.id ?: VK_NULL_HANDLE)
@@ -199,13 +232,25 @@ class DescriptorSet(
 						}
 					)
 					.pTexelBufferView(null) // TODO: support texel buffer views?
-				flip()
 			}
-
-			// TODO: support copies?
-			val copies = null
-
-			vkUpdateDescriptorSets(device.vkDevice, writes, copies)
+			flip()
 		}
+
+		val pCopies = VkCopyDescriptorSet.callocStack(copies.size, mem).apply {
+			for (c in copies) {
+				get()
+					.sType(VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET)
+					.srcSet(c.src.set.id)
+					.srcBinding(c.src.binding.binding)
+					.srcArrayElement(c.src.arrayElement)
+					.dstSet(c.dst.set.id)
+					.dstBinding(c.dst.binding.binding)
+					.dstArrayElement(c.dst.arrayElement)
+					.descriptorCount(c.descriptorCount)
+			}
+			flip()
+		}
+
+		vkUpdateDescriptorSets(vkDevice, pWrites, pCopies)
 	}
 }

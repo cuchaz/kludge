@@ -14,17 +14,16 @@ import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK11.*
 
 
-class GraphicsPipeline(
-	val device: Device,
-	internal val layoutId: Long,
-	internal val renderPassId: Long,
-	internal val id: Long
-) : AutoCloseable {
+class GraphicsPipeline internal constructor(
+	device: Device,
+	id: Long,
+	layoutId: Long,
+	internal val renderPassId: Long
+) : AutoCloseable, Pipeline(device, PipelineBindPoint.Graphics, id, layoutId) {
 
 	override fun close() {
-		vkDestroyPipelineLayout(device.vkDevice, layoutId, null)
 		vkDestroyRenderPass(device.vkDevice, renderPassId, null)
-		vkDestroyPipeline(device.vkDevice, id, null)
+		super.close()
 	}
 }
 
@@ -629,6 +628,6 @@ fun Device.graphicsPipeline(
 		val pPipeline = mem.mallocLong(1)
 		vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, info, null, pPipeline)
 			.orFail("failed to create graphics pipeline")
-		return GraphicsPipeline(this, pLayout.get(0), pRenderPass.get(0), pPipeline.get(0))
+		return GraphicsPipeline(this, pPipeline.get(0), pLayout.get(0), pRenderPass.get(0))
 	}
 }
