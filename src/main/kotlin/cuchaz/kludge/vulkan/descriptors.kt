@@ -10,6 +10,7 @@ import cuchaz.kludge.tools.memstack
 import cuchaz.kludge.tools.toBuffer
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK10.*
+import java.util.*
 
 
 class DescriptorSetLayout internal constructor(
@@ -74,7 +75,51 @@ enum class DescriptorType {
 	StorageBuffer,
 	UniformBufferDynamic,
 	StorageBufferDynamic,
-	InputAttachment
+	InputAttachment;
+
+	class Counts() : EnumMap<DescriptorType,Int>(DescriptorType::class.java) {
+
+		constructor(types: Iterable<DescriptorType>) : this() {
+			for (type in types) {
+				increment(type)
+			}
+		}
+
+		constructor(bindings: List<DescriptorSetLayout.Binding>) : this() {
+			for (binding in bindings) {
+				increment(binding.type)
+			}
+		}
+
+		constructor(vararg counts: Pair<DescriptorType,Int>) : this() {
+			putAll(counts)
+		}
+
+		fun increment(type: DescriptorType) {
+			compute(type) { _, count -> (count ?: 0) + 1 }
+		}
+
+		operator fun times(factor: Int) =
+			Counts().apply {
+				for ((type, count) in this@Counts) {
+					put(type, count*factor)
+				}
+			}
+
+		companion object {
+
+			fun add(counts: List<Counts>) =
+				Counts().apply {
+					for (c in counts) {
+						for ((type, count) in c) {
+							compute(type) { _, totalCount -> (totalCount ?: 0) + count }
+						}
+					}
+				}
+
+			fun add(vararg counts: Counts) = add(counts.toList())
+		}
+	}
 }
 
 
@@ -112,7 +157,7 @@ class DescriptorPool internal constructor(
 
 fun Device.descriptorPool(
 	maxSets: Int,
-	sizes: Map<DescriptorType,Int>,
+	sizes: DescriptorType.Counts,
 	flags: IntFlags<DescriptorPool.Create> = IntFlags(0)
 ): DescriptorPool {
 	memstack { mem ->
