@@ -583,6 +583,35 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 				}
 		}
 	}
+
+	data class ImageFormatProperties internal constructor(
+		val maxExtent: Extent3D,
+		val maxMipLevels: Int,
+		val maxArrayLayers: Int,
+		val sampleCounts: IntFlags<SampleCount>,
+		val maxResourceSize: Long
+	)
+
+	fun getImageFormatProperties(
+		format: Image.Format,
+		type: Image.Type,
+		usage: IntFlags<Image.Usage>,
+		tiling: Image.Tiling = Image.Tiling.Linear,
+		flags: IntFlags<Image.Create> = IntFlags(0)
+	): ImageFormatProperties {
+		memstack { mem ->
+			val pProps = VkImageFormatProperties.mallocStack(mem)
+			vkGetPhysicalDeviceImageFormatProperties(vkDevice, format.ordinal, type.ordinal, tiling.ordinal, usage.value, flags.value, pProps)
+				.orFail("failed to get image format properties")
+			return ImageFormatProperties(
+				maxExtent = pProps.maxExtent().toExtent3D(),
+				maxMipLevels = pProps.maxMipLevels(),
+				maxArrayLayers = pProps.maxArrayLayers(),
+				sampleCounts = IntFlags(pProps.sampleCounts()),
+				maxResourceSize = pProps.maxResourceSize()
+			)
+		}
+	}
 }
 
 val Vulkan.physicalDevices get(): List<PhysicalDevice> {

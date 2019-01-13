@@ -380,6 +380,7 @@ class Image internal constructor(
 		memstack { mem ->
 			val info = VkImageViewCreateInfo.callocStack(mem)
 				.sType(VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO)
+				.flags(0) // reserved for future use
 				.image(id)
 				.viewType(viewType.ordinal)
 				.format(format.ordinal)
@@ -417,6 +418,38 @@ class Image internal constructor(
 			.firstOrNull(memTypeFilter)
 			?: throw NoSuchElementException("no suitable memory type")
 		)
+
+	data class Subresource(
+		val aspectMask: IntFlags<Aspect> = IntFlags.of(Aspect.Color),
+		val mipLevel: Int = 0,
+		val arrayLayer: Int = 0
+	)
+
+	data class SubresourceLayout(
+		val offset: Long,
+		val size: Long,
+		val rowPitch: Long,
+		val arrayPitch: Long,
+		val depthPitch: Long
+	)
+
+	fun getSubresourceLayout(subresource: Subresource = Subresource()): SubresourceLayout {
+		memstack { mem ->
+			val pSubresource = VkImageSubresource.callocStack(mem)
+				.aspectMask(subresource.aspectMask.value)
+				.mipLevel(subresource.mipLevel)
+				.arrayLayer(subresource.arrayLayer)
+			val pLayout = VkSubresourceLayout.mallocStack(mem)
+			vkGetImageSubresourceLayout(device.vkDevice, id, pSubresource, pLayout)
+			return SubresourceLayout(
+				pLayout.offset(),
+				pLayout.size(),
+				pLayout.rowPitch(),
+				pLayout.arrayPitch(),
+				pLayout.depthPitch()
+			)
+		}
+	}
 }
 
 fun Device.image(
