@@ -12,10 +12,12 @@ import java.lang.Math.min
 fun Int.atLeast(i: Int) = max(this, i)
 fun Int.atMost(i: Int) = min(this, i)
 fun Int.clamp(a: Int, b: Int) = this.atLeast(a).atMost(b)
+fun Int.divideUp(i: Int) = (this + i - 1)/i
 
 fun Long.atLeast(l: Long) = max(this, l)
 fun Long.atMost(l: Long) = min(this, l)
 fun Long.clamp(a: Long, b: Long) = this.atLeast(a).atMost(b)
+fun Long.divideUp(l: Long) = (this + l - 1)/l
 
 fun Float.atLeast(f: Float) = max(this, f)
 fun Float.atMost(f: Float) = min(this, f)
@@ -37,3 +39,12 @@ fun Long.toIntOrNull(): Int? {
 // no idea why Kotlin defines these for integral types, but not floating point types...
 val Float.Companion.SIZE_BYTES: Int get() = 4
 val Double.Companion.SIZE_BYTES: Int get() = 8
+
+
+fun <T> List<T>.indexOfOrNull(thing: T): Int? {
+	val index = indexOf(thing)
+	if (index == -1) {
+		return null
+	}
+	return index
+}

@@ -22,7 +22,7 @@ class Framebuffer internal constructor(
 }
 
 fun Device.framebuffer(
-	graphicsPipeline: GraphicsPipeline,
+	renderPass: RenderPass,
 	imageViews: List<Image.View>,
 	extent: Extent2D,
 	layers: Int = 1
@@ -31,7 +31,7 @@ fun Device.framebuffer(
 
 		val info = VkFramebufferCreateInfo.callocStack(mem)
 			.sType(VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO)
-			.renderPass(graphicsPipeline.renderPassId)
+			.renderPass(renderPass.id)
 			.pAttachments(imageViews.map { it.id }.toBuffer(mem))
 			.width(extent.width)
 			.height(extent.height)

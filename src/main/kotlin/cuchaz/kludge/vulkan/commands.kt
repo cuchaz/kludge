@@ -106,7 +106,7 @@ class CommandBuffer internal constructor(
 	}
 
 	fun beginRenderPass(
-		graphicsPipeline: GraphicsPipeline,
+		renderPass: RenderPass,
 		framebuffer: Framebuffer,
 		renderArea: Rect2D,
 		clearValue: ClearValue,
@@ -115,10 +115,13 @@ class CommandBuffer internal constructor(
 		memstack { mem ->
 			val info = VkRenderPassBeginInfo.callocStack(mem)
 				.sType(VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO)
-				.renderPass(graphicsPipeline.renderPassId)
+				.renderPass(renderPass.id)
 				.framebuffer(framebuffer.id)
 				.renderArea { it.set(renderArea) }
-				.pClearValues(clearValue.toBuffer(mem))
+				.pClearValues(VkClearValue.callocStack(1, mem).apply {
+					get().set(clearValue)
+					flip()
+				})
 			vkCmdBeginRenderPass(vkBuf, info, contents.ordinal)
 		}
 	}
@@ -290,6 +293,32 @@ class CommandBuffer internal constructor(
 			vkCmdPipelineBarrier(vkBuf, srcStage.value, dstStage.value, dependencyFlags.value, pMemBarriers, pBufBarriers, pImgBarriers)
 		}
 	}
+
+	fun clearImage(
+		image: Image,
+		imageLayout: Image.Layout,
+		clearColor: ClearValue.Color,
+		range: Image.SubresourceRange = Image.SubresourceRange()
+	) {
+		memstack { mem ->
+			val pClearColor = VkClearColorValue.callocStack(mem).apply { set(clearColor) }
+			val pRange = VkImageSubresourceRange.callocStack(mem).apply { set(range) }
+			vkCmdClearColorImage(vkBuf, image.id, imageLayout.value, pClearColor, pRange)
+		}
+	}
+
+	fun clearImage(
+		image: Image,
+		imageLayout: Image.Layout,
+		clearDepthStencil: ClearValue.DepthStencil,
+		range: Image.SubresourceRange = Image.SubresourceRange()
+	) {
+		memstack { mem ->
+			val pClearDepthStencil = VkClearDepthStencilValue.callocStack(mem).apply { set(clearDepthStencil) }
+			val pRange = VkImageSubresourceRange.callocStack(mem).apply { set(range) }
+			vkCmdClearDepthStencilImage(vkBuf, image.id, imageLayout.value, pClearDepthStencil, pRange)
+		}
+	}
 }
 
 
@@ -316,33 +345,35 @@ sealed class ClearValue {
 		val depth: Float = 0.0f,
 		val stencil: Int = 0
 	) : ClearValue()
-
-	internal fun toBuffer(mem: MemoryStack) =
-		VkClearValue.mallocStack(1, mem)
-			.apply {
-				get().set(this@ClearValue)
-				flip()
-			}
 }
-internal fun VkClearValue.set(value: ClearValue) =
+
+internal fun VkClearColorValue.set(value: ClearValue.Color) =
 	apply {
 		when (value) {
-			is ClearValue.Color.Float -> color().apply {
+			is ClearValue.Color.Float -> {
 				float32(0, value.r)
 				float32(1, value.g)
 				float32(2, value.b)
 				float32(3, value.a)
 			}
-			is ClearValue.Color.Int -> color().apply {
+			is ClearValue.Color.Int -> {
 				int32(0, value.r)
 				int32(1, value.g)
 				int32(2, value.b)
 				int32(3, value.a)
 			}
-			is ClearValue.DepthStencil -> depthStencil().apply {
-				depth(value.depth)
-				stencil(value.stencil)
-			}
+		}
+	}
+internal fun VkClearDepthStencilValue.set(value: ClearValue.DepthStencil) =
+	apply {
+		depth(value.depth)
+		stencil(value.stencil)
+	}
+internal fun VkClearValue.set(value: ClearValue) =
+	apply {
+		when (value) {
+			is ClearValue.Color -> color().set(value)
+			is ClearValue.DepthStencil -> depthStencil().set(value)
 		}
 	}
 internal fun VkClearValue.toClearValueColorFloat() =
