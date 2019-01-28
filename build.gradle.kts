@@ -1,4 +1,5 @@
 import net.minecrell.gradle.licenser.LicenseExtension
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 
@@ -47,6 +48,7 @@ dependencies {
 	lwjgl("vulkan")
 
 	compile("org.joml", "joml", "1.9.12")
+	compile("net.java.dev.jna:jna:5.2.0")
 
 	testImplementation("io.kotlintest", "kotlintest-runner-junit5", "3.1.11")
 }
@@ -55,7 +57,7 @@ val test by tasks.getting(Test::class) {
 	useJUnitPlatform { }
 }
 
-configure<JavaPluginConvention> {
+java {
 	sourceCompatibility = JavaVersion.VERSION_1_8
 }
 
@@ -71,7 +73,7 @@ tasks.withType<KotlinCompile> {
 	}
 }
 
-(extensions["license"] as LicenseExtension).apply {
+license {
 
 	include("**/*.kt")
 	include("**/*.java")
