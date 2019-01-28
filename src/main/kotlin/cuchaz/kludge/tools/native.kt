@@ -148,6 +148,9 @@ fun ByteBuffer.putDoubles(vararg values: Double) {
 	}
 }
 
+fun ByteBuffer.put(b: UByte) {
+	put(b.toByte())
+}
 
 
 /** builds a UUID from the first 16 bytes in the buffer */

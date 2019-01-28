@@ -79,24 +79,12 @@ enum class DescriptorType {
 
 	class Counts() : EnumMap<DescriptorType,Int>(DescriptorType::class.java) {
 
-		constructor(types: Iterable<DescriptorType>) : this() {
-			for (type in types) {
-				increment(type)
-			}
-		}
-
-		constructor(bindings: List<DescriptorSetLayout.Binding>) : this() {
-			for (binding in bindings) {
-				increment(binding.type)
-			}
-		}
-
 		constructor(vararg counts: Pair<DescriptorType,Int>) : this() {
 			putAll(counts)
 		}
 
-		fun increment(type: DescriptorType) {
-			compute(type) { _, count -> (count ?: 0) + 1 }
+		constructor(counts: List<Pair<DescriptorType,Int>>) : this() {
+			putAll(counts)
 		}
 
 		operator fun times(factor: Int) =

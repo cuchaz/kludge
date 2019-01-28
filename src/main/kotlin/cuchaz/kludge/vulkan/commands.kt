@@ -82,15 +82,23 @@ class CommandBuffer internal constructor(
 		SimultaneousUse(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
 	}
 
-	fun begin(
-		flags: IntFlags<Usage> = IntFlags(0)
-	) {
+	enum class Reset(override val value: Int) : IntFlags.Bit {
+		ReleaseResources(VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT)
+	}
+
+	fun reset(flags: IntFlags<Reset> = IntFlags(0)) {
+		vkResetCommandBuffer(vkBuf, flags.value)
+			.orFail("failed to reset command buffer")
+	}
+
+	fun begin(flags: IntFlags<Usage> = IntFlags(0)) {
 		memstack { mem ->
 			val info = VkCommandBufferBeginInfo.callocStack(mem)
 				.sType(VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
 				.flags(flags.value)
 				.pInheritanceInfo(null) // TODO: support secondary queues?
 			vkBeginCommandBuffer(vkBuf, info)
+				.orFail("failed to begin command buffer")
 		}
 
 	}
