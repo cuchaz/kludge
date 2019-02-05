@@ -1,7 +1,9 @@
 # Kludge
 
-*Kludge is a thin wrapper for [GLFW](https://www.glfw.org/) and [Vulkan](https://www.khronos.org/vulkan/)
-that presents an idiomatic [Kotlin](https://kotlinlang.org/) API focusing on ease-of-use without overly penalizing performance.*
+*Kludge is an idiomatic [Kotlin](https://kotlinlang.org/) API for
+[GLFW](https://www.glfw.org/), [Vulkan](https://www.khronos.org/vulkan/),
+and [Dear ImGUI](https://github.com/ocornut/imgui).
+Focuses on ease-of-use and high performance.*
 
 ---
 
@@ -17,17 +19,24 @@ See the [Hello Kludge](https://github.com/cuchaz/hello-kludge) project for demos
 
 ## Progress
 
-Kludge is in an extremely early stage of development.
+Kludge is in a very early stage of development.
 
 The API is **highly** unstable! Expect breaking changes to happen frequently.
 
-Only the bare minimum of the Vulkan API has been exposed to support the hello world triangle demo.
-More work is needed to support applications requiring features beyond the bare minimum.
+Only the a small surface of the underlying APIs have been exposed so far.
+Work towards exposing more underlying API features is ongoing.
 
-In the near future, Kludge will expose an idiomatic API for [Dear ImGUI](https://github.com/ocornut/imgui)
-(via [jimgui](https://github.com/ice1000/jimgui)) as well, but work on this has not yet begun.
+Dear ImGUI support is working now, with pre-built binaries provided by the
+[Kludge-ImGUI](https://github.com/cuchaz/kludge-imgui) project.
+Currently, binaries for the following platforms are included with Kludge:
 
-In the less-near future, Kluge may include a higher-level rendering engine based on its own Vulkan wrapper.
+ * Linux x86_64
+ 
+The native code is portable, so other platforms can be supported by simply building
+Kludge-ImGUI on those platforms. Contributions welcome!
+
+Other ImGUI wrappers for the JVM aready exist (like [jimgui](https://github.com/ice1000/jimgui)),
+but none of the wrappers I tried seemed to easily support the Vulkan backend for ImGUI.
 
 
 ## License
