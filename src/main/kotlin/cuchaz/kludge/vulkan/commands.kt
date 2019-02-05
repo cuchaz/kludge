@@ -49,6 +49,15 @@ class CommandPool(
 			return CommandBuffer(this, pBuffers.get(0))
 		}
 	}
+
+	enum class Reset(override val value: Int) : IntFlags.Bit {
+		ReleaseResources(VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT)
+	}
+
+	fun reset(flags: IntFlags<Reset> = IntFlags(0)) {
+		vkResetCommandPool(device.vkDevice, id, flags.value)
+			.orFail("failed to reset command pool")
+	}
 }
 
 fun Device.commandPool(

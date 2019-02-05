@@ -7,6 +7,7 @@ package cuchaz.kludge.tools
 
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
+import org.lwjgl.system.MemoryUtil
 import java.io.File
 import java.nio.*
 import java.nio.channels.FileChannel
@@ -36,6 +37,9 @@ fun Collection<String>.toStringPointerBuffer(mem: MemoryStack): PointerBuffer? =
 			flip()
 		}
 	}
+
+fun Boolean.toInt() = if (this) 1 else 0
+fun Int.toBoolean() = this == 1
 
 fun IntBuffer.toList(size: Int) = (0 until size).map { get(it) }
 fun LongBuffer.toList(size: Int) = (0 until size).map { get(it) }
@@ -182,6 +186,35 @@ fun ByteBuffer.toUUID(): UUID {
 			or (next())
 	)
 }
+
+
+class Ref<T:Any>(var value: T)
+
+inline fun <reified T:Any> Ref<T>.toBuf(mem: MemoryStack): Buffer {
+	val value = this.value
+	return when (T::class) {
+		Int::class -> mem.ints(value as Int)
+		Boolean::class -> mem.ints((value as Boolean).toInt())
+		else -> throw IllegalArgumentException("unsupported reference type: ${T::class}")
+	}
+}
+
+inline fun <reified T:Any> Ref<T>.fromBuf(buf: Buffer?) {
+	if (buf != null) {
+		value = when (T::class) {
+			Int::class -> (buf as IntBuffer).get(0) as T
+			Boolean::class -> (buf as IntBuffer).get(0).toBoolean() as T
+			else -> throw IllegalArgumentException("unsupported reference type: ${T::class}")
+		}
+	}
+}
+
+val Buffer?.address get() =
+	if (this != null) {
+		MemoryUtil.memAddress0(this)
+	} else {
+		0
+	}
 
 
 inline class IntFlags<T:IntFlags.Bit>(val value: Int) {
