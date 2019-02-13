@@ -34,7 +34,20 @@ object Imgui : AutoCloseable {
 
 		external fun igBegin(name: String, open: Long, flags: Int): Boolean
 		external fun igEnd()
+
+		external fun igSetNextWindowPos(pos: Vec2.ByVal, cond: Int, pivot: Vec2.ByVal)
 		external fun igSetNextWindowSize(size: Vec2.ByVal, cond: Int)
+		// TODO: igSetNextWindowSizeConstraints?
+		external fun igSetNextWindowContentSize(size: Vec2.ByVal)
+		external fun igSetNextWindowCollapsed(collapsed: Boolean, cond: Int)
+		external fun igSetNextWindowFocus()
+		external fun igSetNextWindowBgAlpha(alpha: Float)
+
+		external fun igSetWindowFontScale(scale: Float)
+		external fun igSetWindowPosStr(name: String, pos: Vec2.ByVal, cond: Int)
+		external fun igSetWindowSizeStr(name: String, size: Vec2.ByVal, cond: Int)
+		external fun igSetWindowCollapsedStr(name: String, collapsed: Boolean, cond: Int)
+		external fun igSetWindowFocusStr(name: String)
 
 		external fun igShowDemoWindow(open: Long)
 		external fun igShowAboutWindow(open: Long)
@@ -47,7 +60,29 @@ object Imgui : AutoCloseable {
 		external fun igSmallButton(label: String): Boolean
 		external fun igImage(user_texture_id: Long, size: Vec2.ByVal, uv0: Vec2.ByVal, uv1: Vec2.ByVal, tint_col: Vec4.ByVal, border_col: Vec4.ByVal)
 
+		external fun igSeparator()
 		external fun igSameLine(pos: Float, spacing: Float)
+		external fun igNewLine()
+		external fun igSpacing()
+		external fun igDummy(size: Vec2.ByVal)
+		external fun igIndent(indent_w: Float)
+		external fun igUnindent(indent_w: Float)
+		external fun igBeginGroup()
+		external fun igEndGroup()
+		external fun igGetCursorPos(): Vec2.ByVal
+		external fun igGetCursorPosX(): Float
+		external fun igGetCursorPosY(): Float
+		external fun igSetCursorPos(local_pos: Vec2.ByVal)
+		external fun igSetCursorPosX(local_x: Float)
+		external fun igSetCursorPosY(local_y: Float)
+		external fun igGetCursorStartPos(): Vec2.ByVal
+		external fun igGetCursorScreenPos(): Vec2.ByVal
+		external fun igSetCursorScreenPos(pos: Vec2.ByVal)
+		external fun igAlignTextToFramePadding()
+		external fun igGetTextLineHeight(): Float
+		external fun igGetTextLineHeightWithSpacing(): Float
+		external fun igGetFrameHeight(): Float
+		external fun igGetFrameHeightWithSpacing(): Float
 
 		external fun igGetIO(): Long
 
@@ -88,7 +123,16 @@ object Imgui : AutoCloseable {
 			@JvmField var x: Float,
 			@JvmField var y: Float
 		) : Structure() {
-			class ByVal(x: Float = 0f, y: Float = 0f) : Vec2(x, y), Structure.ByValue
+
+			class ByVal(x: Float = 0f, y: Float = 0f) : Vec2(x, y), Structure.ByValue {
+
+				constructor(pos: Offset2D) : this(pos.x.toFloat(), pos.y.toFloat())
+				fun toOffset() = Offset2D(x.toInt(), y.toInt())
+
+				constructor(size: Extent2D) : this(size.width.toFloat(), size.height.toFloat())
+				fun toExtent() = Extent2D(x.toInt(), y.toInt())
+			}
+
 			class ByRef(x: Float = 0f, y: Float = 0f) : Vec2(x, y), Structure.ByReference
 		}
 
@@ -99,7 +143,13 @@ object Imgui : AutoCloseable {
 			@JvmField var z: Float,
 			@JvmField var w: Float
 		) : Structure() {
-			class ByVal(x: Float = 0f, y: Float = 0f, z: Float = 0f, w: Float = 0f) : Vec4(x, y, z, w), Structure.ByValue
+
+			class ByVal(x: Float = 0f, y: Float = 0f, z: Float = 0f, w: Float = 0f) : Vec4(x, y, z, w), Structure.ByValue {
+
+				constructor(color: ColorRGBA) : this(color.rf, color.gf, color.bf, color.af)
+				fun toColorRGBA() = ColorRGBA.Float(x, y, z, w)
+			}
+
 			class ByRef(x: Float = 0f, y: Float = 0f, z: Float = 0f, w: Float = 0f) : Vec4(x, y, z, w), Structure.ByReference
 		}
 	}
