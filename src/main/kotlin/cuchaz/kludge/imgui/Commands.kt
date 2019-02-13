@@ -7,6 +7,8 @@ package cuchaz.kludge.imgui
 
 import cuchaz.kludge.tools.*
 import cuchaz.kludge.imgui.Imgui.native.Vec2
+import cuchaz.kludge.imgui.Imgui.native.Vec4
+import cuchaz.kludge.vulkan.*
 
 
 class Commands internal constructor() {
@@ -127,5 +129,42 @@ class Commands internal constructor() {
 
 	fun sameLine(pos: Float = 0f, spacing: Float = -1f) {
 		n.igSameLine(pos, spacing)
+	}
+
+	fun image(
+		image: Imgui.ImageDescriptor,
+		sizex: Float, sizey: Float,
+		uv0x: Float = 0f, uv0y: Float = 0f,
+		uv1x: Float = 1f, uv1y: Float = 1f,
+		tintr: Float = 1f, tintg: Float = 1f, tintb: Float = 1f, tinta: Float = 1f,
+		borderr: Float = 0f, borderg: Float = 0f, borderb: Float = 0f, bordera: Float = 0f
+	) {
+		n.igImage(
+			image.descriptorSet.id,
+			Vec2.ByVal(sizex, sizey),
+			Vec2.ByVal(uv0x, uv0y),
+			Vec2.ByVal(uv1x, uv1y),
+			Vec4.ByVal(tintr, tintg, tintb, tinta),
+			Vec4.ByVal(borderr, borderg, borderb, bordera)
+		)
+	}
+
+	fun image(
+		image: Imgui.ImageDescriptor,
+		size: Extent2D,
+		region: Rect2D = Rect2D(Offset2D(0, 0), size),
+		tintColor: ColorRGBA = ColorRGBA.Float(1f, 1f, 1f, 1f),
+		borderColor: ColorRGBA = ColorRGBA.Float(0f, 0f, 0f, 0f)
+	) {
+		image(
+			image,
+			size.width.toFloat(), size.height.toFloat(),
+			region.offset.x.toFloat()/image.extent.width.toFloat(),
+			region.offset.y.toFloat()/image.extent.height.toFloat(),
+			(region.offset.x + region.extent.width).toFloat()/image.extent.width.toFloat(),
+			(region.offset.y + region.extent.height).toFloat()/image.extent.height.toFloat(),
+			tintColor.rf, tintColor.gf, tintColor.bf, tintColor.af,
+			borderColor.rf, borderColor.gf, borderColor.bf, borderColor.af
+		)
 	}
 }

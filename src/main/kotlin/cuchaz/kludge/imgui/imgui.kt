@@ -45,6 +45,7 @@ object Imgui : AutoCloseable {
 		external fun igCheckbox(label: String, v: Long): Boolean
 		external fun igButton(label: String, size: Vec2.ByVal): Boolean
 		external fun igSmallButton(label: String): Boolean
+		external fun igImage(user_texture_id: Long, size: Vec2.ByVal, uv0: Vec2.ByVal, uv1: Vec2.ByVal, tint_col: Vec4.ByVal, border_col: Vec4.ByVal)
 
 		external fun igSameLine(pos: Float, spacing: Float)
 
@@ -87,12 +88,19 @@ object Imgui : AutoCloseable {
 			@JvmField var x: Float,
 			@JvmField var y: Float
 		) : Structure() {
-
 			class ByVal(x: Float = 0f, y: Float = 0f) : Vec2(x, y), Structure.ByValue
 			class ByRef(x: Float = 0f, y: Float = 0f) : Vec2(x, y), Structure.ByReference
+		}
 
-			//class ByValue(x: Float, y: Float) : Vec2(x, y), Structure.ByValue
-			//class ByRef(x: Float, y: Float) : Vec2(x, y), Structure.ByReference
+		@Structure.FieldOrder("x", "y", "z", "w")
+		sealed class Vec4(
+			@JvmField var x: Float,
+			@JvmField var y: Float,
+			@JvmField var z: Float,
+			@JvmField var w: Float
+		) : Structure() {
+			class ByVal(x: Float = 0f, y: Float = 0f, z: Float = 0f, w: Float = 0f) : Vec4(x, y, z, w), Structure.ByValue
+			class ByRef(x: Float = 0f, y: Float = 0f, z: Float = 0f, w: Float = 0f) : Vec4(x, y, z, w), Structure.ByReference
 		}
 	}
 
@@ -122,7 +130,8 @@ object Imgui : AutoCloseable {
 	private val state: State get() = stateOrNull ?: throw NoSuchElementException("call init() first")
 
 	private class State(
-		val queue: Queue
+		val queue: Queue,
+		val descriptorPool: DescriptorPool
 	) : AutoCloseable {
 
 		val autoCloser = AutoCloser()
@@ -157,7 +166,7 @@ object Imgui : AutoCloseable {
 		)
 
 		// init kotlin side
-		stateOrNull = State(queue)
+		stateOrNull = State(queue, descriptorPool)
 	}
 
 	override fun close() {
@@ -192,6 +201,45 @@ object Imgui : AutoCloseable {
 		if (drawData != 0L) {
 			native.ImGui_ImplVulkan_RenderDrawData(drawData, buf.id)
 		}
+	}
+
+	class ImageDescriptor(
+		internal val layout: DescriptorSetLayout,
+		internal val descriptorSet: DescriptorSet,
+		val extent: Extent3D
+	) : AutoCloseable {
+
+		override fun close() {
+			layout.close()
+		}
+	}
+
+	fun imageDescriptor(view: Image.View, sampler: Sampler): ImageDescriptor = state.run {
+
+		val binding = DescriptorSetLayout.Binding(
+			binding = 0,
+			type = DescriptorType.CombinedImageSampler,
+			stages = IntFlags.of(ShaderStage.Fragment)
+		)
+
+		val descriptorSetLayout = device.descriptorSetLayout(listOf(binding))
+		val descriptorSet = descriptorPool.allocate(listOf(descriptorSetLayout))[0]
+
+		device.updateDescriptorSets(
+			writes = listOf(
+				descriptorSet.address(binding).write(
+					images = listOf(
+						DescriptorSet.ImageInfo(
+							sampler = sampler,
+							view = view,
+							layout = Image.Layout.ShaderReadOnlyOptimal
+						)
+					)
+				)
+			)
+		)
+
+		return ImageDescriptor(descriptorSetLayout, descriptorSet, view.image.extent)
 	}
 
 	object io {

@@ -87,6 +87,10 @@ enum class DescriptorType {
 			putAll(counts)
 		}
 
+		fun add(type: DescriptorType, count: Int) {
+			compute(type) { _, totalCount -> (totalCount ?: 0) + count }
+		}
+
 		operator fun times(factor: Int) =
 			Counts().apply {
 				for ((type, count) in this@Counts) {
@@ -100,12 +104,19 @@ enum class DescriptorType {
 				Counts().apply {
 					for (c in counts) {
 						for ((type, count) in c) {
-							compute(type) { _, totalCount -> (totalCount ?: 0) + count }
+							add(type, count)
 						}
 					}
 				}
 
 			fun add(vararg counts: Counts) = add(counts.toList())
+
+			fun fromBindings(bindings: Iterable<DescriptorSetLayout.Binding>) =
+				Counts().apply {
+					for (binding in bindings) {
+						add(binding.type, binding.count)
+					}
+				}
 		}
 	}
 }

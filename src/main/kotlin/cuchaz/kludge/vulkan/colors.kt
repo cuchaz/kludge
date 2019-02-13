@@ -35,7 +35,7 @@ sealed class ColorRGBA {
 		val r: kotlin.Int = 0,
 		val g: kotlin.Int = 0,
 		val b: kotlin.Int = 0,
-		val a: kotlin.Int = 0
+		val a: kotlin.Int = 255
 	) : ColorRGBA() {
 
 		constructor(hex: UInt) : this(

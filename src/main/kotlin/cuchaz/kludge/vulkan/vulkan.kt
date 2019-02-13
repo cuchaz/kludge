@@ -67,7 +67,9 @@ data class Extent3D(
 	val width: Int,
 	val height: Int,
 	val depth: Int
-)
+) {
+	fun to2D() = Extent2D(width, height)
+}
 internal fun VkExtent3D.set(extent: Extent3D) =
 	apply {
 		width(extent.width)

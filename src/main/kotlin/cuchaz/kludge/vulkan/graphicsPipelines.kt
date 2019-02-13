@@ -16,7 +16,8 @@ import org.lwjgl.vulkan.VK11.*
 class GraphicsPipeline internal constructor(
 	device: Device,
 	id: Long,
-	layoutId: Long
+	layoutId: Long,
+	val vertexInput: VertexInput
 ) : AutoCloseable, Pipeline(device, PipelineBindPoint.Graphics, id, layoutId)
 
 class VertexInput(block: VertexInput.() -> Unit = {}) {
@@ -38,6 +39,8 @@ class VertexInput(block: VertexInput.() -> Unit = {}) {
 			_bindings.add(this)
 			block()
 		}
+
+	val size: Long get() = bindings.map { it.stride.toLong() }.sum()
 
 	inner class Binding internal constructor(
 		val index: Int,
@@ -441,6 +444,6 @@ fun Device.graphicsPipeline(
 		val pPipeline = mem.mallocLong(1)
 		vkCreateGraphicsPipelines(vkDevice, VK_NULL_HANDLE, info, null, pPipeline)
 			.orFail("failed to create graphics pipeline")
-		return GraphicsPipeline(this, pPipeline.get(0), pLayout.get(0))
+		return GraphicsPipeline(this, pPipeline.get(0), pLayout.get(0), vertexInput)
 	}
 }
