@@ -126,7 +126,7 @@ class CommandBuffer internal constructor(
 		renderPass: RenderPass,
 		framebuffer: Framebuffer,
 		renderArea: Rect2D,
-		clearValue: ClearValue,
+		clearValues: Map<Attachment,ClearValue?>,
 		contents: Contents = Contents.Inline
 	) {
 		memstack { mem ->
@@ -135,8 +135,11 @@ class CommandBuffer internal constructor(
 				.renderPass(renderPass.id)
 				.framebuffer(framebuffer.id)
 				.renderArea { it.set(renderArea) }
-				.pClearValues(VkClearValue.callocStack(1, mem).apply {
-					get().set(clearValue)
+				.pClearValues(VkClearValue.callocStack(renderPass.attachments.size, mem).apply {
+					for (attachment in renderPass.attachments) {
+						val out = get()
+						clearValues[attachment]?.let { out.set(it) }
+					}
 					flip()
 				})
 			vkCmdBeginRenderPass(vkBuf, info, contents.ordinal)
