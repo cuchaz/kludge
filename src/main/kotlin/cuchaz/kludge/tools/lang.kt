@@ -40,6 +40,9 @@ fun Long.toIntOrNull(): Int? {
 val Float.Companion.SIZE_BYTES: Int get() = 4
 val Double.Companion.SIZE_BYTES: Int get() = 8
 
+fun Double.sqrt() = Math.sqrt(this)
+fun Float.sqrt() = toDouble().sqrt().toFloat()
+
 
 fun <T> List<T>.indexOfOrNull(thing: T): Int? {
 	val index = indexOf(thing)

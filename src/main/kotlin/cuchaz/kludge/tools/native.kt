@@ -24,6 +24,16 @@ inline fun <R> memstack(block: (MemoryStack) -> R): R {
 
 fun String.toASCII(mem: MemoryStack): ByteBuffer = mem.ASCII(this)
 
+fun ByteArray.toUTF8(): String {
+	// String constructor won't check for null terminators,
+	// so find the null (if any) before calling the String constructor
+	var len = this.indexOfFirst { it == 0.toByte() }
+	if (len < 0) {
+		len = size
+	}
+	return String(this, 0, len, Charsets.UTF_8)
+}
+
 fun PointerBuffer.toStrings() = (0 until capacity()).map { getStringASCII() }
 
 fun Collection<String>.toStringPointerBuffer(mem: MemoryStack): PointerBuffer? =
@@ -188,7 +198,16 @@ fun ByteBuffer.toUUID(): UUID {
 }
 
 
-class Ref<T:Any>(var value: T)
+interface Ref<T:Any> {
+
+	var value: T
+
+	companion object {
+		fun <T:Any> of(value: T) = object : Ref<T> {
+			override var value: T = value
+		}
+	}
+}
 
 inline fun <reified T:Any> Ref<T>.toBuf(mem: MemoryStack): Buffer {
 	val value = this.value
@@ -201,10 +220,13 @@ inline fun <reified T:Any> Ref<T>.toBuf(mem: MemoryStack): Buffer {
 
 inline fun <reified T:Any> Ref<T>.fromBuf(buf: Buffer?) {
 	if (buf != null) {
-		value = when (T::class) {
+		val newValue = when (T::class) {
 			Int::class -> (buf as IntBuffer).get(0) as T
 			Boolean::class -> (buf as IntBuffer).get(0).toBoolean() as T
 			else -> throw IllegalArgumentException("unsupported reference type: ${T::class}")
+		}
+		if (value != newValue) {
+			value = newValue
 		}
 	}
 }
@@ -262,6 +284,54 @@ inline fun <reified T:IntFlags.Bit> IntFlags<T>.toFlagsString(): String =
 		.filter { has(it) }
 		.joinToString(",")
 		.let { "[$it]" }
+
+
+inline class LongFlags<T:LongFlags.Bit>(val value: Long) {
+
+	companion object {
+
+		fun <T:Bit> of(vararg bits: T): LongFlags<T> {
+			var flags = LongFlags<T>(0)
+			for (bit in bits) {
+				flags = flags.set(bit)
+			}
+			return flags
+		}
+
+		fun <T:Bit> of(bits: Iterable<T>): LongFlags<T> {
+			var flags = LongFlags<T>(0)
+			for (bit in bits) {
+				flags = flags.set(bit)
+			}
+			return flags
+		}
+	}
+
+	interface Bit {
+		val value: Long
+	}
+
+	fun has(bit: Bit) = (value and bit.value) != 0L
+	fun hasAny(other: LongFlags<T>) = (value and other.value) != 0L
+	fun hasAll(other: LongFlags<T>) = (value and other.value) == other.value
+
+	fun set(bit: Bit) = LongFlags<T>(value or bit.value)
+	fun setAll(other: LongFlags<T>) = LongFlags<T>(value or other.value)
+
+	fun unset(bit: Bit) = LongFlags<T>(value and bit.value.inv())
+	fun unsetAll(other: LongFlags<T>) = LongFlags<T>(value and other.value.inv())
+
+	fun set(bit: Bit, value: Boolean) = if (value) set(bit) else unset(bit)
+}
+
+// NOTE: need to inline this with reified T to get the enum constants
+// so, can't override the actual LongFlags.toString()
+inline fun <reified T:LongFlags.Bit> LongFlags<T>.toFlagsString(): String =
+	T::class.java.enumConstants
+		.filter { has(it) }
+		.joinToString(",")
+		.let { "[$it]" }
+
 
 fun Path.toByteBuffer(): ByteBuffer =
 	FileChannel.open(this).map(FileChannel.MapMode.READ_ONLY, 0, Files.size(this))

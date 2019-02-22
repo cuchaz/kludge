@@ -18,19 +18,24 @@ object Imgui : AutoCloseable {
 
 	internal object native {
 
-		external fun igGetVersion(): String
-
 		external fun igCreateContext(fontAtlasId: Long): Long
 		external fun igDestroyContext(id: Long)
 		external fun igGetCurrentContext(): Long
 
-		external fun igStyleColorsDark(styleId: Long)
-		external fun igStyleColorsClassic(styleId: Long)
-		external fun igStyleColorsLight(styleId: Long)
-
+		external fun igGetIO(): Long
 		external fun igNewFrame()
 		external fun igRender()
 		external fun igGetDrawData(): Long
+
+		external fun igShowDemoWindow(open: Long)
+		external fun igShowAboutWindow(open: Long)
+		external fun igShowMetricsWindow(open: Long)
+		external fun igShowUserGuide()
+		external fun igGetVersion(): String
+
+		external fun igStyleColorsDark(styleId: Long)
+		external fun igStyleColorsClassic(styleId: Long)
+		external fun igStyleColorsLight(styleId: Long)
 
 		external fun igBegin(name: String, open: Long, flags: Int): Boolean
 		external fun igEnd()
@@ -42,23 +47,11 @@ object Imgui : AutoCloseable {
 		external fun igSetNextWindowCollapsed(collapsed: Boolean, cond: Int)
 		external fun igSetNextWindowFocus()
 		external fun igSetNextWindowBgAlpha(alpha: Float)
-
 		external fun igSetWindowFontScale(scale: Float)
 		external fun igSetWindowPosStr(name: String, pos: Vec2.ByVal, cond: Int)
 		external fun igSetWindowSizeStr(name: String, size: Vec2.ByVal, cond: Int)
 		external fun igSetWindowCollapsedStr(name: String, collapsed: Boolean, cond: Int)
 		external fun igSetWindowFocusStr(name: String)
-
-		external fun igShowDemoWindow(open: Long)
-		external fun igShowAboutWindow(open: Long)
-		external fun igShowMetricsWindow(open: Long)
-		external fun igShowUserGuide()
-
-		external fun igText(fmt: String)
-		external fun igCheckbox(label: String, v: Long): Boolean
-		external fun igButton(label: String, size: Vec2.ByVal): Boolean
-		external fun igSmallButton(label: String): Boolean
-		external fun igImage(user_texture_id: Long, size: Vec2.ByVal, uv0: Vec2.ByVal, uv1: Vec2.ByVal, tint_col: Vec4.ByVal, border_col: Vec4.ByVal)
 
 		external fun igSeparator()
 		external fun igSameLine(pos: Float, spacing: Float)
@@ -84,7 +77,23 @@ object Imgui : AutoCloseable {
 		external fun igGetFrameHeight(): Float
 		external fun igGetFrameHeightWithSpacing(): Float
 
-		external fun igGetIO(): Long
+		external fun igText(fmt: String)
+
+		external fun igButton(label: String, size: Vec2.ByVal): Boolean
+		external fun igSmallButton(label: String): Boolean
+		external fun igImage(user_texture_id: Long, size: Vec2.ByVal, uv0: Vec2.ByVal, uv1: Vec2.ByVal, tint_col: Vec4.ByVal, border_col: Vec4.ByVal)
+		external fun igCheckbox(label: String, v: Long): Boolean
+
+		external fun igBeginCombo(label: String, preview_value: String?, flags: Int): Boolean
+		external fun igEndCombo()
+
+		external fun igSliderInt(label: String, v: Long, v_min: Int, v_max: Int, format: String): Boolean
+
+		external fun igSelectable(label: String, selected: Boolean, flags: Int, size: Vec2.ByVal): Boolean
+		external fun igSelectable(label: String, p_selected: Long, flags: Int, size: Vec2.ByVal): Boolean
+
+		external fun igListBoxHeaderInt(label: String, items_count: Int, height_in_items: Int): Boolean
+		external fun igListBoxFooter()
 
 		external fun ImFontAtlas_ImFontAtlas(): Long
 		external fun ImFontAtlas_destroy(id: Long)

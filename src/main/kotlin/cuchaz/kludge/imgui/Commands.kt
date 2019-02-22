@@ -228,4 +228,99 @@ class Commands internal constructor() {
 		Vec4.ByVal(tintColor),
 		Vec4.ByVal(borderColor)
 	)
+
+	enum class ComboFlags(override val value: Int) : IntFlags.Bit {
+		PopupAlignLeft(1 shl 0),
+		HeightSmall(1 shl 1),
+		HeightRegular(1 shl 2),
+		HeightLarge(1 shl 3),
+		HeightLargest(1 shl 4),
+		NoArrowButton(1 shl 5),
+		NoPreview(1 shl 6)
+	}
+
+	fun beginCombo(
+		label: String,
+		preview: String? = null,
+		flags: IntFlags<ComboFlags> = IntFlags(0)
+	) = n.igBeginCombo(label, preview, flags.value)
+
+	fun endCombo() = n.igEndCombo()
+
+	fun sliderInt(
+		label: String,
+		value: Ref<Int>,
+		min: Int,
+		max: Int,
+		format: String = "%d"
+	): Boolean {
+		memstack { mem ->
+			val pVal = value.toBuf(mem)
+			return n.igSliderInt(label, pVal.address, min, max, format)
+				.also {
+					value.fromBuf(pVal)
+				}
+		}
+	}
+
+	enum class SelectableFlags(override val value: Int): IntFlags.Bit {
+		DontClosePopups(1 shl 0),
+		SpanAllColumns(1 shl 1),
+		AllowDoubleClick(1 shl 2),
+		Disabled(1 shl 3)
+	}
+
+	fun selectable(
+		label: String,
+		isSelected: Boolean,
+		flags: IntFlags<SelectableFlags> = IntFlags(0),
+		width: Float = 0f,
+		height: Float = 0f
+	) = n.igSelectable(label, isSelected, flags.value, Vec2.ByVal(width, height))
+
+	fun selectable(
+		label: String,
+		isSelected: Boolean,
+		flags: IntFlags<SelectableFlags> = IntFlags(0),
+		size: Extent2D = Extent2D(0, 0)
+	) = n.igSelectable(label, isSelected, flags.value, Vec2.ByVal(size))
+
+	fun selectable(
+		label: String,
+		isSelected: Ref<Boolean>,
+		flags: IntFlags<SelectableFlags> = IntFlags(0),
+		width: Float = 0f,
+		height: Float = 0f
+	): Boolean {
+		memstack { mem ->
+			val pSelected = isSelected.toBuf(mem)
+			return n.igSelectable(label, pSelected.address, flags.value, Vec2.ByVal(width, height))
+				.also {
+					isSelected.fromBuf(pSelected)
+				}
+		}
+	}
+
+	fun selectable(
+		label: String,
+		isSelected: Ref<Boolean>,
+		flags: IntFlags<SelectableFlags> = IntFlags(0),
+		size: Extent2D = Extent2D(0, 0)
+	): Boolean {
+		memstack { mem ->
+			val pSelected = isSelected.toBuf(mem)
+			return n.igSelectable(label, pSelected.address, flags.value, Vec2.ByVal(size))
+				.also {
+					isSelected.fromBuf(pSelected)
+				}
+		}
+	}
+
+	fun listBoxHeader(
+		label: String,
+		itemsCount: Int,
+		heightInItems: Int = -1
+	) = n.igListBoxHeaderInt(label, itemsCount, heightInItems)
+
+	fun listBoxFooter() = n.igListBoxFooter()
 }
