@@ -34,6 +34,16 @@ fun ByteArray.toUTF8(): String {
 	return String(this, 0, len, Charsets.UTF_8)
 }
 
+fun ByteArray.toASCII(): String {
+	// String constructor won't check for null terminators,
+	// so find the null (if any) before calling the String constructor
+	var len = this.indexOfFirst { it == 0.toByte() }
+	if (len < 0) {
+		len = size
+	}
+	return String(this, 0, len, Charsets.US_ASCII)
+}
+
 fun PointerBuffer.toStrings() = (0 until capacity()).map { getStringASCII() }
 
 fun Collection<String>.toStringPointerBuffer(mem: MemoryStack): PointerBuffer? =

@@ -67,6 +67,8 @@ sealed class ColorRGBA {
 	abstract val gf: kotlin.Float
 	abstract val bf: kotlin.Float
 	abstract val af: kotlin.Float
+
+	fun toClearColor(): ClearValue.Color = ClearValue.Color.Float(rf, gf, bf, af)
 }
 
 
