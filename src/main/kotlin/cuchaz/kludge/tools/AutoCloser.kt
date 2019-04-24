@@ -29,8 +29,6 @@ class AutoCloser : AutoCloseable {
 	}
 }
 
-fun <T:AutoCloseable> T.autoClose(closer: AutoCloser): T = closer.add(this)
-
 interface WithAutoCloser {
 	fun <T:AutoCloseable> T.autoClose(): T
 	fun autoClose(block: () -> Unit)

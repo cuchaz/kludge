@@ -12,9 +12,9 @@ import org.lwjgl.system.MemoryUtil.*
 
 
 class Window(
-	val resizable: Boolean = true,
-	title: String = "Windnow",
-	size: Size = Size(300, 300)
+	title: String = "Window",
+	size: Size = Size(300, 300),
+	val resizable: Boolean = true
 ): AutoCloseable {
 
 	internal val id: Long
@@ -33,7 +33,9 @@ class Window(
 		// TODO: listen to keyboard, mouse
 	}
 
-	fun shouldClose() = glfwWindowShouldClose(id)
+	var shouldClose: Boolean
+		get() = glfwWindowShouldClose(id)
+		set(value) { glfwSetWindowShouldClose(id, value) }
 
 	override fun close() {
 		glfwFreeCallbacks(id)

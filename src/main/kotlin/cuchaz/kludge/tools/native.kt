@@ -14,6 +14,9 @@ import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.experimental.and
+import kotlin.experimental.inv
+import kotlin.experimental.or
 
 
 inline fun <R> memstack(block: (MemoryStack) -> R): R {
@@ -247,6 +250,53 @@ val Buffer?.address get() =
 	} else {
 		0
 	}
+
+
+inline class ShortFlags<T:ShortFlags.Bit>(val value: Short) {
+
+	companion object {
+
+		fun <T:Bit> of(vararg bits: T): ShortFlags<T> {
+			var flags = ShortFlags<T>(0)
+			for (bit in bits) {
+				flags = flags.set(bit)
+			}
+			return flags
+		}
+
+		fun <T:Bit> of(bits: Iterable<T>): ShortFlags<T> {
+			var flags = ShortFlags<T>(0)
+			for (bit in bits) {
+				flags = flags.set(bit)
+			}
+			return flags
+		}
+	}
+
+	interface Bit {
+		val value: Short
+	}
+
+	fun has(bit: Bit) = (value and bit.value) != 0.toShort()
+	fun hasAny(other: ShortFlags<T>) = (value and other.value) != 0.toShort()
+	fun hasAll(other: ShortFlags<T>) = (value and other.value) == other.value
+
+	fun set(bit: Bit) = ShortFlags<T>(value or bit.value)
+	fun setAll(other: ShortFlags<T>) = ShortFlags<T>(value or other.value)
+
+	fun unset(bit: Bit) = ShortFlags<T>(value and bit.value.inv())
+	fun unsetAll(other: ShortFlags<T>) = ShortFlags<T>(value and other.value.inv())
+
+	fun set(bit: Bit, value: Boolean) = if (value) set(bit) else unset(bit)
+}
+
+// NOTE: need to inline this with reified T to get the enum constants
+// so, can't override the actual ShortFlags.toString()
+inline fun <reified T:ShortFlags.Bit> ShortFlags<T>.toFlagsString(): String =
+	T::class.java.enumConstants
+		.filter { has(it) }
+		.joinToString(",")
+		.let { "[$it]" }
 
 
 inline class IntFlags<T:IntFlags.Bit>(val value: Int) {
