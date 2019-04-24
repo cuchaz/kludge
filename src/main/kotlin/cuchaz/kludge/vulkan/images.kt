@@ -393,11 +393,11 @@ class Image internal constructor(
 		}
 	}
 
-	fun bindTo(mem: DeviceMemory, offset: Long = 0L) =
+	fun bindTo(mem: MemoryAllocation, offset: Long = 0L) =
 		device.bindImageMemory(this, mem, offset)
 
 	inner class Allocated(
-		val memory: DeviceMemory
+		val memory: MemoryAllocation
 	) : AutoCloseable {
 
 		val image: Image = this@Image
@@ -493,7 +493,7 @@ fun Device.image(
 	}
 }
 
-fun Device.bindImageMemory(image: Image, mem: DeviceMemory, offset: Long = 0L) {
+fun Device.bindImageMemory(image: Image, mem: MemoryAllocation, offset: Long = 0L) {
 	vkBindImageMemory(vkDevice, image.id, mem.id, offset)
 		.orFail("failed to bind image to device memory")
 }

@@ -233,6 +233,31 @@ class CommandBuffer internal constructor(
 		}
 	}
 
+	fun copyImageToBuffer(
+		src: Image,
+		dst: Buffer,
+		srcLayout: Image.Layout,
+		dstOffset: Long = 0L,
+		rowLength: Int = 0,
+		height: Int = 0,
+		range: Image.SubresourceLayers = Image.SubresourceLayers(),
+		offset: Offset3D = Offset3D(0, 0, 0),
+		extent: Extent3D = src.extent
+	) {
+		memstack { mem ->
+			val pRegions = VkBufferImageCopy.callocStack(1, mem)
+			pRegions.get()
+				.bufferOffset(dstOffset)
+				.bufferRowLength(rowLength)
+				.bufferImageHeight(height)
+				.imageSubresource { it.set(range) }
+				.imageOffset { it.set(offset) }
+				.imageExtent { it.set(extent) }
+			pRegions.flip()
+			vkCmdCopyImageToBuffer(vkBuf, src.id, srcLayout.value, dst.id, pRegions)
+		}
+	}
+
 	data class MemoryBarrier(
 		val srcAccess: IntFlags<Access>,
 		val dstAccess: IntFlags<Access>

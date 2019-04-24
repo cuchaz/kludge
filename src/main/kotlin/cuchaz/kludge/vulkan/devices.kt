@@ -642,6 +642,7 @@ class Device internal constructor(
 	}
 
 	override fun close() {
+		_memoryStager?.close()
 		vkDestroyDevice(vkDevice, null)
 	}
 
@@ -651,6 +652,10 @@ class Device internal constructor(
 		vkDeviceWaitIdle(vkDevice)
 			.orFail("failed to wait for device")
 	}
+
+	private var _memoryStager: MemoryStager? = null
+	val memoryStager: MemoryStager get() =
+		_memoryStager ?: MemoryStager(this).also { _memoryStager = it }
 }
 
 fun PhysicalDevice.device(

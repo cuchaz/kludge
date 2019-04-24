@@ -58,11 +58,11 @@ class Buffer internal constructor(
 		}
 	}
 
-	fun bindTo(mem: DeviceMemory, offset: Long = 0L) =
+	fun bindTo(mem: MemoryAllocation, offset: Long = 0L) =
 		device.bindBufferMemory(this, mem, offset)
 
 	inner class Allocated(
-		val memory: DeviceMemory
+		val memory: MemoryAllocation
 	) : AutoCloseable {
 
 		val buffer: Buffer = this@Buffer
@@ -127,7 +127,7 @@ class MemoryRequirements(
 }
 
 
-class DeviceMemory(
+class MemoryAllocation(
 	val device: Device,
 	internal val id: Long,
 	val size: Long,
@@ -137,8 +137,6 @@ class DeviceMemory(
 	override fun close() {
 		vkFreeMemory(device.vkDevice, id, null)
 	}
-
-	val whollyMappable = size.toIntOrNull() != null
 
 	val sizeAsInt: Int get() =
 		size
@@ -172,7 +170,7 @@ class DeviceMemory(
 	// TODO: support flush/invalidate for mapped memory ranges?
 }
 
-fun Device.allocateMemory(size: Long, memType: MemoryType): DeviceMemory {
+fun Device.allocateMemory(size: Long, memType: MemoryType): MemoryAllocation {
 	memstack { mem ->
 		val info = VkMemoryAllocateInfo.callocStack(mem)
 			.sType(VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO)
@@ -185,11 +183,11 @@ fun Device.allocateMemory(size: Long, memType: MemoryType): DeviceMemory {
 			see PhysicalDevice.properties.limits.maxMemoryAllocationCount
 			https://gamedev.stackexchange.com/questions/163933/why-do-gpus-have-limited-amount-of-allocations
 		 */
-		return DeviceMemory(this, pMem.get(0), size, memType)
+		return MemoryAllocation(this, pMem.get(0), size, memType)
 	}
 }
 
-fun Device.bindBufferMemory(buf: Buffer, mem: DeviceMemory, offset: Long = 0L) {
+fun Device.bindBufferMemory(buf: Buffer, mem: MemoryAllocation, offset: Long = 0L) {
 	vkBindBufferMemory(vkDevice, buf.id, mem.id, offset)
 		.orFail("failed to bind buffer to device memory")
 }
