@@ -9,6 +9,7 @@ import cuchaz.kludge.tools.IntFlags
 import cuchaz.kludge.tools.memstack
 import cuchaz.kludge.tools.toASCII
 import cuchaz.kludge.tools.toBuffer
+import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK11.*
 
@@ -256,6 +257,51 @@ class ColorBlendState(
 	}
 }
 
+class DepthStencilState(
+	val depthTest: Boolean = true,
+	val depthWrite: Boolean = true,
+	val depthCompareOp: CompareOp = CompareOp.Less,
+	val depthBoundsTest: Boolean = false,
+	val stencilTest: Boolean = false,
+	val stencilFront: StencilOpState? = null,
+	val stencilBack: StencilOpState? = null,
+	val minDepth: Float = 0f,
+	val maxDepth: Float = 1f
+)
+
+class StencilOpState(
+	val failOp: StencilOp,
+	val passOp: StencilOp,
+	val depthFailOp: StencilOp,
+	val compareOp: StencilOp,
+	val compareMask: Int,
+	val writeMask: Int,
+	val reference: Int
+) {
+
+	internal fun toVulkan(mem: MemoryStack) =
+		VkStencilOpState.callocStack(mem)
+			.failOp(failOp.ordinal)
+			.passOp(passOp.ordinal)
+			.depthFailOp(depthFailOp.ordinal)
+			.compareOp(compareOp.ordinal)
+			.compareMask(compareMask)
+			.writeMask(writeMask)
+			.reference(reference)
+}
+
+enum class StencilOp {
+	Keep,
+	Zero,
+	Replace,
+	IncrementAndClamp,
+	DecrementAndClamp,
+	Invert,
+	IncrementAndWrap,
+	DecrementAndWrap
+}
+
+
 enum class PipelineBindPoint {
 	Graphics,
 	Compute
@@ -272,7 +318,8 @@ fun Device.graphicsPipeline(
 	scissors: List<Rect2D>,
 	multisampleState: MultisampleState = MultisampleState(),
 	colorBlend: ColorBlendState = ColorBlendState(),
-	attachmentBlends: List<Pair<Attachment,ColorBlendState.Attachment?>>
+	colorAttachmentBlends: Map<Attachment,ColorBlendState.Attachment?>,
+	depthStencilState: DepthStencilState? = null
 ): GraphicsPipeline {
 	memstack { mem ->
 
@@ -388,10 +435,15 @@ fun Device.graphicsPipeline(
 			.orFail("failed to create pipeline layout")
 
 		// build color blend state
-		val pBlendAttachments = VkPipelineColorBlendAttachmentState.callocStack(attachmentBlends.size, mem)
+		val pBlendAttachments = VkPipelineColorBlendAttachmentState.callocStack(colorAttachmentBlends.size, mem)
 		for (attachment in renderPass.attachments) {
-			val (_, blend) = attachmentBlends.find { (a, _) -> a == attachment }
-				?: throw NoSuchElementException("attachment has no color blend: $attachment")
+
+			// skip an attachment when there's no color blend for it
+			if (!colorAttachmentBlends.containsKey(attachment)) {
+				continue
+			}
+
+			val blend = colorAttachmentBlends[attachment]
 			pBlendAttachments.get().apply {
 				if (blend != null) {
 					blendEnable(true)
@@ -418,6 +470,22 @@ fun Device.graphicsPipeline(
 			.blendConstants(2, colorBlend.blendConstants[2])
 			.blendConstants(3, colorBlend.blendConstants[3])
 
+		// build the depth/stencil state, if needed
+		val pDepthStencilState = depthStencilState?.let {
+			VkPipelineDepthStencilStateCreateInfo.callocStack(mem)
+				.sType(VK10.VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO)
+				.flags(0)
+				.depthTestEnable(it.depthTest)
+				.depthWriteEnable(it.depthWrite)
+				.depthCompareOp(it.depthCompareOp.ordinal)
+				.depthBoundsTestEnable(it.depthBoundsTest)
+				.stencilTestEnable(it.stencilTest)
+				.front(it.stencilFront?.toVulkan(mem) ?: VkStencilOpState.callocStack(mem))
+				.back(it.stencilBack?.toVulkan(mem) ?: VkStencilOpState.callocStack(mem))
+				.minDepthBounds(it.minDepth)
+				.maxDepthBounds(it.maxDepth)
+		}
+
 		// TODO: do we need any of these?
 		//pTessellationState(@Nullable @NativeType("VkPipelineTessellationStateCreateInfo const *") VkPipelineTessellationStateCreateInfo value) { npTessellationState(address(), value); return this; }
 
@@ -435,7 +503,7 @@ fun Device.graphicsPipeline(
 			.layout(pLayout.get(0))
 			.renderPass(renderPass.id)
 			.pColorBlendState(pColorBlend)
-			.pDepthStencilState(null) // TODO: support depth and stencil testing?
+			.pDepthStencilState(pDepthStencilState)
 			.subpass(0) // TODO: support other subpasses?
 			.basePipelineHandle(VK_NULL_HANDLE) // TODO: support derivative pipelines?
 			.basePipelineIndex(-1)
