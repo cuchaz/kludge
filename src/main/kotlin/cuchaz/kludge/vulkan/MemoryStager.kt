@@ -103,7 +103,7 @@ fun Buffer.allocateDevice(): Buffer.Allocated =
 		))
 	}
 
-inline fun <T> Buffer.Allocated.transferHtoD(offset: Long = 0L, size: Int = memory.sizeAsInt, block: (buf: ByteBuffer) -> T) {
+inline fun <T> Buffer.Allocated.transferHtoD(offset: Long = 0L, size: Int = memory.sizeAsInt, block: (buf: ByteBuffer) -> T) = apply {
 	if (memory.type.flags.has(MemoryType.Flags.HostVisible)) {
 
 		// memory is host-visible, so map it directly
@@ -121,7 +121,7 @@ inline fun <T> Buffer.Allocated.transferHtoD(offset: Long = 0L, size: Int = memo
 	}
 }
 
-inline fun <T> Buffer.Allocated.transferDtoH(offset: Long = 0L, size: Int = memory.sizeAsInt, block: (buf: ByteBuffer) -> T) {
+inline fun <T> Buffer.Allocated.transferDtoH(offset: Long = 0L, size: Int = memory.sizeAsInt, block: (buf: ByteBuffer) -> T) = apply {
 	if (memory.type.flags.has(MemoryType.Flags.HostVisible)) {
 
 		// memory is host-visible, so map it directly
@@ -148,14 +148,14 @@ fun Image.allocateDevice(): Image.Allocated =
 	}
 
 inline fun <T> Image.Allocated.transferHtoD(
-	layout: Image.Layout,
+	layout: Image.Layout = Image.Layout.TransferDstOptimal,
 	rowLength: Int = 0,
 	height: Int = 0,
 	range: Image.SubresourceLayers = Image.SubresourceLayers(),
 	offset: Offset3D = Offset3D(0, 0, 0),
 	extent: Extent3D = this.image.extent,
 	block: (buf: ByteBuffer) -> T
-) {
+) = apply {
 	if (memory.type.flags.has(MemoryType.Flags.HostVisible)) {
 
 		// memory is host-visible, so map it directly
@@ -168,6 +168,19 @@ inline fun <T> Image.Allocated.transferHtoD(
 		val deviceImg = this
 		hostBuf.memory.map(0, memory.size.toInt(), block)
 		memory.device.memoryStager.command {
+
+			// transition image into a transfer destination
+			pipelineBarrier(
+				srcStage = IntFlags.of(PipelineStage.TopOfPipe),
+				dstStage = IntFlags.of(PipelineStage.Transfer),
+				images = listOf(
+					image.barrier(
+						dstAccess = IntFlags.of(Access.TransferWrite),
+						newLayout = Image.Layout.TransferDstOptimal
+					)
+				)
+			)
+
 			copyBufferToImage(hostBuf.buffer, deviceImg.image, layout, 0, rowLength, height, range, offset, extent)
 		}
 	}
@@ -181,7 +194,7 @@ inline fun <T> Image.Allocated.transferDtoH(
 	offset: Offset3D = Offset3D(0, 0, 0),
 	extent: Extent3D = this.image.extent,
 	block: (buf: ByteBuffer) -> T
-) {
+) = apply {
 	if (memory.type.flags.has(MemoryType.Flags.HostVisible)) {
 
 		// memory is host-visible, so map it directly
@@ -193,6 +206,19 @@ inline fun <T> Image.Allocated.transferDtoH(
 		val hostBuf = memory.device.memoryStager.getBuffer(memory.size)
 		val deviceImg = this
 		memory.device.memoryStager.command {
+
+			// transition image into a transfer src
+			pipelineBarrier(
+				srcStage = IntFlags.of(PipelineStage.TopOfPipe),
+				dstStage = IntFlags.of(PipelineStage.Transfer),
+				images = listOf(
+					image.barrier(
+						dstAccess = IntFlags.of(Access.TransferRead),
+						newLayout = Image.Layout.TransferSrcOptimal
+					)
+				)
+			)
+
 			copyImageToBuffer(deviceImg.image, hostBuf.buffer, layout, 0, rowLength, height, range, offset, extent)
 		}
 		hostBuf.memory.map(0, memory.size.toInt(), block)
