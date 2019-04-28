@@ -263,6 +263,23 @@ class Commands internal constructor() {
 		}
 	}
 
+	fun sliderFloat(
+		label: String,
+		value: Ref<Float>,
+		min: Float,
+		max: Float,
+		format: String = "%f",
+		power: Float = 1f
+	): Boolean {
+		memstack { mem ->
+			val pVal = value.toBuf(mem)
+			return n.igSliderFloat(label, pVal.address, min, max, format, power)
+				.also {
+					value.fromBuf(pVal)
+				}
+		}
+	}
+
 	enum class SelectableFlags(override val value: Int): IntFlags.Bit {
 		DontClosePopups(1 shl 0),
 		SpanAllColumns(1 shl 1),

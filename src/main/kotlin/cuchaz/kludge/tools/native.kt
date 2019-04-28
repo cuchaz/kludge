@@ -226,6 +226,7 @@ inline fun <reified T:Any> Ref<T>.toBuf(mem: MemoryStack): Buffer {
 	val value = this.value
 	return when (T::class) {
 		Int::class -> mem.ints(value as Int)
+		Float::class -> mem.floats(value as Float)
 		Boolean::class -> mem.ints((value as Boolean).toInt())
 		else -> throw IllegalArgumentException("unsupported reference type: ${T::class}")
 	}
@@ -235,6 +236,7 @@ inline fun <reified T:Any> Ref<T>.fromBuf(buf: Buffer?) {
 	if (buf != null) {
 		val newValue = when (T::class) {
 			Int::class -> (buf as IntBuffer).get(0) as T
+			Float::class -> (buf as FloatBuffer).get(0) as T
 			Boolean::class -> (buf as IntBuffer).get(0).toBoolean() as T
 			else -> throw IllegalArgumentException("unsupported reference type: ${T::class}")
 		}
