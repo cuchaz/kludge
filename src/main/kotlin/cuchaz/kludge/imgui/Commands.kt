@@ -9,6 +9,7 @@ import cuchaz.kludge.tools.*
 import cuchaz.kludge.imgui.Imgui.native.Vec2
 import cuchaz.kludge.imgui.Imgui.native.Vec4
 import cuchaz.kludge.vulkan.*
+import org.joml.Vector2f
 
 
 class Commands internal constructor() {
@@ -93,6 +94,43 @@ class Commands internal constructor() {
 	fun end() = n.igEnd()
 
 
+	enum class FocusedFlags(override val value: Int) : IntFlags.Bit {
+		ChildWindows(1 shl 0),
+		RootWindow(1 shl 1),
+		AnyWindow(1 shl 2),
+		RootAndChildWindows(RootWindow.value or ChildWindows.value)
+	}
+
+	enum class HoveredFlags(override val value: Int) : IntFlags.Bit {
+		None(0),
+		ChildWindows(1 shl 0),
+		RootWindow(1 shl 1),
+		AnyWindow(1 shl 2),
+		AllowWhenBlockedByPopup(1 shl 3),
+		AllowWhenBlockedByModal(1 shl 4),
+		AllowWhenBlockedByActiveItem(1 shl 5),
+		AllowWhenOverlapped(1 shl 6),
+		AllowWhenDisabled(1 shl 7),
+		RectOnly(AllowWhenBlockedByPopup.value or AllowWhenBlockedByActiveItem.value or AllowWhenOverlapped.value),
+		RootAndChildWindows(RootWindow.value or ChildWindows.value)
+	}
+
+	fun isWindowAppearing() = n.igIsWindowAppearing()
+	fun isWindowCollapsed() = n.igIsWindowCollapsed()
+	fun isWindowFocused(flags: IntFlags<FocusedFlags> = IntFlags(0)) = n.igIsWindowFocused(flags.value)
+	fun isWindowHovered(flags: IntFlags<HoveredFlags> = IntFlags(0)) = n.igIsWindowHovered(flags.value)
+	fun getWindowPos(out: Vector2f) = n.igGetWindowPos().toVector(out)
+	fun getWindowSize(out: Vector2f) = n.igGetWindowSize().toVector(out)
+	fun getWindowWidth() = n.igGetWindowWidth()
+	fun getWindowHeight() = n.igGetWindowHeight()
+	fun getContentRegionMax(out: Vector2f) = n.igGetContentRegionMax().toVector(out)
+	fun getContentRegionAvail(out: Vector2f) = n.igGetContentRegionAvail().toVector(out)
+	fun getContentRegionAvailWidth() = n.igGetContentRegionAvailWidth()
+	fun getWindowContentRegionMin(out: Vector2f) = n.igGetWindowContentRegionMin().toVector(out)
+	fun getWindowContentRegionMax(out: Vector2f) = n.igGetWindowContentRegionMax().toVector(out)
+	fun getWindowContentRegionWidth() = n.igGetWindowContentRegionWidth()
+
+
 	enum class Cond(override val value: Int) : IntFlags.Bit {
 		Always(1 shl 0),
 		Once(1 shl 1),
@@ -146,26 +184,22 @@ class Commands internal constructor() {
 	fun newLine() = n.igNewLine()
 	fun spacing() = n.igSpacing()
 	fun dummy(width: Float, height: Float) = n.igDummy(Vec2.ByVal(width, height))
-	fun dummy(size: Extent2D) = n.igDummy(Vec2.ByVal(size))
+	fun dummy(size: Vector2f) = n.igDummy(Vec2.ByVal(size))
 	fun indent(indent: Float = 0f) = n.igIndent(indent)
 	fun unindent(indent: Float = 0f) = n.igUnindent(indent)
 	fun beginGroup() = n.igBeginGroup()
 	fun endGroup() = n.igEndGroup()
-	fun getCursorPos() = n.igGetCursorPos().toOffset()
+	fun getCursorPos(out: Vector2f) = n.igGetCursorPos().toVector(out)
 	fun getCursorPosX() = n.igGetCursorPosX()
 	fun getCursorPosY() = n.igGetCursorPosY()
 	fun setCursorPos(x: Float, y: Float) = n.igSetCursorPos(Vec2.ByVal(x, y))
-	fun setCursorPos(pos: Offset2D) = n.igSetCursorPos(Vec2.ByVal(pos))
+	fun setCursorPos(pos: Vector2f) = n.igSetCursorPos(Vec2.ByVal(pos))
 	fun setCursorPosX(x: Float) = n.igSetCursorPosX(x)
 	fun setCursorPosY(y: Float) = n.igSetCursorPosY(y)
-	fun getCursorStartPos() = n.igGetCursorStartPos().toOffset()
-	fun getCursorStartPosX() = n.igGetCursorStartPos().x
-	fun getCursorStartPosY() = n.igGetCursorStartPos().y
-	fun getCursorScreenPos() = n.igGetCursorScreenPos().toOffset()
-	fun getCursorScreenPosX() = n.igGetCursorScreenPos().x
-	fun getCursorScreenPosY() = n.igGetCursorScreenPos().y
+	fun getCursorStartPos(out: Vector2f) = n.igGetCursorStartPos().toVector(out)
+	fun getCursorScreenPos(out: Vector2f) = n.igGetCursorScreenPos().toVector(out)
 	fun setCursorScreenPos(x: Float, y: Float) = n.igSetCursorScreenPos(Vec2.ByVal(x, y))
-	fun setCursorScreenPos(pos: Offset2D) = n.igSetCursorScreenPos(Vec2.ByVal(pos))
+	fun setCursorScreenPos(pos: Vector2f) = n.igSetCursorScreenPos(Vec2.ByVal(pos))
 	fun alignTextToFramePadding() = n.igAlignTextToFramePadding()
 	fun getTextLineHeight() = n.igGetTextLineHeight()
 	fun getTextLineHeightWithSpacing() = n.igGetTextLineHeightWithSpacing()
@@ -189,8 +223,17 @@ class Commands internal constructor() {
 		n.igButton(label, Vec2.ByVal(width, height))
 	fun button(label: String, size: Extent2D) =
 		n.igButton(label, Vec2.ByVal(size))
+	fun button(label: String, size: Vector2f) =
+		n.igButton(label, Vec2.ByVal(size))
 
 	fun smallButton(label: String) = n.igSmallButton(label)
+
+	fun invisibleButton(id: String, width: Float, height: Float) =
+		n.igInvisibleButton(id, Vec2.ByVal(width, height))
+	fun invisibleButton(id: String, size: Extent2D) =
+		n.igInvisibleButton(id, Vec2.ByVal(size))
+	fun invisibleButton(id: String, size: Vector2f) =
+		n.igInvisibleButton(id, Vec2.ByVal(size))
 
 	fun image(
 		image: Imgui.ImageDescriptor,
@@ -340,4 +383,75 @@ class Commands internal constructor() {
 	) = n.igListBoxHeaderInt(label, itemsCount, heightInItems)
 
 	fun listBoxFooter() = n.igListBoxFooter()
+
+
+	fun isItemHovered(flags: IntFlags<HoveredFlags>) = n.igIsItemHovered(flags.value)
+	fun isItemActive() = n.igIsItemActive()
+	fun isItemFocused() = n.igIsItemFocused()
+	fun isItemClicked(mouseButton: Int) = n.igIsItemClicked(mouseButton)
+	fun isItemVisible() = n.igIsItemVisible()
+	fun isItemEdited() = n.igIsItemEdited()
+	fun isItemDeactivated() = n.igIsItemDeactivated()
+	fun isItemDeactivatedAfterEdit() = n.igIsItemDeactivatedAfterEdit()
+	fun isAnyItemHovered() = n.igIsAnyItemHovered()
+	fun isAnyItemActive() = n.igIsAnyItemActive()
+	fun isAnyItemFocused() = n.igIsAnyItemFocused()
+	fun getItemRectMin(out: Vector2f) = n.igGetItemRectMin().toVector(out)
+	fun getItemRectMax(out: Vector2f) = n.igGetItemRectMax().toVector(out)
+	fun getItemRectSize(out: Vector2f) = n.igGetItemRectSize().toVector(out)
+	fun setItemAllowOverlap() = n.igSetItemAllowOverlap()
+
+
+	enum class Key {
+		Tab,
+		LeftArrow,
+		RightArrow,
+		UpArrow,
+		DownArrow,
+		PageUp,
+		PageDown,
+		Home,
+		End,
+		Insert,
+		Delete,
+		Backspace,
+		Space,
+		Enter,
+		Escape,
+		A,
+		C,
+		V,
+		X,
+		Y,
+		Z
+	}
+
+	fun getKeyIndex(imguiKey: Key): Int = n.igGetKeyIndex(imguiKey.ordinal)
+	fun isKeyDown(key: Int) = n.igIsKeyDown(key)
+	fun isKeyPressed(key: Int, repeat: Boolean = true) = n.igIsKeyPressed(key, repeat)
+	fun isKeyReleased(key: Int) = n.igIsKeyReleased(key)
+	fun getKeyPressedAmount(key: Int, repeatDelay: Float, rate: Float) = n.igGetKeyPressedAmount(key, repeatDelay, rate)
+	fun isMouseDown(button: Int) = n.igIsMouseDown(button)
+	fun isAnyMouseDown() = n.igIsAnyMouseDown()
+	fun isMouseClicked(button: Int, repeat: Boolean = false) = n.igIsMouseClicked(button, repeat)
+	fun isMouseDoubleClicked(button: Int) = n.igIsMouseDoubleClicked(button)
+	fun isMouseReleased(button: Int) = n.igIsMouseReleased(button)
+	fun isMouseDragging(button: Int, lockThreshold: Float = -1f) = n.igIsMouseDragging(button, lockThreshold)
+
+	fun isMouseHoveringRect(minx: Float, miny: Float, maxx: Float, maxy: Float, clip: Boolean = true) =
+		n.igIsMouseHoveringRect(Vec2.ByVal(minx, miny), Vec2.ByVal(maxx, maxy), clip)
+	fun isMouseHoveringRect(min: Vector2f, max: Vector2f, clip: Boolean = true) =
+		n.igIsMouseHoveringRect(Vec2.ByVal(min), Vec2.ByVal(max), clip)
+	fun isMouseHoveringRect(rect: Rect2D, clip: Boolean = true) =
+		n.igIsMouseHoveringRect(Vec2.ByVal(rect.offset), Vec2.ByVal(rect.xmax.toFloat(), rect.ymax.toFloat()), clip)
+
+	fun isMousePosValid(pos: Offset2D? = null) = n.igIsMousePosValid(pos?.let { Vec2.ByRef(it) })
+	fun isMousePosValid(pos: Vector2f? = null) = n.igIsMousePosValid(pos?.let { Vec2.ByRef(it) })
+
+	fun getMousePos(out: Vector2f) = n.igGetMousePos().toVector(out)
+	fun getMousePosOnOpeningCurrentPopup(out: Vector2f) = n.igGetMousePosOnOpeningCurrentPopup().toVector(out)
+	fun getMouseDragDelta(button: Int, out: Vector2f, lockThreshold: Float = -1f) = n.igGetMouseDragDelta(button, lockThreshold).toVector(out)
+	fun resetMouseDragDelta(button: Int) = n.igResetMouseDragDelta(button)
+	fun captureKeyboardFromApp(want: Boolean = true) = n.igCaptureKeyboardFromApp(want)
+	fun captureMouseFromApp(want: Boolean = true) = n.igCaptureMouseFromApp(want)
 }

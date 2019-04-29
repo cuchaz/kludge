@@ -107,7 +107,12 @@ internal fun VkOffset3D.toOffset3D() = Offset3D(x(), y(), z())
 data class Rect2D(
 	val offset: Offset2D,
 	val extent: Extent2D
-)
+) {
+	val xmin get() = offset.x
+	val xmax get() = xmin + extent.width
+	val ymin get() = offset.y
+	val ymax get() = ymin + extent.height
+}
 internal fun VkRect2D.set(rect: Rect2D) =
 	apply {
 		offset().set(rect.offset)

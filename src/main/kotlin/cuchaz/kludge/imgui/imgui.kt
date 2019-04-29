@@ -9,8 +9,11 @@ import com.sun.jna.Native
 import com.sun.jna.Structure
 import cuchaz.kludge.tools.AutoCloser
 import cuchaz.kludge.tools.IntFlags
+import cuchaz.kludge.tools.toInt
 import cuchaz.kludge.vulkan.*
 import cuchaz.kludge.window.Window
+import org.joml.Vector2f
+import org.joml.Vector3f
 import org.lwjgl.system.MemoryUtil
 
 
@@ -39,6 +42,22 @@ object Imgui : AutoCloseable {
 
 		external fun igBegin(name: String, open: Long, flags: Int): Boolean
 		external fun igEnd()
+
+		external fun igIsWindowAppearing(): Boolean
+		external fun igIsWindowCollapsed(): Boolean
+		external fun igIsWindowFocused(flags: Int): Boolean
+		external fun igIsWindowHovered(flags: Int): Boolean
+		// TODO: igGetWindowDrawList?
+		external fun igGetWindowPos(): Vec2.ByVal
+		external fun igGetWindowSize(): Vec2.ByVal
+		external fun igGetWindowWidth(): Float
+		external fun igGetWindowHeight(): Float
+		external fun igGetContentRegionMax(): Vec2.ByVal
+		external fun igGetContentRegionAvail(): Vec2.ByVal
+		external fun igGetContentRegionAvailWidth(): Float
+		external fun igGetWindowContentRegionMin(): Vec2.ByVal
+		external fun igGetWindowContentRegionMax(): Vec2.ByVal
+		external fun igGetWindowContentRegionWidth(): Float
 
 		external fun igSetNextWindowPos(pos: Vec2.ByVal, cond: Int, pivot: Vec2.ByVal)
 		external fun igSetNextWindowSize(size: Vec2.ByVal, cond: Int)
@@ -81,6 +100,7 @@ object Imgui : AutoCloseable {
 
 		external fun igButton(label: String, size: Vec2.ByVal): Boolean
 		external fun igSmallButton(label: String): Boolean
+		external fun igInvisibleButton(str_id: String, size: Vec2.ByVal): Boolean
 		external fun igImage(user_texture_id: Long, size: Vec2.ByVal, uv0: Vec2.ByVal, uv1: Vec2.ByVal, tint_col: Vec4.ByVal, border_col: Vec4.ByVal)
 		external fun igCheckbox(label: String, v: Long): Boolean
 
@@ -95,6 +115,43 @@ object Imgui : AutoCloseable {
 
 		external fun igListBoxHeaderInt(label: String, items_count: Int, height_in_items: Int): Boolean
 		external fun igListBoxFooter()
+
+		external fun igIsItemHovered(flags: Int): Boolean
+		external fun igIsItemActive(): Boolean
+		external fun igIsItemFocused(): Boolean
+		external fun igIsItemClicked(mouse_button: Int): Boolean
+		external fun igIsItemVisible(): Boolean
+		external fun igIsItemEdited(): Boolean
+		external fun igIsItemDeactivated(): Boolean
+		external fun igIsItemDeactivatedAfterEdit(): Boolean
+		external fun igIsAnyItemHovered(): Boolean
+		external fun igIsAnyItemActive(): Boolean
+		external fun igIsAnyItemFocused(): Boolean
+		external fun igGetItemRectMin(): Vec2.ByVal
+		external fun igGetItemRectMax(): Vec2.ByVal
+		external fun igGetItemRectSize(): Vec2.ByVal
+		external fun igSetItemAllowOverlap()
+
+		external fun igGetKeyIndex(imgui_key: Int): Int
+		external fun igIsKeyDown(user_key_index: Int): Boolean
+		external fun igIsKeyPressed(user_key_index: Int, repeat: Boolean): Boolean
+		external fun igIsKeyReleased(user_key_index: Int): Boolean
+		external fun igGetKeyPressedAmount(key_index: Int, repeat_delay: Float, rate: Float): Int
+		external fun igIsMouseDown(button: Int): Boolean
+		external fun igIsAnyMouseDown(): Boolean
+		external fun igIsMouseClicked(button: Int, repeat: Boolean): Boolean
+		external fun igIsMouseDoubleClicked(button: Int)
+		external fun igIsMouseReleased(button: Int)
+		external fun igIsMouseDragging(button: Int, lock_threhsold: Float)
+		external fun igIsMouseHoveringRect(r_min: Vec2.ByVal, r_max: Vec2.ByVal, clip: Boolean): Boolean
+		external fun igIsMousePosValid(mouse_pos: Vec2.ByRef?): Boolean
+		external fun igGetMousePos(): Vec2.ByVal
+		external fun igGetMousePosOnOpeningCurrentPopup(): Vec2.ByVal
+		external fun igGetMouseDragDelta(button: Int, lock_threshold: Float): Vec2.ByVal
+		external fun igResetMouseDragDelta(button: Int)
+		// TODO: expose mouse cursor API
+		external fun igCaptureKeyboardFromApp(want_capture_keyboard_value: Boolean)
+		external fun igCaptureMouseFromApp(want_capture_keyboard_value: Boolean)
 
 		external fun ImFontAtlas_ImFontAtlas(): Long
 		external fun ImFontAtlas_destroy(id: Long)
@@ -141,9 +198,22 @@ object Imgui : AutoCloseable {
 
 				constructor(size: Extent2D) : this(size.width.toFloat(), size.height.toFloat())
 				fun toExtent() = Extent2D(x.toInt(), y.toInt())
+
+				constructor(v: Vector2f) : this(v.x, v.y)
+				fun toVector(v: Vector2f) = v.set(x, y)
 			}
 
-			class ByRef(x: Float = 0f, y: Float = 0f) : Vec2(x, y), Structure.ByReference
+			class ByRef(x: Float = 0f, y: Float = 0f) : Vec2(x, y), Structure.ByReference {
+
+				constructor(pos: Offset2D) : this(pos.x.toFloat(), pos.y.toFloat())
+				fun toOffset() = Offset2D(x.toInt(), y.toInt())
+
+				constructor(size: Extent2D) : this(size.width.toFloat(), size.height.toFloat())
+				fun toExtent() = Extent2D(x.toInt(), y.toInt())
+
+				constructor(v: Vector2f) : this(v.x, v.y)
+				fun toVector(v: Vector2f) = v.set(x, y)
+			}
 		}
 
 		@Structure.FieldOrder("x", "y", "z", "w")
@@ -304,7 +374,11 @@ object Imgui : AutoCloseable {
 
 	object io {
 
+		fun getBool(offset: Int) = MemoryUtil.memGetBoolean(native.igGetIO() + offset)
+		fun setBool(offset: Int, value: Boolean) = MemoryUtil.memPutByte(native.igGetIO() + offset, if (value) 1 else 0)
+
 		fun getFloat(offset: Int) = MemoryUtil.memGetFloat(native.igGetIO() + offset)
+		fun setFloat(offset: Int, value: Float) = MemoryUtil.memPutFloat(native.igGetIO() + offset, value)
 
 		/* TODO: make accessors for all the fields
 			size	offset	descriptor
@@ -388,9 +462,22 @@ object Imgui : AutoCloseable {
 		 */
 		object displaySize {
 			val width: Float get() = getFloat(8)
-			val height: Float get() = getFloat(8+4)
+			val height: Float get() = getFloat(8 + 4)
 		}
 		val deltaTime: Float get() = getFloat(16)
 		val frameRate: Float get() = getFloat(928)
+
+		var configWindowsMoveFromTitleBarOnly
+			get() = getBool(204)
+			set(value) = setBool(204, value)
+
+		// mouse values
+		object mouse {
+			val x: Float get() = getFloat(296)
+			val y: Float get() = getFloat(296 + 4)
+			object buttonDown {
+				operator fun get(i: Int) = getBool(304 + i)
+			}
+		}
 	}
 }
