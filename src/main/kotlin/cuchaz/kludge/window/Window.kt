@@ -85,11 +85,9 @@ class Window(
 		}
 
 	fun centerOn(monitor: Monitor) {
-		val monitorSize = monitor.size
-		val windowSize = size
 		pos = Pos(
-			(monitorSize.width - windowSize.width)/2,
-			(monitorSize.height - windowSize.height)/2
+			monitor.pos.x + (monitor.size.width - size.width)/2,
+			monitor.pos.y + (monitor.size.height - size.height)/2
 		)
 	}
 }
