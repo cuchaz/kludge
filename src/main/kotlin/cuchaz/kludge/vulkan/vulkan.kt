@@ -17,10 +17,18 @@ class VulkanException(val err: Int, val msg: String? = null) : RuntimeException(
 	}
 )
 
-fun Int.orFail(handler: (Int) -> Nothing) {
+fun Int.orFailWhen(value: Int, handler: () -> Nothing): Int {
+	if (this == value) {
+		handler()
+	}
+	return this
+}
+
+fun Int.orFail(handler: (Int) -> Nothing): Int {
 	if (this != VK_SUCCESS) {
 		handler(this)
 	}
+	return this
 }
 
 fun Int.orFail(msg: String? = null) = orFail { err -> throw VulkanException(err, msg) }

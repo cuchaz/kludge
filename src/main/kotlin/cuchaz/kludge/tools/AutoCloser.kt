@@ -18,6 +18,8 @@ class AutoCloser : AutoCloseable {
 		return thing
 	}
 
+	fun <T:AutoCloseable> remove(thing: T) = things.remove(thing)
+
 	fun add(block: () -> Unit) {
 		things.add(AutoCloseable { block() })
 	}
@@ -30,7 +32,7 @@ class AutoCloser : AutoCloseable {
 }
 
 interface WithAutoCloser {
-	fun <T:AutoCloseable> T.autoClose(): T
+	fun <T:AutoCloseable> T.autoClose(replace: T? = null): T
 	fun autoClose(block: () -> Unit)
 }
 
@@ -38,8 +40,20 @@ inline fun <T> autoCloser(block: WithAutoCloser.() -> T): T =
 	AutoCloser().use { autoCloser ->
 		object : WithAutoCloser {
 
-			override fun <T:AutoCloseable> T.autoClose(): T =
+			override fun <T:AutoCloseable> T.autoClose(replace: T?): T = apply {
+
+				// if we're replacing something, remove that first and close it
+				if (replace != null) {
+					val wasRemoved = autoCloser.remove(replace)
+					if (!wasRemoved) {
+						throw IllegalArgumentException("$replace was not in the autoclean list")
+					}
+					replace.close()
+				}
+
+				// then add the new thing
 				autoCloser.add(this)
+			}
 
 			override fun autoClose(block: () -> Unit) =
 				autoCloser.add(block)

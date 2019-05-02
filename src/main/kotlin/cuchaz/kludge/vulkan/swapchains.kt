@@ -175,6 +175,7 @@ class Swapchain internal constructor(
 		vkDestroySwapchainKHR(device.vkDevice, id, null)
 	}
 
+	/** will throw SwapchainOutOfDateException if the swapchain can no longer disiplay frames */
 	fun acquireNextImage(
 		semaphore: Semaphore,
 		timeoutNs: Long = -1
@@ -183,6 +184,10 @@ class Swapchain internal constructor(
 			val fence = VK_NULL_HANDLE // TODO: support fences?
 			val pIndex = mem.mallocInt(1)
 			vkAcquireNextImageKHR(device.vkDevice, id, timeoutNs, semaphore.id, fence, pIndex)
+				.orFailWhen(VK_ERROR_OUT_OF_DATE_KHR) {
+					// convert error to exception, but make sure caller can recognize it and catch it
+					throw SwapchainOutOfDateException()
+				}
 				.orFail("failed to acquire next image")
 			return pIndex.get(0) // TODO: hide index from caller
 		}
@@ -252,3 +257,6 @@ enum class CompositeAlpha(override val value: Int) : IntFlags.Bit {
 	PostMultiplied(VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR),
 	Inherit(VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR);
 }
+
+
+class SwapchainOutOfDateException : Exception("Swapchain is out of date and must be recreated")

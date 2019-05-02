@@ -280,6 +280,14 @@ object Imgui : AutoCloseable {
 		renderPass: RenderPass,
 		installCallbacks: Boolean = false // TODO: what should the default be?
 	) {
+		// was anything already initialized from before?
+		stateOrNull?.let {
+
+			// yup, clean it up before init'ing new stuff
+			it.close()
+			stateOrNull = null
+			native.ImGui_ImplVulkan_Shutdown()
+		}
 
 		// init native side
 		native.ImGui_ImplGlfw_InitForVulkan(window.id, installCallbacks)
