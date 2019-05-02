@@ -13,8 +13,20 @@ class AutoCloser : AutoCloseable {
 
 	private val things = ArrayList<AutoCloseable>()
 
-	fun <T:AutoCloseable> add(thing: T): T {
+	fun <T:AutoCloseable> add(thing: T, replace: T? = null): T {
+
+		// add the new thing
 		things.add(thing)
+
+		// if we're replacing something, remove that and close it
+		if (replace != null) {
+			val wasRemoved = remove(replace)
+			if (!wasRemoved) {
+				throw IllegalArgumentException("$replace was not in the autoclean list")
+			}
+			replace.close()
+		}
+
 		return thing
 	}
 
@@ -41,18 +53,7 @@ inline fun <T> autoCloser(block: WithAutoCloser.() -> T): T =
 		object : WithAutoCloser {
 
 			override fun <T:AutoCloseable> T.autoClose(replace: T?): T = apply {
-
-				// if we're replacing something, remove that first and close it
-				if (replace != null) {
-					val wasRemoved = autoCloser.remove(replace)
-					if (!wasRemoved) {
-						throw IllegalArgumentException("$replace was not in the autoclean list")
-					}
-					replace.close()
-				}
-
-				// then add the new thing
-				autoCloser.add(this)
+				autoCloser.add(this, replace)
 			}
 
 			override fun autoClose(block: () -> Unit) =
