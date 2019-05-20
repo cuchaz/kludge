@@ -160,6 +160,17 @@ class CommandBuffer internal constructor(
 		}
 	}
 
+	enum class IndexType {
+		UInt16,
+		UInt32
+	}
+
+	fun bindIndexBuffer(buffer: Buffer, indexType: IndexType, offset: Long = 0L) {
+		memstack { mem ->
+			vkCmdBindIndexBuffer(vkBuf, buffer.id, offset, indexType.ordinal)
+		}
+	}
+
 	fun bindDescriptorSet(
 		descriptorSet: DescriptorSet,
 		pipeline: Pipeline
@@ -180,7 +191,15 @@ class CommandBuffer internal constructor(
 		vkCmdDraw(vkBuf, vertices, instances, firstVertex, firstInstance)
 	}
 
-	// TODO: draw indexed
+	fun drawIndexed(
+		indices: Int,
+		instances: Int = 1,
+		firstIndex: Int = 0,
+		firstInstance: Int = 0,
+		vertexOffset: Int = 0
+	) {
+		vkCmdDrawIndexed(vkBuf, indices, instances, firstIndex, vertexOffset, firstInstance)
+	}
 
 	fun dispatch(
 		x: Int,

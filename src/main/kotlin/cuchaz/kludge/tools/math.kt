@@ -1,5 +1,6 @@
 package cuchaz.kludge.tools
 
+import org.joml.AABBd
 import org.joml.AABBf
 import org.joml.Vector3f
 import kotlin.math.max
@@ -69,3 +70,9 @@ fun AABBf.expandToInclude(x: Float, y: Float, z: Float) {
 }
 
 fun AABBf.expandToInclude(v: Vector3f) = expandToInclude(v.x, v.y, v.z)
+
+fun AABBd.toFloat() =
+	AABBf(
+		minX.toFloat(), minY.toFloat(), minZ.toFloat(),
+		maxX.toFloat(), maxY.toFloat(), maxZ.toFloat()
+	)

@@ -385,7 +385,7 @@ class Commands internal constructor() {
 	fun listBoxFooter() = n.igListBoxFooter()
 
 
-	fun isItemHovered(flags: IntFlags<HoveredFlags>) = n.igIsItemHovered(flags.value)
+	fun isItemHovered(flags: IntFlags<HoveredFlags> = IntFlags(0)) = n.igIsItemHovered(flags.value)
 	fun isItemActive() = n.igIsItemActive()
 	fun isItemFocused() = n.igIsItemFocused()
 	fun isItemClicked(mouseButton: Int) = n.igIsItemClicked(mouseButton)
