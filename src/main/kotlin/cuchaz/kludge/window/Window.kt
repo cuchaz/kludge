@@ -6,7 +6,6 @@
 package cuchaz.kludge.window
 
 import cuchaz.kludge.tools.memstack
-import org.lwjgl.glfw.Callbacks.*
 import org.lwjgl.glfw.GLFW.*
 import org.lwjgl.system.MemoryUtil.*
 
@@ -29,8 +28,6 @@ class Window(
 		if (id == NULL) {
 			throw RuntimeException("failed to create GLFW window")
 		}
-
-		// TODO: listen to keyboard, mouse
 	}
 
 	var shouldClose: Boolean
@@ -38,7 +35,6 @@ class Window(
 		set(value) { glfwSetWindowShouldClose(id, value) }
 
 	override fun close() {
-		glfwFreeCallbacks(id)
 		glfwDestroyWindow(id)
 	}
 

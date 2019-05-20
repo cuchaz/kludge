@@ -9,11 +9,9 @@ import com.sun.jna.Native
 import com.sun.jna.Structure
 import cuchaz.kludge.tools.AutoCloser
 import cuchaz.kludge.tools.IntFlags
-import cuchaz.kludge.tools.toInt
 import cuchaz.kludge.vulkan.*
 import cuchaz.kludge.window.Window
 import org.joml.Vector2f
-import org.joml.Vector3f
 import org.lwjgl.system.MemoryUtil
 
 
@@ -260,6 +258,7 @@ object Imgui : AutoCloseable {
 	private val state: State get() = stateOrNull ?: throw NoSuchElementException("call init() first")
 
 	private class State(
+		val sequence: Int,
 		val queue: Queue,
 		val descriptorPool: DescriptorPool
 	) : AutoCloseable {
@@ -271,25 +270,29 @@ object Imgui : AutoCloseable {
 		val device = queue.device
 
 		val commandPool = device.commandPool(queue.family).autoClose()
+
+		val imageDescriptors = ArrayList<ImageDescriptor>()
 	}
 
 	fun init(
 		window: Window,
 		queue: Queue,
 		descriptorPool: DescriptorPool,
-		renderPass: RenderPass,
-		installCallbacks: Boolean = false // TODO: what should the default be?
+		renderPass: RenderPass
 	) {
 		// was anything already initialized from before?
+		var sequence = 0
 		stateOrNull?.let {
 
-			// yup, clean it up before init'ing new stuff
-			it.close()
-			stateOrNull = null
-			native.ImGui_ImplVulkan_Shutdown()
+			// yup, get the sequence of the old init
+			sequence = it.sequence + 1
+
+			// clean it up before init'ing new stuff
+			close()
 		}
 
 		// init native side
+		val installCallbacks = sequence == 0
 		native.ImGui_ImplGlfw_InitForVulkan(window.id, installCallbacks)
 		native.ImGui_ImplVulkan_Init(
 			native.InitInfo(
@@ -304,7 +307,7 @@ object Imgui : AutoCloseable {
 		)
 
 		// init kotlin side
-		stateOrNull = State(queue, descriptorPool)
+		stateOrNull = State(sequence, queue, descriptorPool)
 	}
 
 	override fun close() {
@@ -342,14 +345,24 @@ object Imgui : AutoCloseable {
 	}
 
 	class ImageDescriptor(
-		internal val layout: DescriptorSetLayout,
-		internal val descriptorSet: DescriptorSet,
+		internal val sequence: Int,
+		internal val _layout: DescriptorSetLayout,
+		internal val _descriptorSet: DescriptorSet,
 		val extent: Extent3D
 	) : AutoCloseable {
 
 		override fun close() {
-			layout.close()
+			_layout.close()
 		}
+
+		private fun check() {
+			if (this.sequence != stateOrNull?.sequence) {
+				throw IllegalStateException("ImageDescriptor has expired because Imgui was re-initialized")
+			}
+		}
+
+		internal val layout get() = check().run { _layout }
+		internal val descriptorSet get() = check().run { _descriptorSet }
 	}
 
 	fun imageDescriptor(view: Image.View, sampler: Sampler): ImageDescriptor = state.run {
@@ -377,7 +390,7 @@ object Imgui : AutoCloseable {
 			)
 		)
 
-		return ImageDescriptor(descriptorSetLayout, descriptorSet, view.image.extent)
+		return ImageDescriptor(state.sequence, descriptorSetLayout, descriptorSet, view.image.extent)
 	}
 
 	object io {
@@ -483,6 +496,7 @@ object Imgui : AutoCloseable {
 		object mouse {
 			val x: Float get() = getFloat(296)
 			val y: Float get() = getFloat(296 + 4)
+			val wheel: Float get() = getFloat(312)
 			object buttonDown {
 				operator fun get(i: Int) = getBool(304 + i)
 			}
