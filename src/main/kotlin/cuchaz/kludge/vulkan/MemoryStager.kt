@@ -96,6 +96,14 @@ class MemoryStager internal constructor(
 }
 
 
+fun Buffer.allocateHost(): Buffer.Allocated =
+	allocate { memType ->
+		memType.flags.hasAll(IntFlags.of(
+			MemoryType.Flags.HostVisible,
+			MemoryType.Flags.HostCoherent
+		))
+	}
+
 fun Buffer.allocateDevice(): Buffer.Allocated =
 	allocate { memType ->
 		memType.flags.hasAll(IntFlags.of(

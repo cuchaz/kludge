@@ -5,6 +5,7 @@
 
 package cuchaz.kludge.vulkan
 
+import org.joml.Vector2f
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK10.*
 
@@ -98,6 +99,9 @@ internal fun VkOffset2D.set(offset: Offset2D) =
 		y(offset.y)
 	}
 internal fun VkOffset2D.toOffset2D() = Offset2D(x(), y())
+
+fun Vector2f.toOffset() = Offset2D(x.toInt(), y.toInt())
+fun Offset2D.toVector() = Vector2f(x.toFloat(), y.toFloat())
 
 data class Offset3D(
 	val x: Int,
