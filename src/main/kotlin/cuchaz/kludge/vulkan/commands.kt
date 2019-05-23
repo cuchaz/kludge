@@ -11,6 +11,7 @@ import cuchaz.kludge.tools.toBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK10.*
+import java.nio.ByteBuffer
 
 
 class CommandPool(
@@ -182,6 +183,60 @@ class CommandBuffer internal constructor(
 		}
 	}
 
+	fun pushConstants(
+		pipeline: Pipeline,
+		stageFlags: IntFlags<ShaderStage>,
+		buf: ByteBuffer,
+		offset: Int = 0
+	) {
+		vkCmdPushConstants(vkBuf, pipeline.layoutId, stageFlags.value, offset, buf)
+	}
+
+	fun pushConstants(
+		pipeline: Pipeline,
+		stageFlags: IntFlags<ShaderStage>,
+		vararg values: Short,
+		offset: Int = 0
+	) {
+		vkCmdPushConstants(vkBuf, pipeline.layoutId, stageFlags.value, offset, values)
+	}
+
+	fun pushConstants(
+		pipeline: Pipeline,
+		stageFlags: IntFlags<ShaderStage>,
+		vararg values: Int,
+		offset: Int = 0
+	) {
+		vkCmdPushConstants(vkBuf, pipeline.layoutId, stageFlags.value, offset, values)
+	}
+
+	fun pushConstants(
+		pipeline: Pipeline,
+		stageFlags: IntFlags<ShaderStage>,
+		vararg values: Long,
+		offset: Int = 0
+	) {
+		vkCmdPushConstants(vkBuf, pipeline.layoutId, stageFlags.value, offset, values)
+	}
+
+	fun pushConstants(
+		pipeline: Pipeline,
+		stageFlags: IntFlags<ShaderStage>,
+		vararg values: Float,
+		offset: Int = 0
+	) {
+		vkCmdPushConstants(vkBuf, pipeline.layoutId, stageFlags.value, offset, values)
+	}
+
+	fun pushConstants(
+		pipeline: Pipeline,
+		stageFlags: IntFlags<ShaderStage>,
+		vararg values: Double,
+		offset: Int = 0
+	) {
+		vkCmdPushConstants(vkBuf, pipeline.layoutId, stageFlags.value, offset, values)
+	}
+
 	fun draw(
 		vertices: Int,
 		instances: Int = 1,
@@ -284,8 +339,8 @@ class CommandBuffer internal constructor(
 
 	data class BufferBarrier internal constructor(
 		val buffer: Buffer,
-		val dstAccess: IntFlags<Access>,
 		val srcAccess: IntFlags<Access>,
+		val dstAccess: IntFlags<Access>,
 		val offset: Long,
 		val size: Long,
 		val srcQueueFamily: PhysicalDevice.QueueFamily?,
@@ -324,7 +379,7 @@ class CommandBuffer internal constructor(
 			pMemBarriers.flip()
 
 			// buffer memory barriers
-			val pBufBarriers = VkBufferMemoryBarrier.callocStack(images.size, mem)
+			val pBufBarriers = VkBufferMemoryBarrier.callocStack(buffers.size, mem)
 			for  (b in buffers) {
 				pBufBarriers.get()
 					.sType(VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER)

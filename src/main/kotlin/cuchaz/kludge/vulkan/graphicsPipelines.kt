@@ -307,10 +307,24 @@ enum class PipelineBindPoint {
 	Compute
 }
 
+data class PushConstantRange(
+	val stages: IntFlags<ShaderStage>,
+	val size: Int,
+	val offset: Int = 0
+)
+
+fun VkPushConstantRange.set(src: PushConstantRange) {
+	stageFlags(src.stages.value)
+	offset(src.offset)
+	size(src.size)
+}
+
+
 fun Device.graphicsPipeline(
 	renderPass: RenderPass,
 	stages: List<ShaderModule.Stage>,
 	descriptorSetLayouts: List<DescriptorSetLayout> = emptyList(),
+	pushConstantRanges: List<PushConstantRange> = emptyList(),
 	vertexInput: VertexInput = VertexInput(),
 	inputAssembly: InputAssembly,
 	rasterizationState: RasterizationState,
@@ -429,7 +443,18 @@ fun Device.graphicsPipeline(
 					descriptorSetLayouts.map { it.id }.toBuffer(mem)
 				}
 			)
-			.pPushConstantRanges(null) // TODO: support constant ranges?
+			.pPushConstantRanges(
+				if (pushConstantRanges.isEmpty()) {
+					null
+				} else {
+					VkPushConstantRange.callocStack(pushConstantRanges.size, mem).apply {
+						for (range in pushConstantRanges) {
+							get().set(range)
+						}
+						flip()
+					}
+				}
+			)
 		val pLayout = mem.mallocLong(1)
 		vkCreatePipelineLayout(vkDevice, pLayoutInfo, null, pLayout)
 			.orFail("failed to create pipeline layout")
