@@ -149,11 +149,6 @@ fun Image.allocateDevice(): Image.Allocated =
 
 inline fun <T> Image.Allocated.transferHtoD(
 	layout: Image.Layout = Image.Layout.TransferDstOptimal,
-	rowLength: Int = 0,
-	height: Int = 0,
-	range: Image.SubresourceLayers = Image.SubresourceLayers(),
-	offset: Offset3D = Offset3D(0, 0, 0),
-	extent: Extent3D = this.image.extent,
 	block: (buf: ByteBuffer) -> T
 ) = apply {
 	if (memory.type.flags.has(MemoryType.Flags.HostVisible)) {
@@ -181,18 +176,14 @@ inline fun <T> Image.Allocated.transferHtoD(
 				)
 			)
 
-			copyBufferToImage(hostBuf.buffer, deviceImg.image, layout, 0, rowLength, height, range, offset, extent)
+			// TODO: expose other image copy options? (need to emulate for host-visible mem tho)
+			copyBufferToImage(hostBuf.buffer, deviceImg.image, layout)
 		}
 	}
 }
 
 inline fun <T> Image.Allocated.transferDtoH(
 	layout: Image.Layout,
-	rowLength: Int = 0,
-	height: Int = 0,
-	range: Image.SubresourceLayers = Image.SubresourceLayers(),
-	offset: Offset3D = Offset3D(0, 0, 0),
-	extent: Extent3D = this.image.extent,
 	block: (buf: ByteBuffer) -> T
 ) = apply {
 	if (memory.type.flags.has(MemoryType.Flags.HostVisible)) {
@@ -219,7 +210,8 @@ inline fun <T> Image.Allocated.transferDtoH(
 				)
 			)
 
-			copyImageToBuffer(deviceImg.image, hostBuf.buffer, layout, 0, rowLength, height, range, offset, extent)
+			// TODO: expose other image copy options? (need to emulate for host-visible mem tho)
+			copyImageToBuffer(deviceImg.image, hostBuf.buffer, layout)
 		}
 		hostBuf.memory.map(0, memory.size.toInt(), block)
 	}
