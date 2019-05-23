@@ -103,29 +103,38 @@ fun Buffer.allocateDevice(): Buffer.Allocated =
 		))
 	}
 
-inline fun <T> Buffer.Allocated.transferHtoD(offset: Long = 0L, size: Int = memory.sizeAsInt, block: (buf: ByteBuffer) -> T) = apply {
+inline fun <T> Buffer.Allocated.transferHtoD(
+	offset: Long = 0L,
+	size: Int = memory.sizeAsInt,
+	block: (buf: ByteBuffer) -> T
+): T {
 	if (memory.type.flags.has(MemoryType.Flags.HostVisible)) {
 
 		// memory is host-visible, so map it directly
-		memory.map(offset, size, block)
+		return memory.map(offset, size, block)
 
 	} else {
 
 		// memory is not host-visible, so upload using a staging buffer
 		val hostBuf = memory.device.memoryStager.getBuffer(size.toLong())
 		val deviceBuf = this
-		hostBuf.memory.map(0, size, block)
+		val result = hostBuf.memory.map(0, size, block)
 		memory.device.memoryStager.command {
 			copyBuffer(hostBuf.buffer, deviceBuf.buffer, 0, offset, size.toLong())
 		}
+		return result
 	}
 }
 
-inline fun <T> Buffer.Allocated.transferDtoH(offset: Long = 0L, size: Int = memory.sizeAsInt, block: (buf: ByteBuffer) -> T) = apply {
+inline fun <T> Buffer.Allocated.transferDtoH(
+	offset: Long = 0L,
+	size: Int = memory.sizeAsInt,
+	block: (buf: ByteBuffer) -> T
+): T {
 	if (memory.type.flags.has(MemoryType.Flags.HostVisible)) {
 
 		// memory is host-visible, so map it directly
-		memory.map(offset, size, block)
+		return memory.map(offset, size, block)
 
 	} else {
 
@@ -135,7 +144,7 @@ inline fun <T> Buffer.Allocated.transferDtoH(offset: Long = 0L, size: Int = memo
 		memory.device.memoryStager.command {
 			copyBuffer(deviceBuf.buffer, hostBuf.buffer, offset, 0, size.toLong())
 		}
-		hostBuf.memory.map(0, size, block)
+		return hostBuf.memory.map(0, size, block)
 	}
 }
 
@@ -150,18 +159,18 @@ fun Image.allocateDevice(): Image.Allocated =
 inline fun <T> Image.Allocated.transferHtoD(
 	layout: Image.Layout = Image.Layout.TransferDstOptimal,
 	block: (buf: ByteBuffer) -> T
-) = apply {
+): T {
 	if (memory.type.flags.has(MemoryType.Flags.HostVisible)) {
 
 		// memory is host-visible, so map it directly
-		memory.map(0, memory.size.toInt(), block)
+		return memory.map(0, memory.size.toInt(), block)
 
 	} else {
 
 		// memory is not host-visible, so upload using a staging buffer
 		val hostBuf = memory.device.memoryStager.getBuffer(memory.size)
 		val deviceImg = this
-		hostBuf.memory.map(0, memory.size.toInt(), block)
+		val result = hostBuf.memory.map(0, memory.size.toInt(), block)
 		memory.device.memoryStager.command {
 
 			// transition image into a transfer destination
@@ -179,17 +188,18 @@ inline fun <T> Image.Allocated.transferHtoD(
 			// TODO: expose other image copy options? (need to emulate for host-visible mem tho)
 			copyBufferToImage(hostBuf.buffer, deviceImg.image, layout)
 		}
+		return result
 	}
 }
 
 inline fun <T> Image.Allocated.transferDtoH(
 	layout: Image.Layout,
 	block: (buf: ByteBuffer) -> T
-) = apply {
+): T {
 	if (memory.type.flags.has(MemoryType.Flags.HostVisible)) {
 
 		// memory is host-visible, so map it directly
-		memory.map(0, memory.size.toInt(), block)
+		return memory.map(0, memory.size.toInt(), block)
 
 	} else {
 
@@ -213,6 +223,6 @@ inline fun <T> Image.Allocated.transferDtoH(
 			// TODO: expose other image copy options? (need to emulate for host-visible mem tho)
 			copyImageToBuffer(deviceImg.image, hostBuf.buffer, layout)
 		}
-		hostBuf.memory.map(0, memory.size.toInt(), block)
+		return hostBuf.memory.map(0, memory.size.toInt(), block)
 	}
 }
