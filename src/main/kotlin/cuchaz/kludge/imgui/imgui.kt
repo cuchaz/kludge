@@ -114,6 +114,17 @@ object Imgui : AutoCloseable {
 		external fun igListBoxHeaderInt(label: String, items_count: Int, height_in_items: Int): Boolean
 		external fun igListBoxFooter()
 
+		external fun igOpenPopup(str_id: String)
+		external fun igBeginPopup(str_id: String, flags: Int): Boolean
+		external fun igBeginPopupContextItem(str_id: String?, mouse_button: Int): Boolean
+		external fun igBeginPopupContextWindow(str_id: String?, mouse_button: Int, also_over_items: Boolean): Boolean
+		external fun igBeginPopupContextVoid(str_id: String?, mouse_button: Int): Boolean
+		external fun igBeginPopupModal(name: String, p_open: Long, flags: Int): Boolean
+		external fun igEndPopup()
+		external fun igOpenPopupOnItemClick(str_id: String?, mouse_button: Int): Boolean
+		external fun igIsPopupOpen(str_id: String): Boolean
+		external fun igCloseCurrentPopup()
+
 		external fun igIsItemHovered(flags: Int): Boolean
 		external fun igIsItemActive(): Boolean
 		external fun igIsItemFocused(): Boolean

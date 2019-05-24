@@ -1,10 +1,20 @@
 package cuchaz.kludge.tools
 
-import org.joml.AABBd
-import org.joml.AABBf
-import org.joml.Vector3f
+import org.joml.*
 import kotlin.math.max
 import kotlin.math.min
+
+
+val Vector3fc.x get() = x()
+val Vector3fc.y get() = y()
+val Vector3fc.z get() = z()
+
+val Vector3dc.x get() = x()
+val Vector3dc.y get() = y()
+val Vector3dc.z get() = z()
+
+fun Vector3dc.toFloat() =
+	Vector3f(x.toFloat(), y.toFloat(), z.toFloat())
 
 
 /** v = v.t/|t| t */

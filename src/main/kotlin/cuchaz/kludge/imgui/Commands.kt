@@ -385,6 +385,27 @@ class Commands internal constructor() {
 	fun listBoxFooter() = n.igListBoxFooter()
 
 
+	fun openPopup(id: String) = n.igOpenPopup(id)
+	fun beginPopup(id: String, flags: IntFlags<BeginFlags> = IntFlags(0)) = n.igBeginPopup(id, flags.value)
+	fun beginPopupContextItem(id: String? = null, mouseButton: Int = 1) = n.igBeginPopupContextItem(id, mouseButton)
+	fun beginPopupContextWindow(id: String? = null, mouseButton: Int = 1, alsoOverItems: Boolean = true) =
+		n.igBeginPopupContextWindow(id, mouseButton, alsoOverItems)
+	fun beginPopupContextVoid(id: String? = null, mouseButton: Int = 1) = n.igBeginPopupContextVoid(id, mouseButton)
+	fun beginPopupModal(name: String, open: Ref<Boolean>? = null, flags: IntFlags<BeginFlags> = IntFlags(0)): Boolean {
+		memstack { mem ->
+			val pOpen = open?.toBuf(mem)
+			return n.igBeginPopupModal(name, pOpen?.address ?: 0, flags.value)
+				.also {
+					open?.fromBuf(pOpen)
+				}
+		}
+	}
+	fun endPopup() = n.igEndPopup()
+	fun openPopupOnItemClick(id: String? = null, mouseButton: Int = 1) = n.igOpenPopupOnItemClick(id, mouseButton)
+	fun isPopupOpen(id: String) = n.igIsPopupOpen(id)
+	fun closeCurrentPopup() = n.igCloseCurrentPopup()
+
+
 	fun isItemHovered(flags: IntFlags<HoveredFlags> = IntFlags(0)) = n.igIsItemHovered(flags.value)
 	fun isItemActive() = n.igIsItemActive()
 	fun isItemFocused() = n.igIsItemFocused()
