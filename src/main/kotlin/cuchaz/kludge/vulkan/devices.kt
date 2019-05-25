@@ -761,8 +761,11 @@ class Queue internal constructor (
 			if (waitFor != null) {
 				info.pWaitSemaphores(waitFor.id.toBuffer(mem))
 			}
-			// TODO: presentation failure shoudn't necessarily crash the program
 			vkQueuePresentKHR(vkQueue, info)
+				.orFailWhen(VK_ERROR_OUT_OF_DATE_KHR) {
+					// convert error to exception, but make sure caller can recognize it and catch it
+					throw SwapchainOutOfDateException()
+				}
 				.orFail("failed to present queue")
 		}
 	}
