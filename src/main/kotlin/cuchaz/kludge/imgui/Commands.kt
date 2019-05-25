@@ -10,6 +10,8 @@ import cuchaz.kludge.imgui.Imgui.native.Vec2
 import cuchaz.kludge.imgui.Imgui.native.Vec4
 import cuchaz.kludge.vulkan.*
 import org.joml.Vector2f
+import org.lwjgl.system.MemoryUtil
+import java.nio.ByteBuffer
 
 
 class Commands internal constructor() {
@@ -71,7 +73,7 @@ class Commands internal constructor() {
 		NoInputs(NoMouseInputs.value or NoNavInputs.value or NoNavFocus.value),
 		NavFlattened(1 shl 23),
 		ChildWindow(1 shl 24),
-		Tooltop(1 shl 25),
+		Tooltip(1 shl 25),
 		Popup(1 shl 26),
 		Modal(1 shl 27),
 		ChildMenu(1 shl 28)
@@ -148,7 +150,10 @@ class Commands internal constructor() {
 	fun setNextWindowSize(size: Extent2D, cond: Cond = Cond.Always) =
 		n.igSetNextWindowSize(Vec2.ByVal(size), cond.value)
 
-	// TODO: setNextWindowSizeConstraints?
+	fun setNextWindowSizeConstraints(xmin: Float, ymin: Float, xmax: Float, ymax: Float) =
+		n.igSetNextWindowSizeConstraints(Vec2.ByVal(xmin, ymin), Vec2.ByVal(xmax, ymax), 0, 0)
+	fun setNextWindowSizeConstraints(min: Extent2D, max: Extent2D) =
+		n.igSetNextWindowSizeConstraints(Vec2.ByVal(min), Vec2.ByVal(max), 0, 0)
 
 	fun setNextWindowContentSize(width: Float, height: Float) =
 		n.igSetNextWindowContentSize(Vec2.ByVal(width, height))
@@ -383,6 +388,27 @@ class Commands internal constructor() {
 	) = n.igListBoxHeaderInt(label, itemsCount, heightInItems)
 
 	fun listBoxFooter() = n.igListBoxFooter()
+
+
+	fun beginMainMenuBar() = n.igBeginMainMenuBar()
+	fun endMainMenuBar() = n.igEndMainMenuBar()
+	fun beginMenuBar() = n.igBeginMenuBar()
+	fun endMenuBar() = n.igEndMenuBar()
+	fun beginMenu(label: String, enabled: Boolean = true) = n.igBeginMenu(label, enabled)
+	fun endMenu() = n.igEndMenu()
+	fun menuItem(label: String, shortcut: String? = null) =
+		menuItem(label, shortcut, false)
+	fun menuItem(label: String, shortcut: String? = null, selected: Boolean = false, enabled: Boolean = true) =
+		n.igMenuItemBool(label, shortcut, selected, enabled)
+	fun menuItem(label: String, shortcut: String? = null, selected: Ref<Boolean>? = null, enabled: Boolean = true): Boolean {
+		memstack { mem ->
+			val pSelected = selected?.toBuf(mem)
+			return n.igMenuItemBoolPtr(label, shortcut, pSelected?.address ?: 0, enabled)
+				.also {
+					selected?.fromBuf(pSelected)
+				}
+		}
+	}
 
 
 	fun openPopup(id: String) = n.igOpenPopup(id)

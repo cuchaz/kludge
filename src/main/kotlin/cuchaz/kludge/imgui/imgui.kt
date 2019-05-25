@@ -59,7 +59,7 @@ object Imgui : AutoCloseable {
 
 		external fun igSetNextWindowPos(pos: Vec2.ByVal, cond: Int, pivot: Vec2.ByVal)
 		external fun igSetNextWindowSize(size: Vec2.ByVal, cond: Int)
-		// TODO: igSetNextWindowSizeConstraints?
+		external fun igSetNextWindowSizeConstraints(size_min: Vec2.ByVal, size_max: Vec2.ByVal, custom_callback: Long, custom_callback_data: Long)
 		external fun igSetNextWindowContentSize(size: Vec2.ByVal)
 		external fun igSetNextWindowCollapsed(collapsed: Boolean, cond: Int)
 		external fun igSetNextWindowFocus()
@@ -113,6 +113,15 @@ object Imgui : AutoCloseable {
 
 		external fun igListBoxHeaderInt(label: String, items_count: Int, height_in_items: Int): Boolean
 		external fun igListBoxFooter()
+
+		external fun igBeginMainMenuBar(): Boolean
+		external fun igEndMainMenuBar()
+		external fun igBeginMenuBar(): Boolean
+		external fun igEndMenuBar()
+		external fun igBeginMenu(label: String, enabled: Boolean): Boolean
+		external fun igEndMenu()
+		external fun igMenuItemBool(label: String, shortcut: String?, selected: Boolean, enabled: Boolean): Boolean
+		external fun igMenuItemBoolPtr(label: String, shortcut: String?, selected: Long, enabled: Boolean): Boolean
 
 		external fun igOpenPopup(str_id: String)
 		external fun igBeginPopup(str_id: String, flags: Int): Boolean
