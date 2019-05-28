@@ -149,6 +149,8 @@ class Swapchain internal constructor(
 	val usage: IntFlags<Image.Usage>
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 	val rect: Rect2D = Rect2D(Offset2D(0, 0), extent)
 	val viewport: Viewport = Viewport(
 		0.0f,

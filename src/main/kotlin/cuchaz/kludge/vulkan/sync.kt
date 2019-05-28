@@ -15,6 +15,8 @@ class Semaphore internal constructor(
 	internal val id: Long
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 	override fun close() {
 		vkDestroySemaphore(device.vkDevice, id, null)
 	}

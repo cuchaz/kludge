@@ -24,6 +24,8 @@ class Surface internal constructor(
 	internal val id: Long
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 	override fun close() {
 		vkDestroySurfaceKHR(vulkan.instance, id, null)
 	}

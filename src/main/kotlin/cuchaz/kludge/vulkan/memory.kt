@@ -23,6 +23,8 @@ class Buffer internal constructor(
 	val size: Long
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 	enum class Flags(override val value: Int) : IntFlags.Bit {
 		SparseBinding(VK_BUFFER_CREATE_SPARSE_BINDING_BIT),
 		SparseResidency(VK_BUFFER_CREATE_SPARSE_RESIDENCY_BIT),
@@ -133,6 +135,8 @@ class MemoryAllocation(
 	val size: Long,
 	val type: MemoryType
 ) : AutoCloseable {
+
+	override fun toString() = "0x%x".format(id)
 
 	override fun close() {
 		vkFreeMemory(device.vkDevice, id, null)

@@ -19,6 +19,8 @@ class CommandPool(
 	internal val id: Long
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 	enum class Create(override val value: Int) : IntFlags.Bit {
 		Transient(VK_COMMAND_POOL_CREATE_TRANSIENT_BIT),
 		ResetCommandBuffer(VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT)
@@ -85,6 +87,8 @@ class CommandBuffer internal constructor(
 	internal val id: Long
 ) {
 	internal val vkBuf = VkCommandBuffer(id, pool.device.vkDevice)
+
+	override fun toString() = "0x%x".format(id)
 
 	enum class Usage(override val value: Int) : IntFlags.Bit {
 		OneTimeSubmit(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT),

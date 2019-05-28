@@ -22,6 +22,8 @@ class Image internal constructor(
 	val usage: IntFlags<Image.Usage>
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 	override fun close() {
 		vkDestroyImage(device.vkDevice, id, null)
 	}
@@ -29,6 +31,8 @@ class Image internal constructor(
 	inner class View internal constructor(
 		internal val id: Long
 	) : AutoCloseable {
+
+		override fun toString() = "0x%x".format(id)
 
 		val image: Image = this@Image
 

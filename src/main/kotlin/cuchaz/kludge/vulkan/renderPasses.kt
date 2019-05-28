@@ -22,6 +22,8 @@ class RenderPass internal constructor(
 	val subpassDependencies: List<SubpassDependency>
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 	override fun close() {
 		vkDestroyRenderPass(device.vkDevice, id, null)
 	}

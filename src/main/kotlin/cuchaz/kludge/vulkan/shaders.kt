@@ -20,6 +20,8 @@ class ShaderModule(
 	internal val id: Long
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 	override fun close() {
 		vkDestroyShaderModule(device.vkDevice, id, null)
 	}

@@ -19,6 +19,8 @@ class DescriptorSetLayout internal constructor(
 	val bindings: List<Binding>
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 	override fun close() {
 		vkDestroyDescriptorSetLayout(device.vkDevice, id, null)
 	}
@@ -127,6 +129,8 @@ class DescriptorPool internal constructor(
 	internal val id: Long
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 	override fun close() {
 		vkDestroyDescriptorPool(device.vkDevice, id, null)
 	}
@@ -187,6 +191,8 @@ class DescriptorSet(
 	val pool: DescriptorPool,
 	val layout: DescriptorSetLayout
 ) {
+
+	override fun toString() = "0x%x".format(id)
 
 	inner class Address internal constructor(
 		val binding: DescriptorSetLayout.Binding,

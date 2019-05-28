@@ -16,6 +16,8 @@ class DebugMessenger internal constructor(
 	internal val id: Long
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 	enum class Severity(override val value: Int) : IntFlags.Bit {
 		Error(VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT),
 		Warning(VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT),

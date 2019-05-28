@@ -15,6 +15,8 @@ class Sampler(
 	internal val id: Long
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 
 	enum class Filter {
 		Nearest,

@@ -15,6 +15,8 @@ abstract class Pipeline(
 	internal val layoutId: Long
 ) : AutoCloseable {
 
+	override fun toString() = "0x%x".format(id)
+
 	override fun close() {
 		vkDestroyPipelineLayout(device.vkDevice, layoutId, null)
 		vkDestroyPipeline(device.vkDevice, id, null)
