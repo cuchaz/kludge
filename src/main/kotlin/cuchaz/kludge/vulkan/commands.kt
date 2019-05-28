@@ -183,6 +183,17 @@ class CommandBuffer internal constructor(
 		}
 	}
 
+	fun bindDescriptorSets(
+		descriptorSets: List<DescriptorSet>,
+		pipeline: Pipeline
+	) {
+		memstack { mem ->
+			val pOffsets = null // TODO: support offsets?
+			val pSets = descriptorSets.map { it.id }.toBuffer(mem) ?: throw IllegalArgumentException("no descriptor sets given")
+			vkCmdBindDescriptorSets(vkBuf, pipeline.bindPoint.ordinal, pipeline.layoutId, 0, pSets, pOffsets)
+		}
+	}
+
 	fun pushConstants(
 		pipeline: Pipeline,
 		stageFlags: IntFlags<ShaderStage>,
