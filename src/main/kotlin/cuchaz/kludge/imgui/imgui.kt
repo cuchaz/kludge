@@ -394,7 +394,7 @@ object Imgui : AutoCloseable {
 		)
 
 		val descriptorSetLayout = device.descriptorSetLayout(listOf(binding))
-		val descriptorSet = descriptorPool.allocate(listOf(descriptorSetLayout))[0]
+		val descriptorSet = descriptorPool.allocate(descriptorSetLayout)
 
 		device.updateDescriptorSets(
 			writes = listOf(
