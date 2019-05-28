@@ -399,12 +399,10 @@ object Imgui : AutoCloseable {
 		device.updateDescriptorSets(
 			writes = listOf(
 				descriptorSet.address(binding).write(
-					images = listOf(
-						DescriptorSet.ImageInfo(
-							sampler = sampler,
-							view = view,
-							layout = Image.Layout.ShaderReadOnlyOptimal
-						)
+					DescriptorSet.ImageInfo(
+						sampler = sampler,
+						view = view,
+						layout = Image.Layout.ShaderReadOnlyOptimal
 					)
 				)
 			)

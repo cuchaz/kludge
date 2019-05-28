@@ -195,9 +195,14 @@ class DescriptorSet(
 		val set: DescriptorSet = this@DescriptorSet
 
 		fun write(
-			buffers: List<DescriptorSet.BufferInfo> = emptyList(),
-			images: List<DescriptorSet.ImageInfo> = emptyList()
+			buffers: List<BufferInfo> = emptyList(),
+			images: List<ImageInfo> = emptyList()
 		) = Write(this, buffers, images)
+
+		fun write(info: BufferInfo) =
+			write(buffers = listOf(info))
+		fun write(info: ImageInfo) =
+			write(images = listOf(info))
 
 		fun copyTo(other: Address) =
 			Copy(this, other)

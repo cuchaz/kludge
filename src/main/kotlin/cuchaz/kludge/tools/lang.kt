@@ -53,7 +53,7 @@ fun <T> List<T>.indexOfOrNull(thing: T): Int? {
 }
 
 
-fun <K,V> List<K>.diff(target: MutableMap<K,V>, added: (K) -> Unit, removed: (K, V) -> Unit) {
+fun <K,V> List<K>.diff(target: Map<K,V>, added: (K) -> Unit, removed: (K, V) -> Unit) {
 
 	val source = this
 
@@ -66,4 +66,39 @@ fun <K,V> List<K>.diff(target: MutableMap<K,V>, added: (K) -> Unit, removed: (K,
 	source
 		.filter { key -> key !in target }
 		.forEach { key -> added(key) }
+}
+
+
+fun <K> List<K>.diff(target: Set<K>, added: (K) -> Unit, removed: (K) -> Unit) {
+
+	val source = this
+
+	// detect removals
+	target
+		.filter { it !in source }
+		.forEach { removed(it) }
+
+	// detect additions
+	source
+		.filter { it !in target }
+		.forEach { added(it) }
+}
+
+fun <K> List<K>.changed(target: Set<K>): Boolean {
+
+	val source = this
+
+	// look for easy outs first
+	if (source.size != target.size) {
+		return true
+	}
+
+	// detect replacements
+	for (it in source) {
+		if (it !in target) {
+			return true
+		}
+	}
+
+	return false
 }

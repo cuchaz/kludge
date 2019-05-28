@@ -275,6 +275,9 @@ class CommandBuffer internal constructor(
 		vkCmdDispatch(vkBuf, x, y, z)
 	}
 
+	fun dispatch(extent: Extent2D) = dispatch(extent.width, extent.height)
+	fun dispatch(extent: Extent3D) = dispatch(extent.width, extent.height, extent.depth)
+
 	fun copyBuffer(
 		src: Buffer,
 		dst: Buffer,
