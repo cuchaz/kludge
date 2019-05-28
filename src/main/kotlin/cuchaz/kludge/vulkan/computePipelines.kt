@@ -20,7 +20,8 @@ class ComputePipeline internal constructor(
 
 fun Device.computePipeline(
 	stage: ShaderModule.Stage,
-	descriptorSetLayouts: List<DescriptorSetLayout> = emptyList()
+	descriptorSetLayouts: List<DescriptorSetLayout> = emptyList(),
+	pushConstantRanges: List<PushConstantRange> = emptyList()
 ): ComputePipeline {
 	memstack { mem ->
 
@@ -42,7 +43,18 @@ fun Device.computePipeline(
 					descriptorSetLayouts.map { it.id }.toBuffer(mem)
 				}
 			)
-			.pPushConstantRanges(null) // TODO: support constant ranges?
+			.pPushConstantRanges(
+				if (pushConstantRanges.isEmpty()) {
+					null
+				} else {
+					VkPushConstantRange.callocStack(pushConstantRanges.size, mem).apply {
+						for (range in pushConstantRanges) {
+							get().set(range)
+						}
+						flip()
+					}
+				}
+			)
 		val pLayout = mem.mallocLong(1)
 		vkCreatePipelineLayout(vkDevice, pLayoutInfo, null, pLayout)
 			.orFail("failied to create pipeline layout")
