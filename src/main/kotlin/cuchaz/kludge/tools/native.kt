@@ -210,8 +210,13 @@ fun ByteBuffer.toUUID(): UUID {
 	)
 }
 
-fun ByteBuffer.skip(numBytes: Int) =
-	position(position() + numBytes)
+fun ByteBuffer.skip(numBytes: Int) {
+	position += numBytes
+}
+
+var ByteBuffer.position
+	get() = position()
+	set(value) { position(value) }
 
 
 interface Ref<T:Any> {
