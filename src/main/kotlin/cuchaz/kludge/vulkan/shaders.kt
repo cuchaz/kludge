@@ -56,6 +56,7 @@ fun Device.shaderModule(code: ByteBuffer): ShaderModule {
 
 fun Device.shaderModule(file: File) = shaderModule(file.toByteBuffer())
 fun Device.shaderModule(path: Path) = shaderModule(path.toByteBuffer())
+fun Device.shaderModule(bytes: ByteArray) = shaderModule(bytes.toByteBuffer())
 
 
 enum class ShaderStage(override val value: Int) : IntFlags.Bit {

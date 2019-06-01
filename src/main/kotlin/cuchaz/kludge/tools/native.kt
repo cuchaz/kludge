@@ -9,6 +9,7 @@ import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import java.io.File
+import java.io.InputStream
 import java.nio.*
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -408,16 +409,8 @@ fun Path.toByteBuffer(): ByteBuffer =
 
 fun File.toByteBuffer(): ByteBuffer = toPath().toByteBuffer()
 
-/* TODO: do we need something like this?
-fun InputStream.toByteBuffer(size: Int): ByteBuffer {
-	val out = ByteBuffer.allocateDirect(size)
-	var remaining = size
-	while (remaining > 0) {
-		out.put(buf)
-		val read = read(result, offset, remaining)
-		if (read < 0) break
-		remaining -= read
-		offset += read
+fun ByteArray.toByteBuffer() =
+	ByteBuffer.allocateDirect(size).apply {
+		put(this@toByteBuffer)
+		flip()
 	}
-}
-*/

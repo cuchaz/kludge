@@ -53,7 +53,7 @@ fun <T> List<T>.indexOfOrNull(thing: T): Int? {
 }
 
 
-fun <K,V> List<K>.diff(target: Map<K,V>, added: (K) -> Unit, removed: (K, V) -> Unit) {
+fun <K,V> Collection<K>.diff(target: Map<K,V>, added: (K) -> Unit, removed: (K, V) -> Unit) {
 
 	val source = this
 
@@ -69,7 +69,7 @@ fun <K,V> List<K>.diff(target: Map<K,V>, added: (K) -> Unit, removed: (K, V) -> 
 }
 
 
-fun <K> List<K>.diff(target: Set<K>, added: (K) -> Unit, removed: (K) -> Unit) {
+fun <K> Collection<K>.diff(target: Set<K>, added: (K) -> Unit, removed: (K) -> Unit) {
 
 	val source = this
 
@@ -84,7 +84,7 @@ fun <K> List<K>.diff(target: Set<K>, added: (K) -> Unit, removed: (K) -> Unit) {
 		.forEach { added(it) }
 }
 
-fun <K> List<K>.changed(target: Set<K>): Boolean {
+fun <K> Collection<K>.changed(target: Set<K>): Boolean {
 
 	val source = this
 
