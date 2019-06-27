@@ -5,8 +5,7 @@
 
 package cuchaz.kludge.tools
 
-import java.lang.Math.max
-import java.lang.Math.min
+import java.lang.Math.*
 
 
 fun Int.atLeast(i: Int) = max(this, i)
@@ -40,8 +39,17 @@ fun Long.toIntOrNull(): Int? {
 val Float.Companion.SIZE_BYTES: Int get() = 4
 val Double.Companion.SIZE_BYTES: Int get() = 8
 
-fun Double.sqrt() = Math.sqrt(this)
+fun Double.sqrt() = sqrt(this)
 fun Float.sqrt() = toDouble().sqrt().toFloat()
+
+fun Double.square() = this*this
+fun Float.square() = this*this
+
+fun Double.toDegrees() = toDegrees(this)
+fun Float.toDegrees() = toDegrees(this.toDouble()).toFloat()
+
+fun Double.toRadians() = toRadians(this)
+fun Float.toRadians() = toRadians(this.toDouble()).toFloat()
 
 
 fun <T> List<T>.indexOfOrNull(thing: T): Int? {
