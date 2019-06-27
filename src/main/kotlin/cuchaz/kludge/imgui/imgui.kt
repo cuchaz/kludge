@@ -9,10 +9,13 @@ import com.sun.jna.Native
 import com.sun.jna.Structure
 import cuchaz.kludge.tools.AutoCloser
 import cuchaz.kludge.tools.IntFlags
+import cuchaz.kludge.tools.address
 import cuchaz.kludge.vulkan.*
 import cuchaz.kludge.window.Window
 import org.joml.Vector2f
 import org.lwjgl.system.MemoryUtil
+import java.nio.ByteBuffer
+import kotlin.reflect.KProperty
 
 
 object Imgui : AutoCloseable {
@@ -413,11 +416,38 @@ object Imgui : AutoCloseable {
 
 	object io {
 
-		fun getBool(offset: Int) = MemoryUtil.memGetBoolean(native.igGetIO() + offset)
-		fun setBool(offset: Int, value: Boolean) = MemoryUtil.memPutByte(native.igGetIO() + offset, if (value) 1 else 0)
+		fun getBoolean(offset: Int) = MemoryUtil.memGetBoolean(native.igGetIO() + offset)
+		fun setBoolean(offset: Int, value: Boolean) = MemoryUtil.memPutByte(native.igGetIO() + offset, if (value) 1 else 0)
+
+		open class ValBoolean(val offset: Int) {
+			operator fun getValue(thisRef: Any?, property: KProperty<*>) = getBoolean(offset)
+		}
+		open class VarBoolean(offset: Int) : ValBoolean(offset) {
+			operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) = setBoolean(offset, value)
+		}
 
 		fun getFloat(offset: Int) = MemoryUtil.memGetFloat(native.igGetIO() + offset)
 		fun setFloat(offset: Int, value: Float) = MemoryUtil.memPutFloat(native.igGetIO() + offset, value)
+
+		open class ValFloat(val offset: Int) {
+			operator fun getValue(thisRef: Any?, property: KProperty<*>) = getFloat(offset)
+		}
+		open class VarFloat(offset: Int) : ValFloat(offset) {
+			operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Float) = setFloat(offset, value)
+		}
+
+		open class ValCharStar(val offset: Int) {
+			operator fun getValue(thisRef: Any?, property: KProperty<*>) =
+				MemoryUtil.memUTF8Safe(MemoryUtil.memGetAddress(native.igGetIO() + offset))
+		}
+		open class VarCharStar(offset: Int) : ValCharStar(offset) {
+			private var buf: ByteBuffer? = null
+			operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String?) {
+				buf?.let { MemoryUtil.memFree(it) }
+				buf = MemoryUtil.memUTF8Safe(value, true)
+				MemoryUtil.memPutAddress(native.igGetIO() + offset, buf.address)
+			}
+		}
 
 		/* TODO: make accessors for all the fields
 			size	offset	descriptor
@@ -499,25 +529,36 @@ object Imgui : AutoCloseable {
 			4	1020    float NavInputsDownDurationPrev[ImGuiNavInput_COUNT];
 			?	1024    ImVector_ImWchar InputQueueCharacters;
 		 */
-		object displaySize {
-			val width: Float get() = getFloat(8)
-			val height: Float get() = getFloat(8 + 4)
-		}
-		val deltaTime: Float get() = getFloat(16)
-		val frameRate: Float get() = getFloat(928)
 
-		var configWindowsMoveFromTitleBarOnly
-			get() = getBool(204)
-			set(value) = setBool(204, value)
+		var iniFilename by VarCharStar(24)
+		var logFilename by VarCharStar(32)
+
+		object displaySize {
+			val width by ValFloat(8)
+			val height by ValFloat(8 + 4)
+		}
+		val deltaTime by ValFloat(16)
+
+		var configWindowsMoveFromTitleBarOnly by VarBoolean(204)
 
 		// mouse values
 		object mouse {
-			val x: Float get() = getFloat(296)
-			val y: Float get() = getFloat(296 + 4)
-			val wheel: Float get() = getFloat(312)
+			val x by ValFloat(296)
+			val y by ValFloat(296 + 4)
+			val wheel by ValFloat(312)
 			object buttonDown {
-				operator fun get(i: Int) = getBool(304 + i)
+				operator fun get(i: Int) = getBoolean(304 + i)
 			}
 		}
+
+		var wantCaptureMouse by VarBoolean(920)
+		var wantCaptureKeyboard by VarBoolean(921)
+		var wantTextInput by VarBoolean(922)
+		var wantSetMousePos by VarBoolean(923)
+		var wantSaveIniSettings by VarBoolean(924)
+		var navActive by VarBoolean(925)
+		var navVisible by VarBoolean(926)
+
+		val frameRate by ValFloat(928)
 	}
 }
