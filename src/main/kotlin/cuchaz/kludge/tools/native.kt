@@ -9,7 +9,6 @@ import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import java.io.File
-import java.io.InputStream
 import java.nio.*
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -261,6 +260,53 @@ val Buffer?.address get() =
 	} else {
 		0
 	}
+
+
+inline class ByteFlags<T:ByteFlags.Bit>(val value: Byte) {
+
+	companion object {
+
+		fun <T:Bit> of(vararg bits: T): ByteFlags<T> {
+			var flags = ByteFlags<T>(0)
+			for (bit in bits) {
+				flags = flags.set(bit)
+			}
+			return flags
+		}
+
+		fun <T:Bit> of(bits: Iterable<T>): ByteFlags<T> {
+			var flags = ByteFlags<T>(0)
+			for (bit in bits) {
+				flags = flags.set(bit)
+			}
+			return flags
+		}
+	}
+
+	interface Bit {
+		val value: Byte
+	}
+
+	fun has(bit: Bit) = (value and bit.value) != 0.toByte()
+	fun hasAny(other: ByteFlags<T>) = (value and other.value) != 0.toByte()
+	fun hasAll(other: ByteFlags<T>) = (value and other.value) == other.value
+
+	fun set(bit: Bit) = ByteFlags<T>(value or bit.value)
+	fun setAll(other: ByteFlags<T>) = ByteFlags<T>(value or other.value)
+
+	fun unset(bit: Bit) = ByteFlags<T>(value and bit.value.inv())
+	fun unsetAll(other: ByteFlags<T>) = ByteFlags<T>(value and other.value.inv())
+
+	fun set(bit: Bit, value: Boolean) = if (value) set(bit) else unset(bit)
+}
+
+// NOTE: need to inline this with reified T to get the enum constants
+// so, can't override the actual ByteFlags.toString()
+inline fun <reified T:ByteFlags.Bit> ByteFlags<T>.toFlagsString(): String =
+	T::class.java.enumConstants
+		.filter { has(it) }
+		.joinToString(",")
+		.let { "[$it]" }
 
 
 inline class ShortFlags<T:ShortFlags.Bit>(val value: Short) {

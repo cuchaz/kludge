@@ -7,12 +7,11 @@ package cuchaz.kludge.imgui
 
 import com.sun.jna.Native
 import com.sun.jna.Structure
-import cuchaz.kludge.tools.AutoCloser
-import cuchaz.kludge.tools.IntFlags
-import cuchaz.kludge.tools.address
+import cuchaz.kludge.tools.*
 import cuchaz.kludge.vulkan.*
 import cuchaz.kludge.window.Window
 import org.joml.Vector2f
+import org.joml.Vector2fc
 import org.lwjgl.system.MemoryUtil
 import java.nio.ByteBuffer
 import kotlin.reflect.KProperty
@@ -44,6 +43,9 @@ object Imgui : AutoCloseable {
 		external fun igBegin(name: String, open: Long, flags: Int): Boolean
 		external fun igEnd()
 
+		external fun igBeginChild(str_id: String, size: Vec2.ByVal, border: Boolean, flags: Int): Boolean
+		external fun igEndChild()
+
 		external fun igIsWindowAppearing(): Boolean
 		external fun igIsWindowCollapsed(): Boolean
 		external fun igIsWindowFocused(flags: Int): Boolean
@@ -73,6 +75,23 @@ object Imgui : AutoCloseable {
 		external fun igSetWindowCollapsedStr(name: String, collapsed: Boolean, cond: Int)
 		external fun igSetWindowFocusStr(name: String)
 
+		external fun igPushStyleColor(idx: Int, col: Vec4.ByVal)
+		external fun igPopStyleColor(count: Int)
+		external fun igPushStyleVarFloat(idx: Int, value: Float)
+		external fun igPushStyleVarVec2(idx: Int, value: Vec2.ByVal)
+		external fun igPopStyleVar(count: Int)
+		external fun igGetStyleColorVec4(idx: Int): Vec4.ByVal
+
+		external fun igPushItemWidth(item_width: Float)
+		external fun igPopItemWidth()
+		external fun igCalcItemWidth(): Float
+		external fun igPushTextWrapPos(wrap_local_pos_x: Float)
+		external fun igPopTextWrapPos()
+		external fun igPushAllowKeyboardFocus(allow_keyboard_focus: Boolean)
+		external fun igPopAllowKeyboardFocus()
+		external fun igPushButtonRepeat(repeat: Boolean)
+		external fun igPopButtonRepeat()
+
 		external fun igSeparator()
 		external fun igSameLine(pos: Float, spacing: Float)
 		external fun igNewLine()
@@ -97,7 +116,13 @@ object Imgui : AutoCloseable {
 		external fun igGetFrameHeight(): Float
 		external fun igGetFrameHeightWithSpacing(): Float
 
+		external fun igTextUnformatted(text: String, text_end: String?)
 		external fun igText(fmt: String)
+		external fun igTextColored(col: Vec4.ByVal, fmt: String)
+		external fun igTextDisabled(fmt: String)
+		external fun igTextWrapped(fmt: String)
+		external fun igLabelText(label: String, fmt: String)
+		external fun igBulletText(fmt: String)
 
 		external fun igButton(label: String, size: Vec2.ByVal): Boolean
 		external fun igSmallButton(label: String): Boolean
@@ -126,6 +151,10 @@ object Imgui : AutoCloseable {
 		external fun igMenuItemBool(label: String, shortcut: String?, selected: Boolean, enabled: Boolean): Boolean
 		external fun igMenuItemBoolPtr(label: String, shortcut: String?, selected: Long, enabled: Boolean): Boolean
 
+		external fun igBeginTooltip()
+		external fun igEndTooltip()
+		external fun igSetTooltip(fmt: String)
+
 		external fun igOpenPopup(str_id: String)
 		external fun igBeginPopup(str_id: String, flags: Int): Boolean
 		external fun igBeginPopupContextItem(str_id: String?, mouse_button: Int): Boolean
@@ -136,6 +165,15 @@ object Imgui : AutoCloseable {
 		external fun igOpenPopupOnItemClick(str_id: String?, mouse_button: Int): Boolean
 		external fun igIsPopupOpen(str_id: String): Boolean
 		external fun igCloseCurrentPopup()
+
+		external fun igColumns(count: Int, id: String?, border: Boolean)
+		external fun igNextColumn()
+		external fun igGetColumnIndex(): Int
+		external fun igGetColumnWidth(column_index: Int): Float
+		external fun igSetColumnWidth(column_index: Int, width: Float)
+		external fun igGetColumnOffset(column_index: Int): Float
+		external fun igSetColumnOffset(column_index: Int, offset_x: Float)
+		external fun igGetColumnsCount(): Int
 
 		external fun igIsItemHovered(flags: Int): Boolean
 		external fun igIsItemActive(): Boolean
@@ -212,7 +250,7 @@ object Imgui : AutoCloseable {
 			@JvmField var y: Float
 		) : Structure() {
 
-			class ByVal(x: Float = 0f, y: Float = 0f) : Vec2(x, y), Structure.ByValue {
+			class ByVal(x: Float = 0f, y: Float = 0f) : Vec2(x, y), ByValue {
 
 				constructor(pos: Offset2D) : this(pos.x.toFloat(), pos.y.toFloat())
 				fun toOffset() = Offset2D(x.toInt(), y.toInt())
@@ -220,11 +258,11 @@ object Imgui : AutoCloseable {
 				constructor(size: Extent2D) : this(size.width.toFloat(), size.height.toFloat())
 				fun toExtent() = Extent2D(x.toInt(), y.toInt())
 
-				constructor(v: Vector2f) : this(v.x, v.y)
+				constructor(v: Vector2fc) : this(v.x, v.y)
 				fun toVector(v: Vector2f) = v.set(x, y)
 			}
 
-			class ByRef(x: Float = 0f, y: Float = 0f) : Vec2(x, y), Structure.ByReference {
+			class ByRef(x: Float = 0f, y: Float = 0f) : Vec2(x, y), ByReference {
 
 				constructor(pos: Offset2D) : this(pos.x.toFloat(), pos.y.toFloat())
 				fun toOffset() = Offset2D(x.toInt(), y.toInt())
@@ -232,7 +270,7 @@ object Imgui : AutoCloseable {
 				constructor(size: Extent2D) : this(size.width.toFloat(), size.height.toFloat())
 				fun toExtent() = Extent2D(x.toInt(), y.toInt())
 
-				constructor(v: Vector2f) : this(v.x, v.y)
+				constructor(v: Vector2fc) : this(v.x, v.y)
 				fun toVector(v: Vector2f) = v.set(x, y)
 			}
 		}
@@ -245,13 +283,13 @@ object Imgui : AutoCloseable {
 			@JvmField var w: Float
 		) : Structure() {
 
-			class ByVal(x: Float = 0f, y: Float = 0f, z: Float = 0f, w: Float = 0f) : Vec4(x, y, z, w), Structure.ByValue {
+			class ByVal(x: Float = 0f, y: Float = 0f, z: Float = 0f, w: Float = 0f) : Vec4(x, y, z, w), ByValue {
 
 				constructor(color: ColorRGBA) : this(color.rf, color.gf, color.bf, color.af)
 				fun toColorRGBA() = ColorRGBA.Float(x, y, z, w)
 			}
 
-			class ByRef(x: Float = 0f, y: Float = 0f, z: Float = 0f, w: Float = 0f) : Vec4(x, y, z, w), Structure.ByReference
+			class ByRef(x: Float = 0f, y: Float = 0f, z: Float = 0f, w: Float = 0f) : Vec4(x, y, z, w), ByReference
 		}
 	}
 

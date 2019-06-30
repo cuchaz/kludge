@@ -475,7 +475,15 @@ sealed class ClearValue {
 			val g: kotlin.Int = 0,
 			val b: kotlin.Int = 0,
 			val a: kotlin.Int = 0
-		) : ClearValue.Color()
+		) : ClearValue.Color() {
+
+			constructor(hex: UInt) : this(
+				((hex and 0xff000000u) shr 8*3).toInt(),
+				((hex and 0x00ff0000u) shr 8*2).toInt(),
+				((hex and 0x0000ff00u) shr 8).toInt(),
+				(hex and 0x000000ffu).toInt()
+			)
+		}
 	}
 
 	class DepthStencil(

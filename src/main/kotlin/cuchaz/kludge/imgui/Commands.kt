@@ -10,8 +10,7 @@ import cuchaz.kludge.imgui.Imgui.native.Vec2
 import cuchaz.kludge.imgui.Imgui.native.Vec4
 import cuchaz.kludge.vulkan.*
 import org.joml.Vector2f
-import org.lwjgl.system.MemoryUtil
-import java.nio.ByteBuffer
+import org.joml.Vector2fc
 
 
 class Commands internal constructor() {
@@ -95,6 +94,22 @@ class Commands internal constructor() {
 
 	fun end() = n.igEnd()
 
+
+	fun beginChild(
+		id: String,
+		width: Float,
+		height: Float,
+		border: Boolean = false,
+		flags: IntFlags<BeginFlags> = IntFlags(0)
+	) = n.igBeginChild(id, Vec2.ByVal(width, height), border, flags.value)
+	fun beginChild(
+		id: String,
+		size: Extent2D = Extent2D(0, 0),
+		border: Boolean = false,
+		flags: IntFlags<BeginFlags> = IntFlags(0)
+	) = n.igBeginChild(id, Vec2.ByVal(size), border, flags.value)
+
+	fun endChild() = n.igEndChild()
 
 	enum class FocusedFlags(override val value: Int) : IntFlags.Bit {
 		ChildWindows(1 shl 0),
@@ -184,12 +199,106 @@ class Commands internal constructor() {
 		n.igSetWindowFocusStr(name)
 
 
+	enum class StyleColor {
+		Text,
+		TextDisabled,
+		WindowBg,
+		ChildBg,
+		PopupBg,
+		Border,
+		BorderShadow,
+		FrameBg,
+		FrameBgHovered,
+		FrameBgActive,
+		TitleBg,
+		TitleBgActive,
+		TitleBgCollapsed,
+		MenuBarBg,
+		ScrollbarBg,
+		ScrollbarGrab,
+		ScrollbarGrabHovered,
+		ScrollbarGrabActive,
+		CheckMark,
+		SliderGrab,
+		SliderGrabActive,
+		Button,
+		ButtonHovered,
+		ButtonActive,
+		Header,
+		HeaderHovered,
+		HeaderActive,
+		Separator,
+		SeparatorHovered,
+		SeparatorActive,
+		ResizeGrip,
+		ResizeGripHovered,
+		ResizeGripActive,
+		Tab,
+		TabHovered,
+		TabActive,
+		TabUnfocused,
+		TabUnfocusedActive,
+		PlotLines,
+		PlotLinesHovered,
+		PlotHistogram,
+		PlotHistogramHovered,
+		TextSelectedBg,
+		DragDropTarget,
+		NavHighlight,
+		NavWindowingHighlight,
+		NavWindowingDimBg,
+		ModalWindowDimBg,
+	}
+	fun pushStyleColor(idx: StyleColor, color: ColorRGBA) = n.igPushStyleColor(idx.ordinal, Vec4.ByVal(color))
+	fun popStyleColor(count: Int = 1) = n.igPopStyleColor(count)
+
+	enum class StyleVar {
+		Alpha,
+		WindowPadding,
+		WindowRounding,
+		WindowBorderSize,
+		WindowMinSize,
+		WindowTitleAlign,
+		ChildRounding,
+		ChildBorderSize,
+		PopupRounding,
+		PopupBorderSize,
+		FramePadding,
+		FrameRounding,
+		FrameBorderSize,
+		ItemSpacing,
+		ItemInnerSpacing,
+		IndentSpacing,
+		ScrollbarSize,
+		ScrollbarRounding,
+		GrabMinSize,
+		GrabRounding,
+		TabRounding,
+		ButtonTextAlign
+	}
+	fun pushStyleVar(idx: StyleVar, value: Float) = n.igPushStyleVarFloat(idx.ordinal, value)
+	fun pushStyleVar(idx: StyleVar, value: Vector2fc) = n.igPushStyleVarVec2(idx.ordinal, Vec2.ByVal(value))
+	fun pushStyleVar(idx: StyleVar, x: Float, y: Float) = n.igPushStyleVarVec2(idx.ordinal, Vec2.ByVal(x, y))
+	fun popStyleVar(count: Int = 1) = n.igPopStyleVar(count)
+	fun getStyleColor(idx: StyleVar) = n.igGetStyleColorVec4(idx.ordinal).toColorRGBA()
+
+	fun pushItemWidth(width: Float) = n.igPushItemWidth(width)
+	fun popItemWidth() = n.igPopItemWidth()
+	fun calcItemWidth()= n.igCalcItemWidth()
+	fun pushTextWrapPos(pos: Float = 0f) = n.igPushTextWrapPos(pos)
+	fun popTextWrapPos() = n.igPopTextWrapPos()
+	fun pushAllowKeyboardFocus(allow: Boolean) = n.igPushAllowKeyboardFocus(allow)
+	fun popAllowKeyboardFocus() = n.igPopAllowKeyboardFocus()
+	fun pushButtonRepeat(repeat: Boolean) = n.igPushButtonRepeat(repeat)
+	fun popButtonRepeat() = n.igPopButtonRepeat()
+
+
 	fun separator() = n.igSeparator()
 	fun sameLine(pos: Float = 0f, spacing: Float = -1f) = n.igSameLine(pos, spacing)
 	fun newLine() = n.igNewLine()
 	fun spacing() = n.igSpacing()
 	fun dummy(width: Float, height: Float) = n.igDummy(Vec2.ByVal(width, height))
-	fun dummy(size: Vector2f) = n.igDummy(Vec2.ByVal(size))
+	fun dummy(size: Vector2fc) = n.igDummy(Vec2.ByVal(size))
 	fun indent(indent: Float = 0f) = n.igIndent(indent)
 	fun unindent(indent: Float = 0f) = n.igUnindent(indent)
 	fun beginGroup() = n.igBeginGroup()
@@ -198,13 +307,13 @@ class Commands internal constructor() {
 	fun getCursorPosX() = n.igGetCursorPosX()
 	fun getCursorPosY() = n.igGetCursorPosY()
 	fun setCursorPos(x: Float, y: Float) = n.igSetCursorPos(Vec2.ByVal(x, y))
-	fun setCursorPos(pos: Vector2f) = n.igSetCursorPos(Vec2.ByVal(pos))
+	fun setCursorPos(pos: Vector2fc) = n.igSetCursorPos(Vec2.ByVal(pos))
 	fun setCursorPosX(x: Float) = n.igSetCursorPosX(x)
 	fun setCursorPosY(y: Float) = n.igSetCursorPosY(y)
 	fun getCursorStartPos(out: Vector2f) = n.igGetCursorStartPos().toVector(out)
 	fun getCursorScreenPos(out: Vector2f) = n.igGetCursorScreenPos().toVector(out)
 	fun setCursorScreenPos(x: Float, y: Float) = n.igSetCursorScreenPos(Vec2.ByVal(x, y))
-	fun setCursorScreenPos(pos: Vector2f) = n.igSetCursorScreenPos(Vec2.ByVal(pos))
+	fun setCursorScreenPos(pos: Vector2fc) = n.igSetCursorScreenPos(Vec2.ByVal(pos))
 	fun alignTextToFramePadding() = n.igAlignTextToFramePadding()
 	fun getTextLineHeight() = n.igGetTextLineHeight()
 	fun getTextLineHeightWithSpacing() = n.igGetTextLineHeightWithSpacing()
@@ -212,7 +321,14 @@ class Commands internal constructor() {
 	fun getFrameHeightWithSpacing() = n.igGetFrameHeightWithSpacing()
 
 
+	fun textUnformatted(text: String, textEnd: String? = null) = n.igTextUnformatted(text, textEnd)
 	fun text(text: String) = n.igText(text)
+	fun textColored(color: ColorRGBA, text: String) = n.igTextColored(Vec4.ByVal(color), text)
+	fun textDisabled(text: String) = n.igTextDisabled(text)
+	fun textWrapped(text: String) = n.igTextWrapped(text)
+	fun labelText(label: String, text: String) = n.igLabelText(label, text)
+	fun bulletText(text: String) = n.igBulletText(text)
+
 
 	fun checkbox(label: String, isChecked: Ref<Boolean>): Boolean {
 		memstack { mem ->
@@ -228,7 +344,7 @@ class Commands internal constructor() {
 		n.igButton(label, Vec2.ByVal(width, height))
 	fun button(label: String, size: Extent2D) =
 		n.igButton(label, Vec2.ByVal(size))
-	fun button(label: String, size: Vector2f) =
+	fun button(label: String, size: Vector2fc) =
 		n.igButton(label, Vec2.ByVal(size))
 
 	fun smallButton(label: String) = n.igSmallButton(label)
@@ -237,7 +353,7 @@ class Commands internal constructor() {
 		n.igInvisibleButton(id, Vec2.ByVal(width, height))
 	fun invisibleButton(id: String, size: Extent2D) =
 		n.igInvisibleButton(id, Vec2.ByVal(size))
-	fun invisibleButton(id: String, size: Vector2f) =
+	fun invisibleButton(id: String, size: Vector2fc) =
 		n.igInvisibleButton(id, Vec2.ByVal(size))
 
 	fun image(
@@ -410,6 +526,10 @@ class Commands internal constructor() {
 		}
 	}
 
+	fun beginTooltip() = n.igBeginTooltip()
+	fun endTooltip() = n.igEndTooltip()
+	fun setTooltip(text: String) = n.igSetTooltip(text)
+
 
 	fun openPopup(id: String) = n.igOpenPopup(id)
 	fun beginPopup(id: String, flags: IntFlags<BeginFlags> = IntFlags(0)) = n.igBeginPopup(id, flags.value)
@@ -430,6 +550,16 @@ class Commands internal constructor() {
 	fun openPopupOnItemClick(id: String? = null, mouseButton: Int = 1) = n.igOpenPopupOnItemClick(id, mouseButton)
 	fun isPopupOpen(id: String) = n.igIsPopupOpen(id)
 	fun closeCurrentPopup() = n.igCloseCurrentPopup()
+
+
+	fun columns(count: Int = 1, id: String? = null, border: Boolean = true) = n.igColumns(count, id, border)
+	fun nextColumn() = n.igNextColumn()
+	fun getColumnIndex() = n.igGetColumnIndex()
+	fun getColumnWidth(index: Int = -1) = n.igGetColumnWidth(index)
+	fun setColumnWidth(index: Int, width: Float) = n.igSetColumnWidth(index, width)
+	fun getColumnOffset(index: Int = -1) = n.igGetColumnWidth(index)
+	fun setColumnOffset(index: Int, offset: Float) = n.igSetColumnOffset(index, offset)
+	fun getColumnsCount() = n.igGetColumnsCount()
 
 
 	fun isItemHovered(flags: IntFlags<HoveredFlags> = IntFlags(0)) = n.igIsItemHovered(flags.value)
@@ -487,13 +617,13 @@ class Commands internal constructor() {
 
 	fun isMouseHoveringRect(minx: Float, miny: Float, maxx: Float, maxy: Float, clip: Boolean = true) =
 		n.igIsMouseHoveringRect(Vec2.ByVal(minx, miny), Vec2.ByVal(maxx, maxy), clip)
-	fun isMouseHoveringRect(min: Vector2f, max: Vector2f, clip: Boolean = true) =
+	fun isMouseHoveringRect(min: Vector2fc, max: Vector2fc, clip: Boolean = true) =
 		n.igIsMouseHoveringRect(Vec2.ByVal(min), Vec2.ByVal(max), clip)
 	fun isMouseHoveringRect(rect: Rect2D, clip: Boolean = true) =
 		n.igIsMouseHoveringRect(Vec2.ByVal(rect.offset), Vec2.ByVal(rect.xmax.toFloat(), rect.ymax.toFloat()), clip)
 
 	fun isMousePosValid(pos: Offset2D? = null) = n.igIsMousePosValid(pos?.let { Vec2.ByRef(it) })
-	fun isMousePosValid(pos: Vector2f? = null) = n.igIsMousePosValid(pos?.let { Vec2.ByRef(it) })
+	fun isMousePosValid(pos: Vector2fc? = null) = n.igIsMousePosValid(pos?.let { Vec2.ByRef(it) })
 
 	fun getMousePos(out: Vector2f) = n.igGetMousePos().toVector(out)
 	fun getMousePosOnOpeningCurrentPopup(out: Vector2f) = n.igGetMousePosOnOpeningCurrentPopup().toVector(out)

@@ -5,6 +5,16 @@ import kotlin.math.max
 import kotlin.math.min
 
 
+val Vector2fc.x get() = x()
+val Vector2fc.y get() = y()
+
+val Vector2dc.x get() = x()
+val Vector2dc.y get() = y()
+
+fun Vector2dc.toFloat() =
+	Vector2f(x.toFloat(), y.toFloat())
+
+
 val Vector3fc.x get() = x()
 val Vector3fc.y get() = y()
 val Vector3fc.z get() = z()
