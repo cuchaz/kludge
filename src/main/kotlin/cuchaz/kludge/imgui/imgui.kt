@@ -136,6 +136,9 @@ object Imgui : AutoCloseable {
 		external fun igSliderInt(label: String, v: Long, v_min: Int, v_max: Int, format: String): Boolean
 		external fun igSliderFloat(label: String, v: Long, v_min: Float, v_max: Float, format: String, power: Float): Boolean
 
+		external fun igInputText(label: String, buf: Long, buf_size: Long, flags: Int, callback: Long, user_data: Long): Boolean
+		external fun igInputTextMultiline(label: String, buf: Long, buf_size: Long, size: Vec2.ByVal, flags: Int, callback: Long, user_data: Long): Boolean
+
 		external fun igSelectable(label: String, selected: Boolean, flags: Int, size: Vec2.ByVal): Boolean
 		external fun igSelectable(label: String, p_selected: Long, flags: Int, size: Vec2.ByVal): Boolean
 

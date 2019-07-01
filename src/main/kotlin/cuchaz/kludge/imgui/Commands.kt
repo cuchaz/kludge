@@ -11,6 +11,7 @@ import cuchaz.kludge.imgui.Imgui.native.Vec4
 import cuchaz.kludge.vulkan.*
 import org.joml.Vector2f
 import org.joml.Vector2fc
+import java.nio.ByteBuffer
 
 
 class Commands internal constructor() {
@@ -443,6 +444,83 @@ class Commands internal constructor() {
 				}
 		}
 	}
+
+
+	enum class InputTextFlags(override val value: Int) : IntFlags.Bit {
+		CharsDecimal(1 shl 0),
+		CharsHexadecimal(1 shl 1),
+		CharsUppercase(1 shl 2),
+		CharsNoBlank(1 shl 3),
+		AutoSelectAll(1 shl 4),
+		EnterReturnsTrue(1 shl 5),
+		// TODO: implement callbacks?
+		//CallbackCompletion(1 shl 6),
+		//CallbackHistory(1 shl 7),
+		//CallbackAlways(1 shl 8),
+		//CallbackCharFilter(1 shl 9),
+		AllowTabInput(1 shl 10),
+		CtrlEnterForNewLine(1 shl 11),
+		NoHorizontalScroll(1 shl 12),
+		AlwaysInsertMode(1 shl 13),
+		ReadOnly(1 shl 14),
+		Password(1 shl 15),
+		NoUndoRedo(1 shl 16),
+		CharsScientific(1 shl 17),
+		//CallbackResize(1 shl 18)
+	}
+
+	class TextBuffer(val bytes: Int) {
+
+		companion object {
+
+			fun of(text: String): TextBuffer {
+				val utf8 = text.toByteArray(Charsets.UTF_8)
+				return TextBuffer(utf8.size).apply {
+					buf.put(utf8)
+					buf.rewind()
+				}
+			}
+		}
+
+		internal val buf = ByteBuffer.allocateDirect(bytes) // yeah, this needs to be direct
+
+		fun hasRoomFor(value: String) = value.toByteArray(Charsets.UTF_8).size <= bytes
+
+		var text: String
+			get() = String(buf.array(), Charsets.UTF_8)
+			set(value) {
+				val utf8 = value.toByteArray(Charsets.UTF_8)
+				if (utf8.size > bytes) {
+					throw IllegalArgumentException("not enough room for string: needs ${utf8.size} bytes, but only have $bytes")
+				}
+				buf.clear()
+				buf.put(utf8)
+				buf.rewind()
+			}
+
+		override fun toString() = text
+	}
+
+	fun inputText(
+		label: String,
+		text: TextBuffer,
+		flags: IntFlags<InputTextFlags> = IntFlags(0)
+	) = n.igInputText(label, text.buf.address, text.bytes.toLong(), flags.value, 0L, 0L)
+
+	fun inputTextMultiline(
+		label: String,
+		text: TextBuffer,
+		size: Extent2D,
+		flags: IntFlags<InputTextFlags> = IntFlags(0)
+	) = n.igInputTextMultiline(label, text.buf.address, text.bytes.toLong(), Vec2.ByVal(size), flags.value, 0L, 0L)
+	fun inputTextMultiline(
+		label: String,
+		text: TextBuffer,
+		width: Float,
+		height: Float,
+		flags: IntFlags<InputTextFlags> = IntFlags(0)
+	) = n.igInputTextMultiline(label, text.buf.address, text.bytes.toLong(), Vec2.ByVal(width, height), flags.value, 0L, 0L)
+
 
 	enum class SelectableFlags(override val value: Int): IntFlags.Bit {
 		DontClosePopups(1 shl 0),
