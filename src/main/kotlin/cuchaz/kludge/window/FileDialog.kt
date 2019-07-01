@@ -20,10 +20,10 @@ class FilterList(vararg val filters: List<String>) {
 
 object FileDialog {
 
-	fun openFile(filterList: FilterList? = null, defaultPath: String? = null): Path? {
+	fun openFile(filterList: FilterList? = null, defaultPath: Path? = null): Path? {
 		memstack { mem ->
 			val outPath = mem.mallocPointer(1)
-			val result = NFD_OpenDialog(filterList?.str, defaultPath, outPath)
+			val result = NFD_OpenDialog(filterList?.str, defaultPath?.toString(), outPath)
 			when (result) {
 				NFD_OKAY -> {
 					val str = outPath.getStringUTF8(0)
@@ -36,10 +36,10 @@ object FileDialog {
 		}
 	}
 
-	fun openFiles(filterList: FilterList? = null, defaultPath: String? = null): List<Path>? {
+	fun openFiles(filterList: FilterList? = null, defaultPath: Path? = null): List<Path>? {
 		memstack { mem ->
 			val pathSet = NFDPathSet.mallocStack(mem)
-			val result = NFD_OpenDialogMultiple(filterList?.str, defaultPath, pathSet)
+			val result = NFD_OpenDialogMultiple(filterList?.str, defaultPath?.toString(), pathSet)
 			when (result) {
 				NFD_OKAY -> {
 					val count = NFD_PathSet_GetCount(pathSet)
@@ -53,10 +53,10 @@ object FileDialog {
 		}
 	}
 
-	fun saveFile(filterList: FilterList? = null, defaultPath: String? = null): Path? {
+	fun saveFile(filterList: FilterList? = null, defaultPath: Path? = null): Path? {
 		memstack { mem ->
 			val outPath = mem.mallocPointer(1)
-			val result = NFD_SaveDialog(filterList?.str, defaultPath, outPath)
+			val result = NFD_SaveDialog(filterList?.str, defaultPath?.toString(), outPath)
 			when (result) {
 				NFD_OKAY -> {
 					val str = outPath.getStringUTF8(0)
@@ -69,10 +69,10 @@ object FileDialog {
 		}
 	}
 
-	fun pickFolder(defaultPath: String? = null): Path? {
+	fun pickFolder(defaultPath: Path? = null): Path? {
 		memstack { mem ->
 			val outPath = mem.mallocPointer(1)
-			val result = NFD_PickFolder(defaultPath, outPath)
+			val result = NFD_PickFolder(defaultPath?.toString(), outPath)
 			when (result) {
 				NFD_OKAY -> {
 					val str = outPath.getStringUTF8(0)
