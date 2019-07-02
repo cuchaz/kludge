@@ -475,8 +475,9 @@ class Commands internal constructor() {
 
 			fun of(text: String): TextBuffer {
 				val utf8 = text.toByteArray(Charsets.UTF_8)
-				return TextBuffer(utf8.size).apply {
+				return TextBuffer(utf8.size + 1).apply {
 					buf.put(utf8)
+					buf.put(0) // add a null terminator
 					buf.rewind()
 				}
 			}
@@ -490,11 +491,12 @@ class Commands internal constructor() {
 			get() = String(buf.array(), Charsets.UTF_8)
 			set(value) {
 				val utf8 = value.toByteArray(Charsets.UTF_8)
-				if (utf8.size > bytes) {
+				if (utf8.size + 1 > bytes) {
 					throw IllegalArgumentException("not enough room for string: needs ${utf8.size} bytes, but only have $bytes")
 				}
 				buf.clear()
 				buf.put(utf8)
+				buf.put(0) // add a null terminator
 				buf.rewind()
 			}
 
