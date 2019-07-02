@@ -17,6 +17,7 @@ import java.util.*
 import kotlin.experimental.and
 import kotlin.experimental.inv
 import kotlin.experimental.or
+import kotlin.reflect.KMutableProperty0
 
 
 inline fun <R> memstack(block: (MemoryStack) -> R): R {
@@ -224,8 +225,17 @@ interface Ref<T:Any> {
 	var value: T
 
 	companion object {
+
 		fun <T:Any> of(value: T) = object : Ref<T> {
 			override var value: T = value
+		}
+
+		fun <T:Any> of(prop: KMutableProperty0<T>) = object : Ref<T> {
+			override var value: T
+				get() = prop.get()
+				set(value) {
+					prop.set(value)
+				}
 		}
 	}
 }
