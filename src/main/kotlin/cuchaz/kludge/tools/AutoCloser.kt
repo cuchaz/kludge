@@ -15,17 +15,22 @@ class AutoCloser : AutoCloseable {
 
 	fun <T:AutoCloseable> add(thing: T, replace: T? = null): T {
 
-		// add the new thing
-		things.add(thing)
-
 		// if we're replacing something, remove that and close it
 		if (replace != null) {
 			val wasRemoved = remove(replace)
-			if (!wasRemoved) {
-				throw IllegalArgumentException("$replace was not in the autoclean list")
+			assert (wasRemoved) {
+				"$replace was not in the autoclean list"
 			}
 			replace.close()
 		}
+
+		// don't allow closing the same thing twice
+		assert (thing !in things) {
+			"$thing is already in the autoclean list"
+		}
+
+		// add the new thing
+		things.add(thing)
 
 		return thing
 	}
