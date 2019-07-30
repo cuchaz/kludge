@@ -202,9 +202,9 @@ object Imgui : AutoCloseable {
 		external fun igIsMouseDown(button: Int): Boolean
 		external fun igIsAnyMouseDown(): Boolean
 		external fun igIsMouseClicked(button: Int, repeat: Boolean): Boolean
-		external fun igIsMouseDoubleClicked(button: Int)
-		external fun igIsMouseReleased(button: Int)
-		external fun igIsMouseDragging(button: Int, lock_threhsold: Float)
+		external fun igIsMouseDoubleClicked(button: Int): Boolean
+		external fun igIsMouseReleased(button: Int): Boolean
+		external fun igIsMouseDragging(button: Int, lock_threhsold: Float): Boolean
 		external fun igIsMouseHoveringRect(r_min: Vec2.ByVal, r_max: Vec2.ByVal, clip: Boolean): Boolean
 		external fun igIsMousePosValid(mouse_pos: Vec2.ByRef?): Boolean
 		external fun igGetMousePos(): Vec2.ByVal
