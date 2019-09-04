@@ -9,6 +9,7 @@ import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import java.io.File
+import java.io.InputStream
 import java.nio.*
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -220,6 +221,19 @@ var ByteBuffer.position
 	set(value) { position(value) }
 
 
+/**
+ * Reads an array of up to `size` bytes from the stream.
+ */
+fun InputStream.readBytes(size: Int): ByteArray {
+	var array = ByteArray(size) { 0 }
+	val bytesRead = read(array)
+	if (bytesRead < size) {
+		array = array.copyOf(bytesRead)
+	}
+	return array
+}
+
+
 interface Ref<T:Any> {
 
 	var value: T
@@ -235,6 +249,14 @@ interface Ref<T:Any> {
 				get() = prop.get()
 				set(value) {
 					prop.set(value)
+				}
+		}
+
+		fun <T:Any> of(getter: () -> T, setter: (T) -> Unit) = object : Ref<T> {
+			override var value: T
+				get() = getter()
+				set(value) {
+					setter(value)
 				}
 		}
 	}
