@@ -1,5 +1,3 @@
-import net.minecrell.gradle.licenser.LicenseExtension
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 
@@ -9,8 +7,13 @@ plugins {
 
 	// https://github.com/Minecrell/licenser
 	id("net.minecrell.licenser") version "0.4.1"
+
+	`java-library`
+	`maven-publish`
+	signing
 }
 
+val name = "kludge"
 group = "cuchaz"
 version = "0.1"
 
@@ -79,4 +82,52 @@ license {
 	include("**/*.java")
 
 	header = file("license.header.txt")
+}
+
+
+val sourcesJar = tasks
+	.register<Jar>("sourcesJar") {
+		classifier = "sources"
+		from(sourceSets.main.get().allJava)
+	}
+	.get()
+
+val javadocJar = tasks
+	.register<Jar>("javadocJar") {
+		classifier = "javadoc"
+		from(tasks.javadoc.get().destinationDir)
+	}
+	.get()
+
+lateinit var publication: MavenPublication
+
+publishing {
+
+	publications {
+
+		publication = create<MavenPublication>(name) {
+
+			// (includes compiled Kotlin classes too)
+			from(components["java"])
+
+			artifact(sourcesJar)
+			artifact(javadocJar)
+		}
+	}
+
+	repositories {
+
+		// TODO: add maven repo for maven central, or jcenter
+
+		// local repo for testing
+		maven {
+			name = "local"
+			url = uri("file://$buildDir/repo")
+		}
+	}
+}
+
+signing {
+	useGpgCmd()
+	sign(publication)
 }
