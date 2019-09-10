@@ -36,7 +36,7 @@ object FileDialog {
 					return Paths.get(str)
 				}
 				NFD_CANCEL -> return null
-				else -> throw FileDialogException("can't open dialog: open file")
+				else -> throw FileDialogException("can't open dialog: open file at defaultPath = ${defaultPath?.toString()}")
 			}
 		}
 	}
@@ -53,7 +53,7 @@ object FileDialog {
 					return paths
 				}
 				NFD_CANCEL -> return null
-				else -> throw FileDialogException("can't open dialog: open files")
+				else -> throw FileDialogException("can't open dialog: open files at defaultPath = ${defaultPath?.toString()}")
 			}
 		}
 	}
@@ -69,7 +69,7 @@ object FileDialog {
 					return Paths.get(str)
 				}
 				NFD_CANCEL -> return null
-				else -> throw FileDialogException("can't open dialog: save file")
+				else -> throw FileDialogException("can't open dialog: save file at defaultPath = ${defaultPath?.toString()}")
 			}
 		}
 	}
@@ -85,7 +85,7 @@ object FileDialog {
 					return Paths.get(str)
 				}
 				NFD_CANCEL -> return null
-				else -> throw FileDialogException("can't open dialog: pick folder")
+				else -> throw FileDialogException("can't open dialog: pick folder at defaultPath = ${defaultPath?.toString()}")
 			}
 		}
 	}
