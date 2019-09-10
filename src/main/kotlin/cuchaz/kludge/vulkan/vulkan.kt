@@ -12,7 +12,7 @@ import org.lwjgl.vulkan.VK10.*
 
 class VulkanException(val err: Int, val msg: String? = null) : RuntimeException(
 	if (msg != null) {
-		"$msg\n${Vulkan.errors[err]}"
+		"${Vulkan.errors[err]}\n$msg"
 	} else {
 		Vulkan.errors[err]
 	}
@@ -33,6 +33,13 @@ fun Int.orFail(handler: (Int) -> Nothing): Int {
 }
 
 fun Int.orFail(msg: String? = null) = orFail { err -> throw VulkanException(err, msg) }
+
+fun Int.orFailMsg(value: Int, messager: () -> String): Int {
+	if (this == value) {
+		throw VulkanException(value, messager())
+	}
+	return this
+}
 
 fun Boolean.toVulkan() =
 	if (this) {

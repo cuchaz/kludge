@@ -99,6 +99,15 @@ class Vulkan(
 
 			val pInstance = mem.mallocPointer(1)
 			vkCreateInstance(infoCreate, null, pInstance)
+				.orFailMsg(VK_ERROR_EXTENSION_NOT_PRESENT) {
+					"Requested extensions: $extensionNames" +
+					"\nUnsuppored extensions: ${extensionNames.filter { it !in supportedExtensions }}"
+
+				}
+				.orFailMsg(VK_ERROR_LAYER_NOT_PRESENT) {
+					"Requested layers: $layerNames" +
+					"\nUnsupported layers: ${layerNames.filter { it !in supportedLayers }}}"
+				}
 				.orFail("failed to create Vulkan instance")
 			return@run VkInstance(pInstance.get(0), infoCreate)
 		}
