@@ -464,7 +464,7 @@ fun Device.image(
 	flags: IntFlags<Image.Create> = IntFlags(0),
 	mipLevels: Int = 1,
 	arrayLayers: Int = 1,
-	tiling: Image.Tiling = Image.Tiling.Linear,
+	tiling: Image.Tiling = Image.Tiling.Optimal,
 	initialLayout: Image.Layout = Image.Layout.Undefined,
 	concurrentQueues: Set<PhysicalDevice.QueueFamily> = emptySet(),
 	samples: SampleCount = SampleCount.One
