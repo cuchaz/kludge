@@ -7,6 +7,7 @@ package cuchaz.kludge.vulkan
 
 import cuchaz.kludge.tools.AutoCloser
 import cuchaz.kludge.tools.IntFlags
+import cuchaz.kludge.tools.atLeast
 import java.nio.ByteBuffer
 
 
@@ -17,21 +18,15 @@ import java.nio.ByteBuffer
  * Each time a transfer is requested, the same staging buffer is used, so MemoryStager is not thead-safe.
  * If the existing staging buffer is too small for the request,
  * then that buffer is replaced with a new one that's big enough for the transfer.
- *
- * TODO: find a computer with a discrete GPU to test this!
  */
 class MemoryStager internal constructor(
 	val device: Device
 ) : AutoCloseable {
 
 	private val closer = AutoCloser()
-	private fun <R:AutoCloseable> R.autoClose() = also { closer.add(this@autoClose) }
+	private fun <R:AutoCloseable> R.autoClose(replace: R? = null) = apply { closer.add(this, replace) }
 	override fun close() {
 		closer.close()
-
-		// also cleanup the staging buffers
-		buf.memory.close()
-		buf.close()
 	}
 
 	// get the queue for memory transfers
@@ -51,41 +46,38 @@ class MemoryStager internal constructor(
 		.autoClose()
 
 	// start with initial buffers
-	private var buf: Buffer.Allocated = allocate(1024)
-
-	private fun allocate(size: Long) = device
-		.buffer(
-			size,
-			IntFlags.of(Buffer.Usage.TransferSrc)
-		)
-		.autoClose()
-		.allocate { memType ->
-			memType.flags.hasAll(IntFlags.of(
-				MemoryType.Flags.HostVisible,
-				MemoryType.Flags.HostCoherent
-			))
-		}
-		.autoClose()
+	private var buf: Buffer.Allocated? = null
 
 	fun getBuffer(size: Long): Buffer.Allocated {
 
 		// if the existing buffer is big enough, use that
-		if (buf.memory.size >= size) {
-			return buf
+		val existingBuf = buf
+		if (existingBuf != null && existingBuf.memory.size >= size) {
+			return existingBuf
 		}
 
-		// otherwise, allocate a new one
-		var newSize = buf.memory.size
+		// otherwise, allocate a new one (at least 1 KiB)
+		var newSize = buf?.memory?.size?.atLeast(1024) ?: 1024
 		while (newSize < size) {
 			newSize *= 2
 		}
 
-		// cleanup the old buffer
-		buf.memory.close()
-		buf.close()
-
 		// allocate the new buffer
-		buf = allocate(newSize)
+		val buf = device
+			.buffer(
+				size,
+				IntFlags.of(Buffer.Usage.TransferSrc)
+			)
+			.autoClose(replace = buf?.buffer)
+			.allocate { memType ->
+				memType.flags.hasAll(IntFlags.of(
+					MemoryType.Flags.HostVisible,
+					MemoryType.Flags.HostCoherent
+				))
+			}
+			.autoClose(replace = buf)
+
+		this.buf = buf
 
 		return buf
 	}
