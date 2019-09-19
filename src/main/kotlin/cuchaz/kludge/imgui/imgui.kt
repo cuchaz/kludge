@@ -140,7 +140,7 @@ object Imgui : AutoCloseable {
 		external fun igInputTextMultiline(label: String, buf: Long, buf_size: Long, size: Vec2.ByVal, flags: Int, callback: Long, user_data: Long): Boolean
 
 		external fun igSelectable(label: String, selected: Boolean, flags: Int, size: Vec2.ByVal): Boolean
-		external fun igSelectable(label: String, p_selected: Long, flags: Int, size: Vec2.ByVal): Boolean
+		external fun igSelectableBoolPtr(label: String, p_selected: Long, flags: Int, size: Vec2.ByVal): Boolean
 
 		external fun igListBoxHeaderInt(label: String, items_count: Int, height_in_items: Int): Boolean
 		external fun igListBoxFooter()

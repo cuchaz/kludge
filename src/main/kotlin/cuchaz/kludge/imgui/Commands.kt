@@ -555,7 +555,7 @@ class Commands internal constructor() {
 	): Boolean {
 		memstack { mem ->
 			val pSelected = isSelected.toBuf(mem)
-			return n.igSelectable(label, pSelected.address, flags.value, Vec2.ByVal(width, height))
+			return n.igSelectableBoolPtr(label, pSelected.address, flags.value, Vec2.ByVal(width, height))
 				.also {
 					isSelected.fromBuf(pSelected)
 				}
@@ -570,7 +570,7 @@ class Commands internal constructor() {
 	): Boolean {
 		memstack { mem ->
 			val pSelected = isSelected.toBuf(mem)
-			return n.igSelectable(label, pSelected.address, flags.value, Vec2.ByVal(size))
+			return n.igSelectableBoolPtr(label, pSelected.address, flags.value, Vec2.ByVal(size))
 				.also {
 					isSelected.fromBuf(pSelected)
 				}
