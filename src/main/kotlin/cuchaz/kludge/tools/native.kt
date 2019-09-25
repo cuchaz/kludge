@@ -216,9 +216,16 @@ fun ByteBuffer.skip(numBytes: Int) {
 	position += numBytes
 }
 
+val ByteBuffer.capacity
+	get() = capacity()
+
 var ByteBuffer.position
 	get() = position()
 	set(value) { position(value) }
+
+var ByteBuffer.limit
+	get() = limit()
+	set(value) { limit(value) }
 
 
 /**

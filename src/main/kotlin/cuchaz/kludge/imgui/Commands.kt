@@ -484,15 +484,35 @@ class Commands internal constructor() {
 		}
 
 		internal val buf = ByteBuffer.allocateDirect(bytes) // yeah, this needs to be direct
+			.apply {
+				// zero the buffer on first use
+				// TODO: this is probably very slow, but there don't seem to be any better (portable) alternatives
+				// see: https://stackoverflow.com/questions/11197875/fast-erase-not-clear-a-bytebuffer-in-java
+				for (i in 0 until bytes) {
+					put(0)
+				}
+				flip()
+			}
 
-		fun hasRoomFor(value: String) = value.toByteArray(Charsets.UTF_8).size <= bytes
+		fun hasRoomFor(value: String) = value.toByteArray(Charsets.UTF_8).size + 1 <= bytes
 
 		var text: String
-			get() = String(buf.array(), Charsets.UTF_8)
+			get() {
+
+				// scan for the null terminator to set the buffer bounds
+				buf.clear()
+				var pos = 0
+				while (pos < buf.capacity && buf.get(pos) != 0.toByte()) {
+					pos++
+				}
+				buf.limit = pos
+
+				return Charsets.UTF_8.decode(buf).toString()
+			}
 			set(value) {
 				val utf8 = value.toByteArray(Charsets.UTF_8)
 				if (utf8.size + 1 > bytes) {
-					throw IllegalArgumentException("not enough room for string: needs ${utf8.size} bytes, but only have $bytes")
+					throw IllegalArgumentException("not enough room for string: needs ${utf8.size + 1} bytes, but only have $bytes")
 				}
 				buf.clear()
 				buf.put(utf8)
