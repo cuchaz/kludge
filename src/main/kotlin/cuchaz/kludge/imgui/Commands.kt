@@ -836,6 +836,43 @@ class Commands internal constructor() {
 		}
 	}
 
+	class TabState {
+		var wasActive = false
+	}
+
+	inline fun tabItem(
+		state: TabState,
+		label: String,
+		isOpen: Ref<Boolean>? = null,
+		flags: IntFlags<TabBarFlags> = IntFlags(0),
+		onActivated: () -> Unit = {},
+		whenActive: () -> Unit,
+		onDeactived: () -> Unit = {}
+	) {
+
+		val isActive = beginTabItem(label, isOpen, flags)
+		try {
+			if (isActive && !state.wasActive) {
+				state.wasActive = true
+				onActivated()
+			}
+
+			if (isActive) {
+				whenActive()
+			}
+
+			if (!isActive && state.wasActive) {
+				state.wasActive = false
+				onDeactived()
+			}
+		} finally {
+			if (isActive) {
+				endTabItem()
+			}
+		}
+	}
+
+
 	fun setTabItemClosed(label: String) =
 		n.igSetTabItemClosed(label)
 
