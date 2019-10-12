@@ -116,6 +116,15 @@ object Imgui : AutoCloseable {
 		external fun igGetFrameHeight(): Float
 		external fun igGetFrameHeightWithSpacing(): Float
 
+		external fun igPushIDStr(str_id: String)
+		// TODO: igPushIDRange?
+		external fun igPushIDPtr(ptr_id: Long)
+		external fun igPushIDInt(int_id: Int)
+		external fun igPopID()
+		external fun igGetIDStr(str_id: String): Int
+		// TODO: igGetIDRange?
+		external fun igGetIDPtr(ptr_id: Long): Int
+
 		external fun igTextUnformatted(text: String, text_end: String?)
 		external fun igText(fmt: String)
 		external fun igTextColored(col: Vec4.ByVal, fmt: String)
@@ -127,8 +136,15 @@ object Imgui : AutoCloseable {
 		external fun igButton(label: String, size: Vec2.ByVal): Boolean
 		external fun igSmallButton(label: String): Boolean
 		external fun igInvisibleButton(str_id: String, size: Vec2.ByVal): Boolean
+		external fun igArrowButton(std_id: String, dir: Int): Boolean
 		external fun igImage(user_texture_id: Long, size: Vec2.ByVal, uv0: Vec2.ByVal, uv1: Vec2.ByVal, tint_col: Vec4.ByVal, border_col: Vec4.ByVal)
+		external fun igImageButton(user_texture_id: Long, size: Vec2.ByVal, uv0: Vec2.ByVal, uv1: Vec2.ByVal, frame_padding: Int, bg_col: Vec4.ByVal, tint_col: Vec4.ByVal): Boolean
 		external fun igCheckbox(label: String, v: Long): Boolean
+		external fun igCheckboxFlags(label: String, flags: Long, flags_value: Int): Boolean
+		external fun igRadioButtonBool(label: String, active: Boolean): Boolean
+		external fun igRadioButtonIntPtr(label: String, v: Long, v_button: Int): Boolean
+		external fun igProgressBar(fraction: Float, size_arg: Vec2.ByVal, overlay: String?)
+		external fun igBullet()
 
 		external fun igBeginCombo(label: String, preview_value: String?, flags: Int): Boolean
 		external fun igEndCombo()
@@ -177,6 +193,12 @@ object Imgui : AutoCloseable {
 		external fun igGetColumnOffset(column_index: Int): Float
 		external fun igSetColumnOffset(column_index: Int, offset_x: Float)
 		external fun igGetColumnsCount(): Int
+
+		external fun igBeginTabBar(std_id: String, flags: Int): Boolean
+		external fun igEndTabBar()
+		external fun igBeginTabItem(label: String, p_open: Long, flags: Int): Boolean
+		external fun igEndTabItem()
+		external fun igSetTabItemClosed(tab_or_docked_window_label: String)
 
 		external fun igIsItemHovered(flags: Int): Boolean
 		external fun igIsItemActive(): Boolean

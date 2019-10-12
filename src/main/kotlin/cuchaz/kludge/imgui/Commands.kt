@@ -322,6 +322,32 @@ class Commands internal constructor() {
 	fun getFrameHeightWithSpacing() = n.igGetFrameHeightWithSpacing()
 
 
+	fun pushId(id: String) = n.igPushIDStr(id)
+	fun pushId(obj: Any) = pushId(getId(obj))
+	fun pushId(id: Int) = n.igPushIDInt(id)
+	fun popId() = n.igPopID()
+	fun getId(id: String) = n.igGetIDStr(id)
+	fun getId(obj: Any) = System.identityHashCode(obj)
+
+	inline fun <R> withId(id: String, block: () -> R): R {
+		pushId(id)
+		try {
+			return block()
+		} finally {
+			popId()
+		}
+	}
+
+	inline fun <R> withId(obj: Any, block: () -> R): R {
+		pushId(obj)
+		try {
+			return block()
+		} finally {
+			popId()
+		}
+	}
+
+
 	fun textUnformatted(text: String, textEnd: String? = null) = n.igTextUnformatted(text, textEnd)
 	fun text(text: String) = n.igText(text)
 	fun textColored(color: ColorRGBA, text: String) = n.igTextColored(Vec4.ByVal(color), text)
@@ -330,16 +356,6 @@ class Commands internal constructor() {
 	fun labelText(label: String, text: String) = n.igLabelText(label, text)
 	fun bulletText(text: String) = n.igBulletText(text)
 
-
-	fun checkbox(label: String, isChecked: Ref<Boolean>): Boolean {
-		memstack { mem ->
-			val pChecked = isChecked.toBuf(mem)
-			return n.igCheckbox(label, pChecked.address)
-				.also {
-					isChecked.fromBuf(pChecked)
-				}
-		}
-	}
 
 	fun button(label: String, width: Float = 0f, height: Float = 0f) =
 		n.igButton(label, Vec2.ByVal(width, height))
@@ -356,6 +372,17 @@ class Commands internal constructor() {
 		n.igInvisibleButton(id, Vec2.ByVal(size))
 	fun invisibleButton(id: String, size: Vector2fc) =
 		n.igInvisibleButton(id, Vec2.ByVal(size))
+
+	enum class Direction(val value: Int) {
+		None(-1),
+		Left(0),
+		Right(1),
+		Up(2),
+		Down(3)
+	}
+
+	fun arrowButton(id: String, direction: Direction) =
+		n.igArrowButton(id, direction.value)
 
 	fun image(
 		image: Imgui.ImageDescriptor,
@@ -393,6 +420,104 @@ class Commands internal constructor() {
 		Vec4.ByVal(tintColor),
 		Vec4.ByVal(borderColor)
 	)
+
+	fun imageButton(
+		image: Imgui.ImageDescriptor,
+		width: Float, height: Float,
+		uv0x: Float = 0f, uv0y: Float = 0f,
+		uv1x: Float = 1f, uv1y: Float = 1f,
+		framePadding: Int = -1,
+		bgr: Float = 0f, bgg: Float = 0f, bgb: Float = 0f, bga: Float = 0f,
+		tintr: Float = 1f, tintg: Float = 1f, tintb: Float = 1f, tinta: Float = 1f
+	) = n.igImageButton(
+		image.descriptorSet.id,
+		Vec2.ByVal(width, height),
+		Vec2.ByVal(uv0x, uv0y),
+		Vec2.ByVal(uv1x, uv1y),
+		framePadding,
+		Vec4.ByVal(bgr, bgg, bgb, bga),
+		Vec4.ByVal(tintr, tintg, tintb, tinta)
+	)
+
+	fun imageButton(
+		image: Imgui.ImageDescriptor,
+		size: Extent2D = image.extent.to2D(),
+		region: Rect2D = Rect2D(Offset2D(0, 0), size),
+		framePadding: Int = -1,
+		bgColor: ColorRGBA = ColorRGBA.Float(0f, 0f, 0f, 0f),
+		tintColor: ColorRGBA = ColorRGBA.Float(1f, 1f, 1f, 1f)
+	) = n.igImageButton(
+		image.descriptorSet.id,
+		Vec2.ByVal(size),
+		Vec2.ByVal(
+			region.offset.x.toFloat()/image.extent.width.toFloat(),
+			region.offset.y.toFloat()/image.extent.height.toFloat()
+		),
+		Vec2.ByVal(
+			(region.offset.x + region.extent.width).toFloat()/image.extent.width.toFloat(),
+			(region.offset.y + region.extent.height).toFloat()/image.extent.height.toFloat()
+		),
+		framePadding,
+		Vec4.ByVal(bgColor),
+		Vec4.ByVal(tintColor)
+	)
+
+	fun checkbox(label: String, isChecked: Ref<Boolean>): Boolean {
+		memstack { mem ->
+			val pChecked = isChecked.toBuf(mem)
+			return n.igCheckbox(label, pChecked.address)
+				.also {
+					isChecked.fromBuf(pChecked)
+				}
+		}
+	}
+
+	fun checkboxFlags(label: String, flags: Ref<Int>, flagValue: Int): Boolean {
+		memstack { mem ->
+			val pFlags = flags.toBuf(mem)
+			return n.igCheckboxFlags(label, pFlags.address, flagValue)
+				.also {
+					flags.fromBuf(pFlags)
+				}
+		}
+	}
+
+	fun radioButton(label: String, active: Boolean) =
+		n.igRadioButtonBool(label, active)
+
+	fun radioButton(label: String, selected: Ref<Int>, value: Int): Boolean {
+		memstack { mem ->
+			val pSelected = selected.toBuf(mem)
+			return n.igRadioButtonIntPtr(label, pSelected.address, value)
+				.also {
+					selected.fromBuf(pSelected)
+				}
+		}
+	}
+
+	fun progressBar(
+		fraction: Float,
+		width: Float = -1f, height: Float = 0f,
+		overlay: String? = null
+	) = n.igProgressBar(
+		fraction,
+		Vec2.ByVal(width, height),
+		overlay
+	)
+
+	fun progressBar(
+		fraction: Float,
+		size: Extent2D = Extent2D(-1, 0),
+		overlay: String? = null
+	) = n.igProgressBar(
+		fraction,
+		Vec2.ByVal(size),
+		overlay
+	)
+
+	fun bullet() =
+		n.igBullet()
+
 
 	enum class ComboFlags(override val value: Int) : IntFlags.Bit {
 		PopupAlignLeft(1 shl 0),
@@ -660,6 +785,59 @@ class Commands internal constructor() {
 	fun getColumnOffset(index: Int = -1) = n.igGetColumnWidth(index)
 	fun setColumnOffset(index: Int, offset: Float) = n.igSetColumnOffset(index, offset)
 	fun getColumnsCount() = n.igGetColumnsCount()
+
+
+	enum class TabBarFlags(override val value: Int) : IntFlags.Bit {
+		None(0),
+		Reorderable(1 shl 0),
+		AutoSelectNewTabs(1 shl 1),
+		NoCloseWithMiddleMouseButton(1 shl 2),
+		NoTabListPopupButton(1 shl 3),
+		NoTabListScrollingButtons(1 shl 4),
+		NoTooltip(1 shl 5),
+		FittingPolicyResizeDown(1 shl 6),
+		FittingPolicyScroll(1 shl 7)
+	}
+
+	fun beginTabBar(id: String, flags: IntFlags<TabBarFlags> = IntFlags(0)) =
+		n.igBeginTabBar(id, flags.value)
+
+	fun endTabBar() = n.igEndTabBar()
+
+	inline fun tabBar(id: String, flags: IntFlags<TabBarFlags> = IntFlags(0), block: () -> Unit) {
+		if (beginTabBar(id, flags)) {
+			try {
+				block()
+			} finally {
+				endTabBar()
+			}
+		}
+	}
+
+	fun beginTabItem(label: String, isOpen: Ref<Boolean>? = null, flags: IntFlags<TabBarFlags> = IntFlags(0)): Boolean {
+		memstack { mem ->
+			val pOpen = isOpen?.toBuf(mem)
+			return n.igBeginTabItem(label, pOpen?.address ?: 0, flags.value)
+				.also {
+					isOpen?.fromBuf(pOpen)
+				}
+		}
+	}
+
+	fun endTabItem() = n.igEndTabItem()
+	
+	inline fun tabItem(label: String, isOpen: Ref<Boolean>? = null, flags: IntFlags<TabBarFlags> = IntFlags(0), block: () -> Unit) {
+		if (beginTabItem(label, isOpen, flags)) {
+			try {
+				block()
+			} finally {
+				endTabItem()
+			}
+		}
+	}
+
+	fun setTabItemClosed(label: String) =
+		n.igSetTabItemClosed(label)
 
 
 	fun isItemHovered(flags: IntFlags<HoveredFlags> = IntFlags(0)) = n.igIsItemHovered(flags.value)
