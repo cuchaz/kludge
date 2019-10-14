@@ -847,7 +847,7 @@ class Commands internal constructor() {
 		flags: IntFlags<TabBarFlags> = IntFlags(0),
 		onActivated: () -> Unit = {},
 		whenActive: () -> Unit,
-		onDeactived: () -> Unit = {}
+		onDeactivated: () -> Unit = {}
 	) {
 
 		val isActive = beginTabItem(label, isOpen, flags)
@@ -863,7 +863,7 @@ class Commands internal constructor() {
 
 			if (!isActive && state.wasActive) {
 				state.wasActive = false
-				onDeactived()
+				onDeactivated()
 			}
 		} finally {
 			if (isActive) {
