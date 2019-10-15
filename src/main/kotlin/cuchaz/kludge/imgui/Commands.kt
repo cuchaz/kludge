@@ -811,7 +811,16 @@ class Commands internal constructor() {
 		}
 	}
 
-	fun beginTabItem(label: String, isOpen: Ref<Boolean>? = null, flags: IntFlags<TabBarFlags> = IntFlags(0)): Boolean {
+	enum class TabItemFlags(override val value: Int) : IntFlags.Bit {
+		None(0),
+		UnsavedDocument(1 shl 0),
+		SetSelected(1 shl 1),
+		NoCloseWithMiddleMouseButton(1 shl 2),
+		NoPushId(1 shl 3)
+
+	}
+
+	fun beginTabItem(label: String, isOpen: Ref<Boolean>? = null, flags: IntFlags<TabItemFlags> = IntFlags(0)): Boolean {
 		memstack { mem ->
 			val pOpen = isOpen?.toBuf(mem)
 			return n.igBeginTabItem(label, pOpen?.address ?: 0, flags.value)
@@ -823,7 +832,7 @@ class Commands internal constructor() {
 
 	fun endTabItem() = n.igEndTabItem()
 	
-	inline fun tabItem(label: String, isOpen: Ref<Boolean>? = null, flags: IntFlags<TabBarFlags> = IntFlags(0), block: () -> Unit) {
+	inline fun tabItem(label: String, isOpen: Ref<Boolean>? = null, flags: IntFlags<TabItemFlags> = IntFlags(0), block: () -> Unit) {
 		if (beginTabItem(label, isOpen, flags)) {
 			try {
 				block()
@@ -841,7 +850,7 @@ class Commands internal constructor() {
 		state: TabState,
 		label: String,
 		isOpen: Ref<Boolean>? = null,
-		flags: IntFlags<TabBarFlags> = IntFlags(0),
+		flags: IntFlags<TabItemFlags> = IntFlags(0),
 		onActivated: () -> Unit = {},
 		whenActive: () -> Unit,
 		onDeactivated: () -> Unit = {}
