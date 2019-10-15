@@ -323,11 +323,9 @@ class Commands internal constructor() {
 
 
 	fun pushId(id: String) = n.igPushIDStr(id)
-	fun pushId(obj: Any) = pushId(getId(obj))
 	fun pushId(id: Int) = n.igPushIDInt(id)
 	fun popId() = n.igPopID()
 	fun getId(id: String) = n.igGetIDStr(id)
-	fun getId(obj: Any) = System.identityHashCode(obj)
 
 	inline fun <R> withId(id: String, block: () -> R): R {
 		pushId(id)
@@ -338,15 +336,14 @@ class Commands internal constructor() {
 		}
 	}
 
-	inline fun <R> withId(obj: Any, block: () -> R): R {
-		pushId(obj)
+	inline fun <R> withId(id: Int, block: () -> R): R {
+		pushId(id)
 		try {
 			return block()
 		} finally {
 			popId()
 		}
 	}
-
 
 	fun textUnformatted(text: String, textEnd: String? = null) = n.igTextUnformatted(text, textEnd)
 	fun text(text: String) = n.igText(text)
