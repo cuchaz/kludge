@@ -155,6 +155,16 @@ object Imgui : AutoCloseable {
 		external fun igInputText(label: String, buf: Long, buf_size: Long, flags: Int, callback: Long, user_data: Long): Boolean
 		external fun igInputTextMultiline(label: String, buf: Long, buf_size: Long, size: Vec2.ByVal, flags: Int, callback: Long, user_data: Long): Boolean
 
+		external fun igTreeNodeStr(label: String): Boolean
+		external fun igTreeNodeExStr(label: String, flags: Int): Boolean
+		external fun igTreePushStr(str_id: String)
+		external fun igTreePop()
+		external fun igTreeAdvanceToLabelPos()
+		external fun igGetTreeNodeToLabelSpacing(): Float
+		external fun igSetNextTreeNodeOpen(is_open: Boolean, cond: Int)
+		external fun igCollapsingHeader(label: String, flags: Int): Boolean
+		external fun igCollapsingHeader(label: String, p_open: Long, flags: Int): Boolean
+
 		external fun igSelectable(label: String, selected: Boolean, flags: Int, size: Vec2.ByVal): Boolean
 		external fun igSelectableBoolPtr(label: String, p_selected: Long, flags: Int, size: Vec2.ByVal): Boolean
 

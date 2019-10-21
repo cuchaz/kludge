@@ -666,6 +666,59 @@ class Commands internal constructor() {
 	) = n.igInputTextMultiline(label, text.buf.address, text.bytes.toLong(), Vec2.ByVal(width, height), flags.value, 0L, 0L)
 
 
+	enum class TreeNodeFlags(override val value: Int) : IntFlags.Bit {
+		None(0),
+		Selected(1 shl 0),
+		Framed(1 shl 1),
+		AllowItemOverlap(1 shl 2),
+		NoTreePushOnOpen(1 shl 3),
+		NoAutoOpenOnLog(1 shl 4),
+		DefaultOpen(1 shl 5),
+		OpenOnDoubleClick(1 shl 6),
+		OpenOnArrow(1 shl 7),
+		Leaf(1 shl 8),
+		Bullet(1 shl 9),
+		FramePadding(1 shl 10),
+		NavLeftJumpsBackHere(1 shl 13),
+		CollapsingHeader(Framed.value or NoTreePushOnOpen.value or NoAutoOpenOnLog.value)
+	}
+
+	fun treeNode(label: String, flags: IntFlags<TreeNodeFlags> = IntFlags(0)) =
+		n.igTreeNodeExStr(label, flags.value)
+	fun treePush(id: String) =
+		n.igTreePushStr(id)
+	fun treePop() =
+		n.igTreePop()
+	fun treeAdvanceToLabelPos() =
+		n.igTreeAdvanceToLabelPos()
+	fun getTreeNodeToLabelSpacing() =
+		n.igGetTreeNodeToLabelSpacing()
+	fun setNextTreeNodeOpen(isOpen: Boolean, cond: IntFlags<Cond> = IntFlags(0)) =
+		n.igSetNextTreeNodeOpen(isOpen, cond.value)
+	fun collapsingHeader(label: String, flags: IntFlags<TreeNodeFlags> = IntFlags(0)) =
+		n.igCollapsingHeader(label, flags.value)
+	fun collapsingHeader(label: String, pOpen: Ref<Boolean>, flags: IntFlags<TreeNodeFlags> = IntFlags(0)): Boolean {
+		memstack { mem ->
+			val buf = pOpen.toBuf(mem)
+			return n.igCollapsingHeader(label, buf.address, flags.value)
+				.also {
+					pOpen.fromBuf(buf)
+				}
+		}
+	}
+
+	inline fun <R> treeNode(label: String, flags: IntFlags<TreeNodeFlags> = IntFlags(0), block: () -> R): R? {
+		if (treeNode(label)) {
+			try {
+				return block()
+			} finally {
+				treePop()
+			}
+		}
+		return null
+	}
+
+
 	enum class SelectableFlags(override val value: Int): IntFlags.Bit {
 		DontClosePopups(1 shl 0),
 		SpanAllColumns(1 shl 1),
