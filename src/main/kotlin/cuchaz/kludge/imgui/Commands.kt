@@ -95,6 +95,20 @@ class Commands internal constructor() {
 
 	fun end() = n.igEnd()
 
+	inline fun <R> window(
+		name: String,
+		open: Ref<Boolean>? = null,
+		flags: IntFlags<BeginFlags> = IntFlags(0),
+		block: () -> R
+	): R {
+		begin(name, open, flags)
+		try {
+			return block()
+		} finally {
+			end()
+		}
+	}
+
 
 	fun beginChild(
 		id: String,
@@ -111,6 +125,37 @@ class Commands internal constructor() {
 	) = n.igBeginChild(id, Vec2.ByVal(size), border, flags.value)
 
 	fun endChild() = n.igEndChild()
+
+	fun child(
+		id: String,
+		width: Float,
+		height: Float,
+		border: Boolean = false,
+		flags: IntFlags<BeginFlags> = IntFlags(0),
+		block: () -> Unit
+	) {
+		beginChild(id, width, height, border, flags)
+		try {
+			block()
+		} finally {
+			endChild()
+		}
+	}
+
+	fun child(
+		id: String,
+		size: Extent2D = Extent2D(0, 0),
+		border: Boolean = false,
+		flags: IntFlags<BeginFlags> = IntFlags(0),
+		block: () -> Unit
+	) {
+		beginChild(id, size, border, flags)
+		try {
+			return block()
+		} finally {
+			endChild()
+		}
+	}
 
 	enum class FocusedFlags(override val value: Int) : IntFlags.Bit {
 		ChildWindows(1 shl 0),
@@ -825,6 +870,78 @@ class Commands internal constructor() {
 	fun openPopupOnItemClick(id: String? = null, mouseButton: Int = 1) = n.igOpenPopupOnItemClick(id, mouseButton)
 	fun isPopupOpen(id: String) = n.igIsPopupOpen(id)
 	fun closeCurrentPopup() = n.igCloseCurrentPopup()
+
+	fun popup(
+		id: String,
+		flags: IntFlags<BeginFlags> = IntFlags(0),
+		block: () -> Unit
+	) {
+		if (beginPopup(id, flags)) {
+			try {
+				block()
+			} finally {
+				endPopup()
+			}
+		}
+	}
+
+	fun popupContextItem(
+		id: String,
+		mouseButton: Int = 1,
+		block: () -> Unit
+	) {
+		if (beginPopupContextItem(id, mouseButton)) {
+			try {
+				block()
+			} finally {
+				endPopup()
+			}
+		}
+	}
+
+	fun popupContextWindow(
+		id: String,
+		mouseButton: Int = 1,
+		alsoOverItems: Boolean = true,
+		block: () -> Unit
+	) {
+		if (beginPopupContextWindow(id, mouseButton, alsoOverItems)) {
+			try {
+				block()
+			} finally {
+				endPopup()
+			}
+		}
+	}
+
+	fun popupContextVoid(
+		id: String,
+		mouseButton: Int = 1,
+		block: () -> Unit
+	) {
+		if (beginPopupContextVoid(id, mouseButton)) {
+			try {
+				block()
+			} finally {
+				endPopup()
+			}
+		}
+	}
+
+	fun popupModal(
+		name: String,
+		open: Ref<Boolean>? = null,
+		flags: IntFlags<BeginFlags> = IntFlags(0),
+		block: () -> Unit
+	) {
+		if (beginPopupModal(name, open, flags)) {
+			try {
+				block()
+			} finally {
+				endPopup()
+			}
+		}
+	}
 
 
 	fun columns(count: Int = 1, id: String? = null, border: Boolean = true) = n.igColumns(count, id, border)
