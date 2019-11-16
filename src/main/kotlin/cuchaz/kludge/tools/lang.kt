@@ -51,6 +51,11 @@ fun Float.toDegrees() = toDegrees(this.toDouble()).toFloat()
 fun Double.toRadians() = toRadians(this)
 fun Float.toRadians() = toRadians(this.toDouble()).toFloat()
 
+fun Double.abs() = abs(this)
+fun Float.abs() = abs(this)
+fun Long.abs() = abs(this)
+fun Int.abs() = abs(this)
+
 
 fun <T> List<T>.indexOfOrNull(thing: T): Int? {
 	val index = indexOf(thing)
