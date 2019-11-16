@@ -101,3 +101,21 @@ fun AABBd.toFloat() =
 		minX.toFloat(), minY.toFloat(), minZ.toFloat(),
 		maxX.toFloat(), maxY.toFloat(), maxZ.toFloat()
 	)
+
+
+val Quaterniondc.x get() = x()
+val Quaterniondc.y get() = y()
+val Quaterniondc.z get() = z()
+val Quaterniondc.w get() = w()
+
+fun Quaterniondc.isFinite() =
+	x.isFinite() && y.isFinite() && z.isFinite() && w.isFinite()
+
+
+val Quaternionfc.x get() = x()
+val Quaternionfc.y get() = y()
+val Quaternionfc.z get() = z()
+val Quaternionfc.w get() = w()
+
+fun Quaternionfc.isFinite() =
+	x.isFinite() && y.isFinite() && z.isFinite() && w.isFinite()
