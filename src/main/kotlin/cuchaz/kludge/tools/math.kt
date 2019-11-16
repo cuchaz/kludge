@@ -10,11 +10,23 @@ import kotlin.math.max
 import kotlin.math.min
 
 
+fun Number.toString(decimals: Int? = null, size: Int? = null) =
+	"%${size ?: ""}${if (decimals != null) ".$decimals" else ""}f".format(this)
+
+fun List<Number>.toString(decimals: Int? = null, size: Int? = null) =
+	"[${joinToString(", ") { it.toString(decimals, size) }}]"
+
 val Vector2fc.x get() = x()
 val Vector2fc.y get() = y()
 
+fun Vector2fc.toString(decimals: Int? = null, size: Int? = null) =
+	listOf(x, y).toString(decimals, size)
+
 val Vector2dc.x get() = x()
 val Vector2dc.y get() = y()
+
+fun Vector2dc.toString(decimals: Int? = null, size: Int? = null) =
+	listOf(x, y).toString(decimals, size)
 
 fun Vector2dc.toFloat() =
 	Vector2f(x.toFloat(), y.toFloat())
@@ -24,9 +36,16 @@ val Vector3fc.x get() = x()
 val Vector3fc.y get() = y()
 val Vector3fc.z get() = z()
 
+fun Vector3fc.toString(decimals: Int? = null, size: Int? = null) =
+	listOf(x, y, z).toString(decimals, size)
+
+
 val Vector3dc.x get() = x()
 val Vector3dc.y get() = y()
 val Vector3dc.z get() = z()
+
+fun Vector3dc.toString(decimals: Int? = null, size: Int? = null) =
+	listOf(x, y, z).toString(decimals, size)
 
 fun Vector3dc.toFloat() =
 	Vector3f(x.toFloat(), y.toFloat(), z.toFloat())
@@ -111,6 +130,9 @@ val Quaterniondc.w get() = w()
 fun Quaterniondc.isFinite() =
 	x.isFinite() && y.isFinite() && z.isFinite() && w.isFinite()
 
+fun Quaterniondc.toString(decimals: Int? = null, size: Int? = null) =
+	listOf(x, y, z, w).toString(decimals, size)
+
 
 val Quaternionfc.x get() = x()
 val Quaternionfc.y get() = y()
@@ -119,3 +141,6 @@ val Quaternionfc.w get() = w()
 
 fun Quaternionfc.isFinite() =
 	x.isFinite() && y.isFinite() && z.isFinite() && w.isFinite()
+
+fun Quaternionfc.toString(decimals: Int? = null, size: Int? = null) =
+	listOf(x, y, z, w).toString(decimals, size)
