@@ -50,7 +50,7 @@ dependencies {
 	lwjgl("nfd", natives=true)
 	lwjgl("vulkan")
 
-	compile("org.joml", "joml", "1.9.12")
+	compile("org.joml", "joml", "1.9.19")
 	compile("net.java.dev.jna:jna:5.2.0")
 
 	testImplementation("io.kotlintest", "kotlintest-runner-junit5", "3.1.11")
