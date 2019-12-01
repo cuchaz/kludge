@@ -154,6 +154,17 @@ object Imgui : AutoCloseable {
 
 		external fun igInputText(label: String, buf: Long, buf_size: Long, flags: Int, callback: Long, user_data: Long): Boolean
 		external fun igInputTextMultiline(label: String, buf: Long, buf_size: Long, size: Vec2.ByVal, flags: Int, callback: Long, user_data: Long): Boolean
+		external fun igInputFloat(label: String, v: Long, step: Float, step_fast: Float, format: String, flags: Int): Boolean
+		external fun igInputFloat2(label: String, v: Long, format: String, flags: Int): Boolean
+		external fun igInputFloat3(label: String, v: Long, format: String, flags: Int): Boolean
+		external fun igInputFloat4(label: String, v: Long, format: String, flags: Int): Boolean
+		external fun igInputInt(label: String, v: Long, step: Int, step_fast: Int, flags: Int): Boolean
+		external fun igInputInt2(label: String, v: Long, flags: Int): Boolean
+		external fun igInputInt3(label: String, v: Long, flags: Int): Boolean
+		external fun igInputInt4(label: String, v: Long, flags: Int): Boolean
+		external fun igInputDouble(label: String, v: Long, step: Double, step_fast: Double, format: String, flags: Int): Boolean
+		external fun igInputScalar(label: String, data_type: Int, v: Long, step: Long, step_fast: Long, format: String, flags: Int): Boolean
+		external fun igInputScalarN(label: String, data_type: Int, v: Long, components: Int, step: Long, step_fast: Long, format: String, flags: Int): Boolean
 
 		external fun igTreeNodeStr(label: String): Boolean
 		external fun igTreeNodeExStr(label: String, flags: Int): Boolean

@@ -579,6 +579,21 @@ class Commands internal constructor() {
 
 	fun endCombo() = n.igEndCombo()
 
+	fun combo(
+		label: String,
+		preview: String? = null,
+		flags: IntFlags<ComboFlags> = IntFlags(0),
+		block: () -> Unit
+	) {
+		if (beginCombo(label, preview, flags)) {
+			try {
+				block()
+			} finally {
+				endCombo()
+			}
+		}
+	}
+
 	fun sliderInt(
 		label: String,
 		value: Ref<Int>,
@@ -709,6 +724,80 @@ class Commands internal constructor() {
 		height: Float,
 		flags: IntFlags<InputTextFlags> = IntFlags(0)
 	) = n.igInputTextMultiline(label, text.buf.address, text.bytes.toLong(), Vec2.ByVal(width, height), flags.value, 0L, 0L)
+
+	fun inputFloat(
+		label: String,
+		value: Ref<Float>,
+		step: Float = 0f,
+		step_fast: Float = 0f,
+		format: String = "%.3f",
+		flags: IntFlags<InputTextFlags> = IntFlags(0)
+	): Boolean {
+		memstack { mem ->
+			val pValue = value.toBuf(mem)
+			return n.igInputFloat(label, pValue.address, step, step_fast, format, flags.value)
+				.also {
+					value.fromBuf(pValue)
+				}
+		}
+	}
+
+	// TODO: inputFloat2? inputFloat3? inputFloat4?
+
+	fun inputInt(
+		label: String,
+		value: Ref<Int>,
+		step: Int = 1,
+		step_fast: Int = 100,
+		flags: IntFlags<InputTextFlags> = IntFlags(0)
+	): Boolean {
+		memstack { mem ->
+			val pValue = value.toBuf(mem)
+			return n.igInputInt(label, pValue.address, step, step_fast, flags.value)
+				.also {
+					value.fromBuf(pValue)
+				}
+		}
+	}
+
+	// TODO: inputInt2? inputInt3? inputInt4?
+
+	fun inputDouble(
+		label: String,
+		value: Ref<Double>,
+		step: Double = 0.0,
+		step_fast: Double = 0.0,
+		format: String = "%.6f",
+		flags: IntFlags<InputTextFlags> = IntFlags(0)
+	): Boolean {
+		memstack { mem ->
+			val pValue = value.toBuf(mem)
+			return n.igInputDouble(label, pValue.address, step, step_fast, format, flags.value)
+				.also {
+					value.fromBuf(pValue)
+				}
+		}
+	}
+
+	// TODO: inputScalar, inputScalarN?
+
+
+	/**
+	 * Shows enumeration options as a combo box
+	 */
+	inline fun <reified T:Enum<T>> inputEnum(
+		label: String,
+		value: Ref<T>,
+		flags: IntFlags<ComboFlags> = IntFlags(0)
+	) {
+		combo(label, value.value.name, flags) {
+			for (v in enumValues<T>()) {
+				if (selectable(v.name, v == value.value)) {
+					value.value = v
+				}
+			}
+		}
+	}
 
 
 	enum class TreeNodeFlags(override val value: Int) : IntFlags.Bit {
