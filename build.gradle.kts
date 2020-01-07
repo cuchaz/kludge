@@ -24,7 +24,7 @@ repositories {
 
 dependencies {
 
-	compile(kotlin("stdlib-jdk8"))
+	implementation(kotlin("stdlib-jdk8"))
 
 	fun lwjgl(module: String? = null, natives: Boolean = false) {
 
@@ -36,7 +36,7 @@ dependencies {
 			}
 		val lwjglVersion = "3.2.0"
 
-		compile("org.lwjgl", name, lwjglVersion)
+		api("org.lwjgl", name, lwjglVersion)
 
 		if (natives) {
 			for (os in listOf("linux", "macos", "windows")) {
@@ -49,9 +49,9 @@ dependencies {
 	lwjgl("jemalloc", natives=true)
 	lwjgl("nfd", natives=true)
 	lwjgl("vulkan")
-
-	compile("org.joml", "joml", "1.9.19")
-	compile("net.java.dev.jna:jna:5.2.0")
+	
+	api("org.joml", "joml", "1.9.19")
+	api("net.java.dev.jna:jna:5.2.0")
 
 	testImplementation("io.kotlintest", "kotlintest-runner-junit5", "3.1.11")
 }
