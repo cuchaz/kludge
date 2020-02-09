@@ -330,13 +330,45 @@ class Commands internal constructor() {
 
 	fun pushItemWidth(width: Float) = n.igPushItemWidth(width)
 	fun popItemWidth() = n.igPopItemWidth()
+	inline fun <T> itemWidth(width: Float, block: () -> T): T {
+		try {
+			pushItemWidth(width)
+			return block()
+		} finally {
+			popItemWidth()
+		}
+	}
 	fun calcItemWidth()= n.igCalcItemWidth()
 	fun pushTextWrapPos(pos: Float = 0f) = n.igPushTextWrapPos(pos)
 	fun popTextWrapPos() = n.igPopTextWrapPos()
+	inline fun <T> textWrapPos(pos: Float = 0f, block: () -> T): T {
+		try {
+			pushTextWrapPos(pos)
+			return block()
+		} finally {
+			popTextWrapPos()
+		}
+	}
 	fun pushAllowKeyboardFocus(allow: Boolean) = n.igPushAllowKeyboardFocus(allow)
 	fun popAllowKeyboardFocus() = n.igPopAllowKeyboardFocus()
+	inline fun <T> allowKeyboardFocus(allow: Boolean, block: () -> T): T {
+		try {
+			pushAllowKeyboardFocus(allow)
+			return block()
+		} finally {
+			popAllowKeyboardFocus()
+		}
+	}
 	fun pushButtonRepeat(repeat: Boolean) = n.igPushButtonRepeat(repeat)
 	fun popButtonRepeat() = n.igPopButtonRepeat()
+	inline fun <T> buttonRepeat(repeat: Boolean, block: () -> T): T {
+		try {
+			pushButtonRepeat(repeat)
+			return block()
+		} finally {
+			popButtonRepeat()
+		}
+	}
 
 
 	fun separator() = n.igSeparator()
@@ -347,8 +379,24 @@ class Commands internal constructor() {
 	fun dummy(size: Vector2fc) = n.igDummy(Vec2.ByVal(size))
 	fun indent(indent: Float = 0f) = n.igIndent(indent)
 	fun unindent(indent: Float = 0f) = n.igUnindent(indent)
+	inline fun <T> indent(indent: Float = 0f, block: () -> T): T {
+		try {
+			indent(indent)
+			return block()
+		} finally {
+			unindent(indent)
+		}
+	}
 	fun beginGroup() = n.igBeginGroup()
 	fun endGroup() = n.igEndGroup()
+	inline fun <T> group(block: () -> T): T {
+		try {
+			beginGroup()
+			return block()
+		} finally {
+			endGroup()
+		}
+	}
 	fun getCursorPos(out: Vector2f) = n.igGetCursorPos().toVector(out)
 	fun getCursorPosX() = n.igGetCursorPosX()
 	fun getCursorPosY() = n.igGetCursorPosY()
@@ -511,6 +559,17 @@ class Commands internal constructor() {
 				.also {
 					isChecked.fromBuf(pChecked)
 				}
+		}
+	}
+
+	fun checkbox(label: String, isChecked: Boolean): Boolean? {
+		memstack { mem ->
+			val pChecked = mem.ints(isChecked.toInt())
+			return if (n.igCheckbox(label, pChecked.address)) {
+				pChecked[0].toBoolean()
+			} else {
+				null
+			}
 		}
 	}
 
