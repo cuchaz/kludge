@@ -274,6 +274,10 @@ object Imgui : AutoCloseable {
 		external fun ImGui_ImplVulkan_NewFrame()
 		external fun ImGui_ImplVulkan_RenderDrawData(drawData: Long, commandBufId: Long)
 
+		// internal/BETA ImGUI functions
+		external fun igPushItemFlag(option: Int, enabled: Boolean)
+		external fun igPopItemFlag()
+
 		@Structure.FieldOrder(
 			"instanceId", "physicalDeviceId", "deviceId", "queueFamilyIndex", "queueId",
 			"pipelineCacheId", "descriptorPoolId", "allocatorId", "errFn"
@@ -378,6 +382,7 @@ object Imgui : AutoCloseable {
 
 		val commandPool = device.commandPool(queue.family).autoClose()
 
+		// TODO: this is unused... should we put descriptors here and auto-clean them up later?
 		val imageDescriptors = ArrayList<ImageDescriptor>()
 	}
 

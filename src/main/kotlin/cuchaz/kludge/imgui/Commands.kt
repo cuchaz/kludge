@@ -1270,4 +1270,23 @@ class Commands internal constructor() {
 	fun resetMouseDragDelta(button: Int) = n.igResetMouseDragDelta(button)
 	fun captureKeyboardFromApp(want: Boolean = true) = n.igCaptureKeyboardFromApp(want)
 	fun captureMouseFromApp(want: Boolean = true) = n.igCaptureMouseFromApp(want)
+
+	enum class ItemFlags(override val value: Int) : IntFlags.Bit {
+		Default(0),
+		Disabled(1 shl 2)
+	}
+	fun pushItemFlag(option: ItemFlags, enabled: Boolean) = n.igPushItemFlag(option.value, enabled)
+	fun popItemFlag() = n.igPopItemFlag()
+
+	inline fun <T> itemFlag(option: ItemFlags, enabled: Boolean, block: () -> T): T {
+		try {
+			pushItemFlag(option, enabled)
+			return block()
+		} finally {
+			popItemFlag()
+		}
+	}
+
+	inline fun <T> disabled(block: () -> T) =
+		itemFlag(ItemFlags.Disabled, true, block)
 }
