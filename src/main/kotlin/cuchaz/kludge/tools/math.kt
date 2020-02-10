@@ -52,13 +52,13 @@ fun Vector3dc.toFloat() =
 
 
 /** v = v.t/|t| t */
-fun Vector3f.parallelTo(target: Vector3f) = apply {
+fun Vector3f.parallelTo(target: Vector3fc) = apply {
 	val scale = this.dot(target)/target.length()
 	set(target).mul(scale)
 }
 
 /** v -= v.t/|t| t */
-fun Vector3f.perpendicularTo(target: Vector3f) = apply {
+fun Vector3f.perpendicularTo(target: Vector3fc) = apply {
 	val scale = this.dot(target)/target.length()
 	set(
 		x - scale*target.x,
