@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 
-	kotlin("jvm") version "1.3.20-eap-25"
+	kotlin("jvm") version "1.3.60"
 
 	// https://github.com/Minecrell/licenser
 	id("net.minecrell.licenser") version "0.4.1"
@@ -18,7 +18,6 @@ group = "cuchaz"
 version = "0.1"
 
 repositories {
-	maven("http://dl.bintray.com/kotlin/kotlin-eap")
 	jcenter()
 }
 
