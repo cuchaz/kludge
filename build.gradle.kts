@@ -13,7 +13,6 @@ plugins {
 	signing
 }
 
-val name = "kludge"
 group = "cuchaz"
 version = "0.1"
 
@@ -104,7 +103,7 @@ publishing {
 
 	publications {
 
-		publication = create<MavenPublication>(name) {
+		publication = create<MavenPublication>(project.name) {
 
 			// (includes compiled Kotlin classes too)
 			from(components["java"])
