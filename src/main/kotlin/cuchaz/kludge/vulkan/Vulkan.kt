@@ -11,6 +11,7 @@ import cuchaz.kludge.tools.toStringPointerBuffer
 import org.lwjgl.system.MemoryUtil
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.EXTDebugReport.VK_ERROR_VALIDATION_FAILED_EXT
+import org.lwjgl.vulkan.EXTDebugReport.VK_EXT_DEBUG_REPORT_EXTENSION_NAME
 import org.lwjgl.vulkan.EXTDebugUtils.*
 import org.lwjgl.vulkan.EXTDescriptorIndexing.VK_ERROR_FRAGMENTATION_EXT
 import org.lwjgl.vulkan.EXTGlobalPriority.VK_ERROR_NOT_PERMITTED_EXT
@@ -90,6 +91,7 @@ class Vulkan(
 		}
 
 		const val DebugExtension = VK_EXT_DEBUG_UTILS_EXTENSION_NAME
+		const val ReportExtension = VK_EXT_DEBUG_REPORT_EXTENSION_NAME
 
 		val supportedLayers: Set<String> by lazy {
 			memstack { mem ->
