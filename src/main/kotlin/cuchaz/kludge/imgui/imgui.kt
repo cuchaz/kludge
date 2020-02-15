@@ -51,15 +51,15 @@ object Imgui : AutoCloseable {
 		external fun igIsWindowFocused(flags: Int): Boolean
 		external fun igIsWindowHovered(flags: Int): Boolean
 		// TODO: igGetWindowDrawList?
-		external fun igGetWindowPos(): Vec2.ByVal
-		external fun igGetWindowSize(): Vec2.ByVal
+		external fun igGetWindowPos_nonUDT2(): Vec2.ByVal
+		external fun igGetWindowSize_nonUDT2(): Vec2.ByVal
 		external fun igGetWindowWidth(): Float
 		external fun igGetWindowHeight(): Float
-		external fun igGetContentRegionMax(): Vec2.ByVal
-		external fun igGetContentRegionAvail(): Vec2.ByVal
+		external fun igGetContentRegionMax_nonUDT2(): Vec2.ByVal
+		external fun igGetContentRegionAvail_nonUDT2(): Vec2.ByVal
 		external fun igGetContentRegionAvailWidth(): Float
-		external fun igGetWindowContentRegionMin(): Vec2.ByVal
-		external fun igGetWindowContentRegionMax(): Vec2.ByVal
+		external fun igGetWindowContentRegionMin_nonUDT2(): Vec2.ByVal
+		external fun igGetWindowContentRegionMax_nonUDT2(): Vec2.ByVal
 		external fun igGetWindowContentRegionWidth(): Float
 
 		external fun igSetNextWindowPos(pos: Vec2.ByVal, cond: Int, pivot: Vec2.ByVal)
@@ -101,14 +101,14 @@ object Imgui : AutoCloseable {
 		external fun igUnindent(indent_w: Float)
 		external fun igBeginGroup()
 		external fun igEndGroup()
-		external fun igGetCursorPos(): Vec2.ByVal
+		external fun igGetCursorPos_nonUDT2(): Vec2.ByVal
 		external fun igGetCursorPosX(): Float
 		external fun igGetCursorPosY(): Float
 		external fun igSetCursorPos(local_pos: Vec2.ByVal)
 		external fun igSetCursorPosX(local_x: Float)
 		external fun igSetCursorPosY(local_y: Float)
-		external fun igGetCursorStartPos(): Vec2.ByVal
-		external fun igGetCursorScreenPos(): Vec2.ByVal
+		external fun igGetCursorStartPos_nonUDT2(): Vec2.ByVal
+		external fun igGetCursorScreenPos_nonUDT2(): Vec2.ByVal
 		external fun igSetCursorScreenPos(pos: Vec2.ByVal)
 		external fun igAlignTextToFramePadding()
 		external fun igGetTextLineHeight(): Float
@@ -232,9 +232,9 @@ object Imgui : AutoCloseable {
 		external fun igIsAnyItemHovered(): Boolean
 		external fun igIsAnyItemActive(): Boolean
 		external fun igIsAnyItemFocused(): Boolean
-		external fun igGetItemRectMin(): Vec2.ByVal
-		external fun igGetItemRectMax(): Vec2.ByVal
-		external fun igGetItemRectSize(): Vec2.ByVal
+		external fun igGetItemRectMin_nonUDT2(): Vec2.ByVal
+		external fun igGetItemRectMax_nonUDT2(): Vec2.ByVal
+		external fun igGetItemRectSize_nonUDT2(): Vec2.ByVal
 		external fun igSetItemAllowOverlap()
 
 		external fun igGetKeyIndex(imgui_key: Int): Int
@@ -250,9 +250,9 @@ object Imgui : AutoCloseable {
 		external fun igIsMouseDragging(button: Int, lock_threhsold: Float): Boolean
 		external fun igIsMouseHoveringRect(r_min: Vec2.ByVal, r_max: Vec2.ByVal, clip: Boolean): Boolean
 		external fun igIsMousePosValid(mouse_pos: Vec2.ByRef?): Boolean
-		external fun igGetMousePos(): Vec2.ByVal
+		external fun igGetMousePos_nonUDT2(): Vec2.ByVal
 		external fun igGetMousePosOnOpeningCurrentPopup(): Vec2.ByVal
-		external fun igGetMouseDragDelta(button: Int, lock_threshold: Float): Vec2.ByVal
+		external fun igGetMouseDragDelta_nonUDT2(button: Int, lock_threshold: Float): Vec2.ByVal
 		external fun igResetMouseDragDelta(button: Int)
 		// TODO: expose mouse cursor API
 		external fun igCaptureKeyboardFromApp(want_capture_keyboard_value: Boolean)

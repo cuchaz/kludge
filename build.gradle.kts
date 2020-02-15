@@ -49,7 +49,7 @@ dependencies {
 	lwjgl("vulkan")
 	
 	api("org.joml", "joml", "1.9.19")
-	api("net.java.dev.jna:jna:5.2.0")
+	api("net.java.dev.jna:jna:5.5.0")
 
 	testImplementation("io.kotlintest", "kotlintest-runner-junit5", "3.1.11")
 }
