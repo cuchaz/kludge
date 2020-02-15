@@ -106,6 +106,7 @@ class Vulkan(
 			}
 		}
 
+		const val ValidationLayer = "VK_LAYER_KHRONOS_validation"
 		const val StandardValidationLayer = "VK_LAYER_LUNARG_standard_validation"
 	}
 
