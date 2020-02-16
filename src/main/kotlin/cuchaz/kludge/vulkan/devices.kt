@@ -612,6 +612,42 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 			)
 		}
 	}
+
+	enum class FormatFeatureFlags(override val value: Int) : IntFlags.Bit {
+		SampledImage(VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT),
+		StorageImage(VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT),
+		StorageImageAtomic(VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT),
+		UniformTexelBuffer(VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT),
+		StorageTexelBuffer(VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_BIT),
+		StorageTexelBufferAtomic(VK_FORMAT_FEATURE_STORAGE_TEXEL_BUFFER_ATOMIC_BIT),
+		VertexBuffer(VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT),
+		ColorAttachment(VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT),
+		ColorAttachmentBlend(VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT),
+		DepthStencilAttachment(VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT),
+		BlitSrc(VK_FORMAT_FEATURE_BLIT_SRC_BIT),
+		BlitDst(VK_FORMAT_FEATURE_BLIT_DST_BIT),
+		SampledImageFilterLinear(VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)
+	}
+
+	data class FormatProperties internal constructor(
+		val linearTilingFeatures: IntFlags<FormatFeatureFlags>,
+		val optimalTilingFeatures: IntFlags<FormatFeatureFlags>,
+		val bufferFeatures: IntFlags<FormatFeatureFlags>
+	)
+
+	fun getFormatProperties(
+		format: Image.Format
+	): FormatProperties {
+		memstack { mem ->
+			val pProps = VkFormatProperties.mallocStack(mem)
+			vkGetPhysicalDeviceFormatProperties(vkDevice, format.ordinal, pProps);
+			return FormatProperties(
+				IntFlags(pProps.linearTilingFeatures()),
+				IntFlags(pProps.optimalTilingFeatures()),
+				IntFlags(pProps.bufferFeatures())
+			)
+		}
+	}
 }
 
 val Vulkan.physicalDevices get(): List<PhysicalDevice> {
