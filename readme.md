@@ -19,19 +19,21 @@ See the [Hello Kludge](https://github.com/cuchaz/hello-kludge) project for demos
 
 ## Progress
 
-Kludge is in a very early stage of development.
+Kludge is in a medium-to-early stage of development.
 
-The API is **highly** unstable! Expect breaking changes to happen frequently.
+The API is becoming more and more stable, but expect breaking changes to happen occasionally.
 
-Only the a small surface of the underlying APIs have been exposed so far.
-Work towards exposing more underlying API features is ongoing.
+Only the mostly commonly-used surface of the underlying APIs have been exposed so far.
+Work towards exposing more underlying API features is ongoing and mainly driven by
+the couple of applications that depend on Kludge.
 
 Dear ImGUI support is working now, with pre-built binaries provided by the
 [Kludge-ImGUI](https://github.com/cuchaz/kludge-imgui) project.
 Currently, binaries for the following platforms are included with Kludge:
 
  * Linux x86_64
- 
+ * Windows x86_64
+
 The native code is portable, so other platforms can be supported by simply building
 Kludge-ImGUI on those platforms. Contributions welcome!
 
@@ -46,7 +48,7 @@ but none of the wrappers I tried seemed to easily support the Vulkan backend for
 
 ## Using
 
-Kludge is in very early development and is not yet included in any artifact repository.
+Kludge is in early development and is not yet included in any artifact repository.
 
 Kludge uses the the [Gradle Build Tool](https://gradle.org/)
 and the [Kotlin DSL](https://docs.gradle.org/current/userguide/kotlin_dsl.html) to compile sources and manage dependencies.
