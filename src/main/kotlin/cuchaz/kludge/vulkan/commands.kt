@@ -486,7 +486,7 @@ sealed class ClearValue {
 		}
 	}
 
-	class DepthStencil(
+	data class DepthStencil(
 		val depth: Float = 0.0f,
 		val stencil: Int = 0
 	) : ClearValue()
