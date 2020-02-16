@@ -169,7 +169,7 @@ class Swapchain internal constructor(
 			vkGetSwapchainImagesKHR(device.vkDevice, id, pCount, pImages)
 				.orFail("failed to get swapchain images")
 			(0 until count)
-				.map { Image(device, pImages.get(), Image.Type.TwoD, extent.to3D(1), surfaceFormat.format, usage) }
+				.map { Image(device, pImages.get(), Image.Type.TwoD, extent.to3D(1), surfaceFormat.format, usage, Image.Tiling.Optimal) }
 		}
 	}
 

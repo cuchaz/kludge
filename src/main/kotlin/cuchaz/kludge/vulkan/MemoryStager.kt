@@ -57,7 +57,7 @@ class MemoryStager internal constructor(
 		}
 
 		// otherwise, allocate a new one (at least 1 KiB)
-		var newSize = buf?.memory?.size?.atLeast(1024) ?: 1024
+		var newSize = (buf?.memory?.size ?: 0).atLeast(1024)
 		while (newSize < size) {
 			newSize *= 2
 		}
@@ -66,7 +66,7 @@ class MemoryStager internal constructor(
 		val buf = device
 			.buffer(
 				size,
-				IntFlags.of(Buffer.Usage.TransferSrc)
+				IntFlags.of(Buffer.Usage.TransferSrc, Buffer.Usage.TransferDst)
 			)
 			.autoClose(replace = buf?.buffer)
 			.allocate { memType ->
@@ -165,14 +165,14 @@ inline fun <T> Image.Allocated.transferHtoD(
 	layout: Image.Layout = Image.Layout.TransferDstOptimal,
 	block: (buf: ByteBuffer) -> T
 ): T {
-	if (memory.type.flags.has(MemoryType.Flags.HostVisible)) {
+	if (image.tiling == Image.Tiling.Linear && memory.type.flags.has(MemoryType.Flags.HostVisible)) {
 
-		// memory is host-visible, so map it directly
+		// map it directly
 		return memory.map(0, memory.size.toInt(), block)
 
 	} else {
 
-		// memory is not host-visible, so upload using a staging buffer
+		// upload using a staging buffer
 		val hostBuf = memory.device.memoryStager.getBuffer(memory.size)
 		val deviceImg = this
 		val result = hostBuf.memory.map(0, memory.size.toInt(), block)
@@ -185,7 +185,7 @@ inline fun <T> Image.Allocated.transferHtoD(
 				images = listOf(
 					image.barrier(
 						dstAccess = IntFlags.of(Access.TransferWrite),
-						newLayout = Image.Layout.TransferDstOptimal
+						newLayout = layout
 					)
 				)
 			)
@@ -198,17 +198,17 @@ inline fun <T> Image.Allocated.transferHtoD(
 }
 
 inline fun <T> Image.Allocated.transferDtoH(
-	layout: Image.Layout,
+	layout: Image.Layout = Image.Layout.TransferSrcOptimal,
 	block: (buf: ByteBuffer) -> T
 ): T {
-	if (memory.type.flags.has(MemoryType.Flags.HostVisible)) {
+	if (image.tiling == Image.Tiling.Linear && memory.type.flags.has(MemoryType.Flags.HostVisible)) {
 
-		// memory is host-visible, so map it directly
+		// map it directly
 		return memory.map(0, memory.size.toInt(), block)
 
 	} else {
 
-		// memory is not host-visible, so upload using a staging buffer
+		// download using a staging buffer
 		val hostBuf = memory.device.memoryStager.getBuffer(memory.size)
 		val deviceImg = this
 		memory.device.memoryStager.command {
@@ -220,7 +220,7 @@ inline fun <T> Image.Allocated.transferDtoH(
 				images = listOf(
 					image.barrier(
 						dstAccess = IntFlags.of(Access.TransferRead),
-						newLayout = Image.Layout.TransferSrcOptimal
+						newLayout = layout
 					)
 				)
 			)

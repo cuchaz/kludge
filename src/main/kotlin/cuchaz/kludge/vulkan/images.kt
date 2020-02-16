@@ -19,7 +19,8 @@ class Image internal constructor(
 	val type: Image.Type,
 	val extent: Extent3D,
 	val format: Image.Format,
-	val usage: IntFlags<Image.Usage>
+	val usage: IntFlags<Image.Usage>,
+	val tiling: Image.Tiling
 ) : AutoCloseable {
 
 	override fun toString() = "0x%x".format(id)
@@ -493,7 +494,7 @@ fun Device.image(
 		val pImg = mem.mallocLong(1)
 		vkCreateImage(vkDevice, info, null, pImg)
 			.orFail("failed to create image")
-		return Image(this, pImg.get(0), type, extent, format, usage)
+		return Image(this, pImg.get(0), type, extent, format, usage, tiling)
 	}
 }
 
