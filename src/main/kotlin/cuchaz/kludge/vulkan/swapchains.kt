@@ -190,6 +190,10 @@ class Swapchain internal constructor(
 					// convert error to exception, but make sure caller can recognize it and catch it
 					throw SwapchainOutOfDateException()
 				}
+				.orFailWhen(VK_SUBOPTIMAL_KHR) {
+					// convert error to exception, but make sure caller can recognize it and catch it
+					throw SwapchainOutOfDateException()
+				}
 				.orFail("failed to acquire next image")
 			return pIndex.get(0) // TODO: hide index from caller
 		}
