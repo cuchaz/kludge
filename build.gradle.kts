@@ -24,7 +24,12 @@ dependencies {
 
 	implementation(kotlin("stdlib-jdk8"))
 
-	fun lwjgl(module: String? = null, natives: Boolean = false) {
+	val linux = "linux"
+	val macos = "macos"
+	val windows = "windows"
+	val all = listOf(linux, macos, windows)
+
+	fun lwjgl(module: String? = null, natives: List<String> = emptyList()) {
 
 		val name = "lwjgl" +
 			if (module == null) {
@@ -36,17 +41,15 @@ dependencies {
 
 		api("org.lwjgl", name, lwjglVersion)
 
-		if (natives) {
-			for (os in listOf("linux", "macos", "windows")) {
-				runtimeOnly("org.lwjgl", name, lwjglVersion, classifier = "natives-$os")
-			}
+		for (os in natives) {
+			runtimeOnly("org.lwjgl", name, lwjglVersion, classifier = "natives-$os")
 		}
 	}
-	lwjgl(natives=true)
-	lwjgl("glfw", natives=true)
-	lwjgl("jemalloc", natives=true)
-	lwjgl("nfd", natives=true)
-	lwjgl("vulkan")
+	lwjgl(natives=all)
+	lwjgl("glfw", natives=all)
+	lwjgl("jemalloc", natives=all)
+	lwjgl("nfd", natives=all)
+	lwjgl("vulkan", natives=listOf(macos))
 	
 	api("org.joml", "joml", "1.9.19")
 	api("net.java.dev.jna:jna:5.5.0")
