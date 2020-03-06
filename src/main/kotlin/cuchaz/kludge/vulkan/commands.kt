@@ -6,6 +6,7 @@
 package cuchaz.kludge.vulkan
 
 import cuchaz.kludge.tools.IntFlags
+import cuchaz.kludge.tools.kapply
 import cuchaz.kludge.tools.memstack
 import cuchaz.kludge.tools.toBuffer
 import org.lwjgl.system.MemoryStack
@@ -140,7 +141,7 @@ class CommandBuffer internal constructor(
 				.renderPass(renderPass.id)
 				.framebuffer(framebuffer.id)
 				.renderArea { it.set(renderArea) }
-				.pClearValues(VkClearValue.callocStack(renderPass.attachments.size, mem).apply {
+				.pClearValues(VkClearValue.callocStack(renderPass.attachments.size, mem).kapply {
 					for (attachment in renderPass.attachments) {
 						val out = get()
 						clearValues[attachment]?.let { out.set(it) }
@@ -544,7 +545,7 @@ internal fun Collection<ClearValue>.toBuffer(mem: MemoryStack) =
 	if (isEmpty()) {
 		null
 	} else {
-		VkClearValue.mallocStack(size, mem).apply {
+		VkClearValue.mallocStack(size, mem).kapply {
 			for (c in this@toBuffer) {
 				get().set(c)
 			}

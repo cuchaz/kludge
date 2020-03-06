@@ -5,10 +5,7 @@
 
 package cuchaz.kludge.vulkan
 
-import cuchaz.kludge.tools.IntFlags
-import cuchaz.kludge.tools.memstack
-import cuchaz.kludge.tools.toASCII
-import cuchaz.kludge.tools.toBuffer
+import cuchaz.kludge.tools.*
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK11.*
@@ -356,7 +353,7 @@ fun Device.graphicsPipeline(
 				if (vertexInput.bindings.isEmpty()) {
 					null
 				} else {
-					VkVertexInputBindingDescription.callocStack(vertexInput.bindings.size, mem).apply {
+					VkVertexInputBindingDescription.callocStack(vertexInput.bindings.size, mem).kapply {
 						for (b in vertexInput.bindings) {
 							get()
 								.binding(b.index)
@@ -372,7 +369,7 @@ fun Device.graphicsPipeline(
 				if (attrs.isEmpty()) {
 					null
 				} else {
-					VkVertexInputAttributeDescription.callocStack(attrs.size, mem).apply {
+					VkVertexInputAttributeDescription.callocStack(attrs.size, mem).kapply {
 						for (a in attrs) {
 							get()
 								.binding(a.binding.index)
@@ -447,7 +444,7 @@ fun Device.graphicsPipeline(
 				if (pushConstantRanges.isEmpty()) {
 					null
 				} else {
-					VkPushConstantRange.callocStack(pushConstantRanges.size, mem).apply {
+					VkPushConstantRange.callocStack(pushConstantRanges.size, mem).kapply {
 						for (range in pushConstantRanges) {
 							get().set(range)
 						}

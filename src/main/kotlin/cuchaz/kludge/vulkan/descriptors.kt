@@ -6,6 +6,7 @@
 package cuchaz.kludge.vulkan
 
 import cuchaz.kludge.tools.IntFlags
+import cuchaz.kludge.tools.kapply
 import cuchaz.kludge.tools.memstack
 import cuchaz.kludge.tools.toBuffer
 import org.lwjgl.vulkan.*
@@ -45,7 +46,7 @@ fun Device.descriptorSetLayout(
 				if (bindings.isEmpty()) {
 					null
 				} else {
-					VkDescriptorSetLayoutBinding.callocStack(bindings.size, mem).apply {
+					VkDescriptorSetLayoutBinding.callocStack(bindings.size, mem).kapply {
 						for (b in bindings) {
 							get()
 								.binding(b.binding)
@@ -168,7 +169,7 @@ fun Device.descriptorPool(
 		val info = VkDescriptorPoolCreateInfo.callocStack(mem)
 			.sType(VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO)
 			.maxSets(maxSets)
-			.pPoolSizes(VkDescriptorPoolSize.callocStack(sizes.size, mem).apply {
+			.pPoolSizes(VkDescriptorPoolSize.callocStack(sizes.size, mem).kapply {
 				for ((type, count) in sizes) {
 					get()
 						.type(type.ordinal)
@@ -248,7 +249,7 @@ fun Device.updateDescriptorSets(
 ) {
 	memstack { mem ->
 
-		val pWrites = VkWriteDescriptorSet.callocStack(writes.size, mem).apply {
+		val pWrites = VkWriteDescriptorSet.callocStack(writes.size, mem).kapply {
 			for (w in writes) {
 				get()
 					.sType(VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET)
@@ -260,7 +261,7 @@ fun Device.updateDescriptorSets(
 						if (w.buffers.isEmpty()) {
 							null
 						} else {
-							VkDescriptorBufferInfo.callocStack(w.buffers.size, mem).apply {
+							VkDescriptorBufferInfo.callocStack(w.buffers.size, mem).kapply {
 								for (b in w.buffers) {
 									get()
 										.buffer(b.buffer.id)
@@ -275,7 +276,7 @@ fun Device.updateDescriptorSets(
 						if (w.images.isEmpty()) {
 							null
 						} else {
-							VkDescriptorImageInfo.callocStack(w.images.size, mem).apply {
+							VkDescriptorImageInfo.callocStack(w.images.size, mem).kapply {
 								for (i in w.images) {
 									get()
 										.sampler(i.sampler?.id ?: VK_NULL_HANDLE)
@@ -291,7 +292,7 @@ fun Device.updateDescriptorSets(
 			flip()
 		}
 
-		val pCopies = VkCopyDescriptorSet.callocStack(copies.size, mem).apply {
+		val pCopies = VkCopyDescriptorSet.callocStack(copies.size, mem).kapply {
 			for (c in copies) {
 				get()
 					.sType(VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET)

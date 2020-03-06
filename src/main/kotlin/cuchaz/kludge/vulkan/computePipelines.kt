@@ -5,6 +5,7 @@
 
 package cuchaz.kludge.vulkan
 
+import cuchaz.kludge.tools.kapply
 import cuchaz.kludge.tools.memstack
 import cuchaz.kludge.tools.toASCII
 import cuchaz.kludge.tools.toBuffer
@@ -47,7 +48,7 @@ fun Device.computePipeline(
 				if (pushConstantRanges.isEmpty()) {
 					null
 				} else {
-					VkPushConstantRange.callocStack(pushConstantRanges.size, mem).apply {
+					VkPushConstantRange.callocStack(pushConstantRanges.size, mem).kapply {
 						for (range in pushConstantRanges) {
 							get().set(range)
 						}

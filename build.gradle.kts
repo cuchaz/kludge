@@ -37,7 +37,7 @@ dependencies {
 			} else {
 				"-$module"
 			}
-		val lwjglVersion = "3.2.0"
+		val lwjglVersion = "3.2.2"
 
 		api("org.lwjgl", name, lwjglVersion)
 

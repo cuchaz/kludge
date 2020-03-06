@@ -5,10 +5,9 @@
 
 package cuchaz.kludge.vulkan
 
-import cuchaz.kludge.tools.IntFlags
-import cuchaz.kludge.tools.indexOfOrNull
-import cuchaz.kludge.tools.memstack
-import cuchaz.kludge.tools.toBuffer
+import cuchaz.kludge.tools.*
+import cuchaz.kludge.vulkan.Attachment.Ref
+import cuchaz.kludge.vulkan.toBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.*
 import org.lwjgl.vulkan.VK11.*
@@ -147,7 +146,7 @@ internal fun Collection<Attachment.Ref>.toBuffer(mem: MemoryStack) =
 	if (isEmpty()) {
 		null
 	} else {
-		VkAttachmentReference.callocStack(size, mem).apply {
+		VkAttachmentReference.callocStack(size, mem).kapply {
 			for (ref in this@toBuffer) {
 				get().set(ref)
 			}

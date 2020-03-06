@@ -8,6 +8,7 @@ package cuchaz.kludge.tools
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
+import org.lwjgl.system.StructBuffer
 import java.io.File
 import java.io.InputStream
 import java.nio.*
@@ -302,6 +303,8 @@ val Buffer?.address get() =
 		0
 	}
 
+/** calls the usual Kotlin apply function */
+fun <T:StructBuffer<*,*>> T.kapply(block: T.() -> Unit) = apply(block)
 
 inline class ByteFlags<T:ByteFlags.Bit>(val value: Byte) {
 
