@@ -188,7 +188,6 @@ class Commands internal constructor() {
 	fun getWindowHeight() = n.igGetWindowHeight()
 	fun getContentRegionMax(out: Vector2f) = n.igGetContentRegionMax_nonUDT2().toVector(out)
 	fun getContentRegionAvail(out: Vector2f) = n.igGetContentRegionAvail_nonUDT2().toVector(out)
-	fun getContentRegionAvailWidth() = n.igGetContentRegionAvailWidth()
 	fun getWindowContentRegionMin(out: Vector2f) = n.igGetWindowContentRegionMin_nonUDT2().toVector(out)
 	fun getWindowContentRegionMax(out: Vector2f) = n.igGetWindowContentRegionMax_nonUDT2().toVector(out)
 	fun getWindowContentRegionWidth() = n.igGetWindowContentRegionWidth()
@@ -882,12 +881,8 @@ class Commands internal constructor() {
 		n.igTreePushStr(id)
 	fun treePop() =
 		n.igTreePop()
-	fun treeAdvanceToLabelPos() =
-		n.igTreeAdvanceToLabelPos()
 	fun getTreeNodeToLabelSpacing() =
 		n.igGetTreeNodeToLabelSpacing()
-	fun setNextTreeNodeOpen(isOpen: Boolean, cond: IntFlags<Cond> = IntFlags(0)) =
-		n.igSetNextTreeNodeOpen(isOpen, cond.value)
 	fun collapsingHeader(label: String, flags: IntFlags<TreeNodeFlags> = IntFlags(0)) =
 		n.igCollapsingHeader(label, flags.value)
 	fun collapsingHeader(label: String, pOpen: Ref<Boolean>, flags: IntFlags<TreeNodeFlags> = IntFlags(0)): Boolean {
@@ -899,6 +894,8 @@ class Commands internal constructor() {
 				}
 		}
 	}
+	fun setNextItemOpen(isOpen: Boolean, cond: IntFlags<Cond> = IntFlags(0)) =
+		n.igSetNextItemOpen(isOpen, cond.value)
 
 	inline fun <R> treeNode(label: String, flags: IntFlags<TreeNodeFlags> = IntFlags(0), block: () -> R): R? {
 		if (treeNode(label)) {

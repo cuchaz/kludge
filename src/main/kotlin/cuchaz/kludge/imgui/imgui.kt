@@ -57,7 +57,6 @@ object Imgui : AutoCloseable {
 		external fun igGetWindowHeight(): Float
 		external fun igGetContentRegionMax_nonUDT2(): Vec2.ByVal
 		external fun igGetContentRegionAvail_nonUDT2(): Vec2.ByVal
-		external fun igGetContentRegionAvailWidth(): Float
 		external fun igGetWindowContentRegionMin_nonUDT2(): Vec2.ByVal
 		external fun igGetWindowContentRegionMax_nonUDT2(): Vec2.ByVal
 		external fun igGetWindowContentRegionWidth(): Float
@@ -170,11 +169,10 @@ object Imgui : AutoCloseable {
 		external fun igTreeNodeExStr(label: String, flags: Int): Boolean
 		external fun igTreePushStr(str_id: String)
 		external fun igTreePop()
-		external fun igTreeAdvanceToLabelPos()
 		external fun igGetTreeNodeToLabelSpacing(): Float
-		external fun igSetNextTreeNodeOpen(is_open: Boolean, cond: Int)
 		external fun igCollapsingHeader(label: String, flags: Int): Boolean
 		external fun igCollapsingHeader(label: String, p_open: Long, flags: Int): Boolean
+		external fun igSetNextItemOpen(is_open: Boolean, cond: Int)
 
 		external fun igSelectable(label: String, selected: Boolean, flags: Int, size: Vec2.ByVal): Boolean
 		external fun igSelectableBoolPtr(label: String, p_selected: Long, flags: Int, size: Vec2.ByVal): Boolean
@@ -280,7 +278,7 @@ object Imgui : AutoCloseable {
 
 		@Structure.FieldOrder(
 			"instanceId", "physicalDeviceId", "deviceId", "queueFamilyIndex", "queueId",
-			"pipelineCacheId", "descriptorPoolId", "allocatorId", "errFn"
+			"pipelineCacheId", "descriptorPoolId", "minImageCount", "imageCount", "MSAASamples", "allocatorId", "errFn"
 		)
 		class InitInfo(
 			@JvmField var instanceId: Long = 0,
@@ -290,6 +288,9 @@ object Imgui : AutoCloseable {
 			@JvmField var queueId: Long = 0,
 			@JvmField var pipelineCacheId: Long = 0,
 			@JvmField var descriptorPoolId: Long = 0,
+			@JvmField var minImageCount: Int = 0,
+			@JvmField var imageCount: Int = 0,
+			@JvmField var MSAASamples: Int = 0,
 			@JvmField var allocatorId: Long = 0,
 			@JvmField var errFn: Long = 0
 		) : Structure()
@@ -413,7 +414,9 @@ object Imgui : AutoCloseable {
 				deviceId = queue.device.vkDevice.address(),
 				queueFamilyIndex = queue.family.index,
 				queueId =  queue.vkQueue.address(),
-				descriptorPoolId = descriptorPool.id
+				descriptorPoolId = descriptorPool.id,
+				minImageCount = 2,
+				imageCount = 2
 			),
 			renderPass.id
 		)
