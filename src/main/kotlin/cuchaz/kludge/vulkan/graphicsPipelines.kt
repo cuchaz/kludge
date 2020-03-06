@@ -316,6 +316,16 @@ fun VkPushConstantRange.set(src: PushConstantRange) {
 	size(src.size)
 }
 
+data class TesselationState(
+	val patchControlPoints: Int,
+	val flags: IntFlags<Flags> = IntFlags(0)
+) {
+
+	enum class Flags(override val value: Int) : IntFlags.Bit {
+		// no flags yet, reserved for future use
+	}
+}
+
 
 fun Device.graphicsPipeline(
 	renderPass: RenderPass,
@@ -330,7 +340,8 @@ fun Device.graphicsPipeline(
 	multisampleState: MultisampleState = MultisampleState(),
 	colorBlend: ColorBlendState = ColorBlendState(),
 	colorAttachmentBlends: Map<Attachment,ColorBlendState.Attachment?>,
-	depthStencilState: DepthStencilState? = null
+	depthStencilState: DepthStencilState? = null,
+	tesselationState: TesselationState? = null
 ): GraphicsPipeline {
 	memstack { mem ->
 
@@ -508,8 +519,13 @@ fun Device.graphicsPipeline(
 				.maxDepthBounds(it.maxDepth)
 		}
 
-		// TODO: do we need any of these?
-		//pTessellationState(@Nullable @NativeType("VkPipelineTessellationStateCreateInfo const *") VkPipelineTessellationStateCreateInfo value) { npTessellationState(address(), value); return this; }
+		// build the tesselation state, if needed
+		val pTesselationState = tesselationState?.let {
+			VkPipelineTessellationStateCreateInfo.callocStack(mem)
+				.sType(VK10.VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO)
+				.flags(it.flags.value)
+				.patchControlPoints(it.patchControlPoints)
+		}
 
 		// finally! build the graphics pipeline
 		val info = VkGraphicsPipelineCreateInfo.callocStack(1, mem)
@@ -526,6 +542,7 @@ fun Device.graphicsPipeline(
 			.renderPass(renderPass.id)
 			.pColorBlendState(pColorBlend)
 			.pDepthStencilState(pDepthStencilState)
+			.pTessellationState(pTesselationState)
 			.subpass(0) // TODO: support other subpasses?
 			.basePipelineHandle(VK_NULL_HANDLE) // TODO: support derivative pipelines?
 			.basePipelineIndex(-1)
