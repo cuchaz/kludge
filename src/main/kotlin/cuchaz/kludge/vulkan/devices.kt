@@ -596,7 +596,7 @@ class PhysicalDevice internal constructor (internal val instance: VkInstance, in
 		format: Image.Format,
 		type: Image.Type,
 		usage: IntFlags<Image.Usage>,
-		tiling: Image.Tiling = Image.Tiling.Linear,
+		tiling: Image.Tiling,
 		flags: IntFlags<Image.Create> = IntFlags(0)
 	): ImageFormatProperties {
 		memstack { mem ->
