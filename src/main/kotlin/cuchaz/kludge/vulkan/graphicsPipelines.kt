@@ -234,17 +234,32 @@ class ColorBlendState(
 	val blendConstants: FloatArray = floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f)
 ) {
 
+	companion object {
+		val colorWriteMaskAll = IntFlags.of(
+			ColorComponent.R,
+			ColorComponent.G,
+			ColorComponent.B,
+			ColorComponent.A
+		)
+	}
+
 	data class Attachment(
-		val color: Part,
-		val alpha: Part,
-		val colorWriteMask: IntFlags<ColorComponent> =
-			IntFlags.of(
-				ColorComponent.R,
-				ColorComponent.G,
-				ColorComponent.B,
-				ColorComponent.A
-			)
+		val parts: Parts? = null,
+		val colorWriteMask: IntFlags<ColorComponent> = colorWriteMaskAll
 	) {
+
+		/** enables blending */
+		constructor(color: Part, alpha: Part, colorWriteMask: IntFlags<ColorComponent> = colorWriteMaskAll) :
+			this(Parts(color, alpha), colorWriteMask)
+
+		/** disables blending */
+		constructor(colorWriteMask: IntFlags<ColorComponent> = colorWriteMaskAll) :
+			this(null, colorWriteMask)
+
+		data class Parts(
+			val color: Part,
+			val alpha: Part
+		)
 
 		data class Part(
 			val src: BlendFactor,
@@ -339,7 +354,7 @@ fun Device.graphicsPipeline(
 	scissors: List<Rect2D>,
 	multisampleState: MultisampleState = MultisampleState(),
 	colorBlend: ColorBlendState = ColorBlendState(),
-	colorAttachmentBlends: Map<Attachment,ColorBlendState.Attachment?>,
+	colorAttachmentBlends: List<Pair<Attachment,ColorBlendState.Attachment>>,
 	depthStencilState: DepthStencilState? = null,
 	tesselationState: TesselationState? = null
 ): GraphicsPipeline {
@@ -471,25 +486,28 @@ fun Device.graphicsPipeline(
 		val pBlendAttachments = VkPipelineColorBlendAttachmentState.callocStack(colorAttachmentBlends.size, mem)
 		for (attachment in renderPass.attachments) {
 
-			// skip an attachment when there's no color blend for it
-			if (!colorAttachmentBlends.containsKey(attachment)) {
-				continue
-			}
+			// get the color blend for the attachment, or skip it
+			val blend = colorAttachmentBlends
+				.find { it.first === attachment }
+				?.second
+				?: continue
 
-			val blend = colorAttachmentBlends[attachment]
 			pBlendAttachments.get().apply {
-				if (blend != null) {
+
+				val parts = blend.parts
+				if (parts != null) {
 					blendEnable(true)
-					srcColorBlendFactor(blend.color.src.ordinal)
-					dstColorBlendFactor(blend.color.dst.ordinal)
-					colorBlendOp(blend.color.op.ordinal)
-					srcAlphaBlendFactor(blend.alpha.src.ordinal)
-					dstAlphaBlendFactor(blend.alpha.dst.ordinal)
-					alphaBlendOp(blend.alpha.op.ordinal)
-					colorWriteMask(blend.colorWriteMask.value)
+					srcColorBlendFactor(parts.color.src.ordinal)
+					dstColorBlendFactor(parts.color.dst.ordinal)
+					colorBlendOp(parts.color.op.ordinal)
+					srcAlphaBlendFactor(parts.alpha.src.ordinal)
+					dstAlphaBlendFactor(parts.alpha.dst.ordinal)
+					alphaBlendOp(parts.alpha.op.ordinal)
 				} else {
 					blendEnable(false)
 				}
+
+				colorWriteMask(blend.colorWriteMask.value)
 			}
 		}
 		pBlendAttachments.flip()
