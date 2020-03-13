@@ -405,8 +405,7 @@ object Imgui : AutoCloseable {
 		}
 
 		// init native side
-		val installCallbacks = sequence == 0
-		native.ImGui_ImplGlfw_InitForVulkan(window.id, installCallbacks)
+		native.ImGui_ImplGlfw_InitForVulkan(window.id, true)
 		native.ImGui_ImplVulkan_Init(
 			native.InitInfo(
 				instanceId = queue.device.physicalDevice.instance.address(),
