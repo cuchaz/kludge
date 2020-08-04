@@ -33,6 +33,7 @@ Currently, binaries for the following platforms are included with Kludge:
 
  * Linux x86_64
  * Windows x86_64
+ * Mac OSX
 
 The native code is portable, so other platforms can be supported by simply building
 Kludge-ImGUI on those platforms. Contributions welcome!
