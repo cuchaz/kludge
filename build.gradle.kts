@@ -1,4 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.Properties
 
 
 plugins {
@@ -13,7 +16,27 @@ plugins {
 	signing
 }
 
-group = "cuchaz"
+// read secret properties, if any
+properties["secrets.path"]
+	?.let { Paths.get(it as String) }
+	?.takeIf { Files.exists(it) }
+	?.let { path ->
+		val props = path.toFile().inputStream().use { input ->
+			Properties().apply {
+				load(input)
+			}
+		}
+		for (name in props.stringPropertyNames()) {
+			ext.set(name, props.getProperty(name))
+		}
+	}
+
+fun getSecret(name: String) =
+	findProperty(name) as? String
+		?: throw NoSuchElementException("No value defined for secret: $name")
+
+
+group = "com.cuchazinteractive"
 version = "0.1"
 
 repositories {
@@ -113,12 +136,56 @@ publishing {
 
 			artifact(sourcesJar)
 			artifact(javadocJar)
+
+			pom {
+
+				name.set(project.name)
+				description.set("Kludge is an idiomatic Kotlin API for GLFW, Vulkan, and Dear ImGUI. Focuses on ease-of-use and high performance.")
+				url.set("https://github.com/cuchaz/kludge")
+
+				licenses {
+					license {
+						name.set("BSD-3-Clause License")
+						url.set("https://opensource.org/licenses/BSD-3-Clause")
+					}
+				}
+
+				developers {
+					developer {
+						id.set("cuchaz")
+						name.set("Jeff Martin")
+						email.set("jeff@cuchazinteractive.com")
+						organization.set("Cuchaz Interactive, LLC")
+					}
+				}
+
+				scm {
+					connection.set("scm:git:git://github.com/cuchaz/kludge.git")
+					developerConnection.set("scm:git:git://github.com/cuchaz/kludge.git")
+					url.set("https://github.com/cuchaz/kludge/tree/master")
+				}
+			}
 		}
 	}
 
 	repositories {
 
-		// TODO: add maven repo for maven central, or jcenter
+		// OSSRH for Maven Central
+		// instructions at: https://central.sonatype.org/pages/ossrh-guide.html
+		// manage staging/releases online at: https://oss.sonatype.org/
+		maven {
+			name = "OSSRH"
+			url = if (version.toString().endsWith("-SNAPSHOT")) {
+				uri("https://oss.sonatype.org/content/repositories/snapshots")
+			} else {
+				uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
+			}
+
+			credentials {
+				username = getSecret("sonatype.login")
+				password = getSecret("sonatype.password")
+			}
+		}
 
 		// local repo for testing
 		maven {
