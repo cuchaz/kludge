@@ -306,7 +306,8 @@ val Buffer?.address get() =
 /** calls the usual Kotlin apply function */
 fun <T:StructBuffer<*,*>> T.kapply(block: T.() -> Unit) = apply(block)
 
-inline class ByteFlags<T:ByteFlags.Bit>(val value: Byte) {
+@JvmInline
+value class ByteFlags<T:ByteFlags.Bit>(val value: Byte) {
 
 	companion object {
 
@@ -353,7 +354,8 @@ inline fun <reified T:ByteFlags.Bit> ByteFlags<T>.toFlagsString(): String =
 		.let { "[$it]" }
 
 
-inline class ShortFlags<T:ShortFlags.Bit>(val value: Short) {
+@JvmInline
+value class ShortFlags<T:ShortFlags.Bit>(val value: Short) {
 
 	companion object {
 
@@ -400,7 +402,8 @@ inline fun <reified T:ShortFlags.Bit> ShortFlags<T>.toFlagsString(): String =
 		.let { "[$it]" }
 
 
-inline class IntFlags<T:IntFlags.Bit>(val value: Int) {
+@JvmInline
+value class IntFlags<T:IntFlags.Bit>(val value: Int) {
 
 	companion object {
 
@@ -447,7 +450,8 @@ inline fun <reified T:IntFlags.Bit> IntFlags<T>.toFlagsString(): String =
 		.let { "[$it]" }
 
 
-inline class LongFlags<T:LongFlags.Bit>(val value: Long) {
+@JvmInline
+value class LongFlags<T:LongFlags.Bit>(val value: Long) {
 
 	companion object {
 

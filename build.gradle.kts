@@ -6,10 +6,10 @@ import java.util.Properties
 
 plugins {
 
-	kotlin("jvm") version "1.3.60"
+	kotlin("jvm") version "1.5.0"
 
-	// https://github.com/Minecrell/licenser
-	id("net.minecrell.licenser") version "0.4.1"
+	// https://github.com/CadixDev/licenser
+	id("org.cadixdev.licenser") version "0.6.0"
 
 	`java-library`
 	`maven-publish`
@@ -40,7 +40,7 @@ group = "com.cuchazinteractive"
 version = "0.1"
 
 repositories {
-	jcenter()
+	mavenCentral()
 }
 
 dependencies {
@@ -89,14 +89,9 @@ java {
 }
 
 tasks.withType<KotlinCompile> {
-
 	kotlinOptions {
-
 		jvmTarget = "1.8"
-
-		// enable experimental features
-		languageVersion = "1.3"
-		freeCompilerArgs += "-XXLanguage:+InlineClasses"
+		languageVersion = "1.5"
 	}
 }
 
@@ -105,7 +100,7 @@ license {
 	include("**/*.kt")
 	include("**/*.java")
 
-	header = file("license.header.txt")
+	setHeader(file("license.header.txt"))
 }
 
 
