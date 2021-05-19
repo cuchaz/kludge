@@ -9,5 +9,5 @@ package cuchaz.kludge
 object Kludge {
 
 	val name = "Kludge"
-	val version = "0.1"
+	val version = "0.2"
 }
